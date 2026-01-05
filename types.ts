@@ -1,8 +1,38 @@
+
 export type IndustryType = 'fashion' | 'saas' | 'tourism' | 'real_estate' | 'other';
+
+export interface DiagnosticQuestion {
+  id: string;
+  label: string;
+  placeholder?: string;
+  context: string; // Context for the Right Panel
+}
+
+export interface RoadmapPhase {
+  phaseName: string;
+  duration: string;
+  items: string[];
+}
+
+export interface AIState {
+  questions: DiagnosticQuestion[];
+  recommendations: {
+    systemIds: string[];
+    impacts: Record<string, string>;
+  };
+  readinessAnalysis: {
+    score: number;
+    risks: string[];
+    wins: string[];
+    summary: string;
+  };
+  roadmap: RoadmapPhase[];
+}
 
 export interface AppState {
   step: number;
   completed: boolean;
+  aiState: AIState;
   data: {
     businessName: string;
     website: string;
@@ -27,6 +57,12 @@ export interface AppState {
 export const INITIAL_STATE: AppState = {
   step: 1,
   completed: false,
+  aiState: {
+    questions: [],
+    recommendations: { systemIds: [], impacts: {} },
+    readinessAnalysis: { score: 0, risks: [], wins: [], summary: "" },
+    roadmap: []
+  },
   data: {
     businessName: '',
     website: '',
