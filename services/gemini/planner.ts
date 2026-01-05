@@ -1,4 +1,3 @@
-
 import { ai } from "./client";
 import { Type, Schema } from "@google/genai";
 import { AppState, RoadmapPhase } from "../../types";

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './components/Button';
 import { Dashboard } from './components/Dashboard';
-import { INITIAL_STATE, AppState } from './types';
+import { INITIAL_STATE, AppState, Task } from './types';
 import { analyst } from './services/gemini/analyst';
 
 // Wizard Components
@@ -15,13 +15,37 @@ import { Step3Systems } from './components/wizard/Step3Systems';
 import { Step4Readiness } from './components/wizard/Step4Readiness';
 import { Step5Plan } from './components/wizard/Step5Plan';
 
+const STORAGE_KEY = 'sun_ai_wizard_state';
+
 export default function App() {
-  const [state, setState] = useState<AppState>(INITIAL_STATE);
+  // Initialize from localStorage or default
+  const [state, setState] = useState<AppState>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Migration/Safety check for new dashboardState
+        if (!parsed.dashboardState) {
+          parsed.dashboardState = INITIAL_STATE.dashboardState;
+        }
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to load state", e);
+    }
+    return INITIAL_STATE;
+  });
+
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // AI State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [intelligenceStream, setIntelligenceStream] = useState<string>("");
+
+  // Persist state changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
 
   // Smooth scroll to top on step change
   useEffect(() => {
@@ -61,6 +85,17 @@ export default function App() {
   const setRoadmap = (roadmap: AppState['aiState']['roadmap']) => {
     setState(prev => ({ ...prev, aiState: { ...prev.aiState, roadmap: roadmap } }));
   };
+  
+  // Dashboard State Setter
+  const updateDashboardState = (tasks: Task[]) => {
+    setState(prev => ({
+      ...prev,
+      dashboardState: {
+        tasks,
+        initialized: true
+      }
+    }));
+  };
 
 
   const nextStep = () => {
@@ -68,10 +103,20 @@ export default function App() {
       setIsTransitioning(true);
       setTimeout(() => {
         setState(prev => ({ ...prev, step: prev.step + 1 }));
+        // Clear the AI stream so the next step starts fresh or falls back to static context
+        setIntelligenceStream(""); 
         setIsTransitioning(false);
       }, 300);
     } else {
       setState(prev => ({ ...prev, completed: true }));
+    }
+  };
+
+  const handleReset = () => {
+    if (confirm("Are you sure you want to reset your progress?")) {
+      localStorage.removeItem(STORAGE_KEY);
+      setState(INITIAL_STATE);
+      window.scrollTo(0, 0);
     }
   };
 
@@ -116,7 +161,13 @@ export default function App() {
   // --- Render Logic ---
 
   if (state.completed) {
-    return <Dashboard />;
+    return (
+      <Dashboard 
+        state={state} 
+        onReset={handleReset} 
+        updateDashboardState={updateDashboardState}
+      />
+    );
   }
 
   const renderStepContent = () => {
@@ -195,7 +246,15 @@ export default function App() {
         
         {/* Sticky Footer for Mobile/Desktop Actions */}
         <div className="sticky bottom-0 w-full p-8 bg-sun-bg/95 backdrop-blur-sm border-t border-sun-border mt-auto">
-          <div className="max-w-3xl mx-auto flex justify-end">
+          <div className="max-w-3xl mx-auto flex justify-end gap-4">
+             {state.step > 1 && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setState(prev => ({ ...prev, step: prev.step - 1 }))}
+                >
+                  Back
+                </Button>
+             )}
             <Button onClick={nextStep} className="group">
               {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

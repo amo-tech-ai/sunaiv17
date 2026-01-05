@@ -29,10 +29,26 @@ export interface AIState {
   roadmap: RoadmapPhase[];
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'in_progress' | 'review' | 'done';
+  priority: 'high' | 'medium' | 'low';
+  phase: string;
+  tags: string[];
+}
+
+export interface DashboardState {
+  tasks: Task[];
+  initialized: boolean;
+}
+
 export interface AppState {
   step: number;
   completed: boolean;
   aiState: AIState;
+  dashboardState: DashboardState;
   data: {
     businessName: string;
     website: string;
@@ -62,6 +78,10 @@ export const INITIAL_STATE: AppState = {
     recommendations: { systemIds: [], impacts: {} },
     readinessAnalysis: { score: 0, risks: [], wins: [], summary: "" },
     roadmap: []
+  },
+  dashboardState: {
+    tasks: [],
+    initialized: false
   },
   data: {
     businessName: '',
