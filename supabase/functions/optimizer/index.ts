@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { industry, priorities, painPoints } = await req.json();
+    const { industry, priorities } = await req.json();
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
 
@@ -18,11 +18,12 @@ serve(async (req) => {
       properties: {
         recommended_ids: {
           type: Type.ARRAY,
-          items: { type: Type.STRING }
+          items: { type: Type.STRING },
+          description: "List of system IDs to recommend (max 3), ranked by relevance."
         },
         custom_impacts: {
           type: Type.OBJECT,
-          // Map of SystemID -> String
+          description: "Map of system ID to a specific, one-sentence ROI projection string.",
           properties: {
             lead_gen: { type: Type.STRING },
             content_studio: { type: Type.STRING },
@@ -30,25 +31,41 @@ serve(async (req) => {
             crm_autopilot: { type: Type.STRING },
             whatsapp_assistant: { type: Type.STRING },
           }
+        },
+        synergy_notes: {
+          type: Type.STRING,
+          description: "A short insight explaining why these specific systems work well together for this user."
         }
       },
-      required: ["recommended_ids", "custom_impacts"]
+      required: ["recommended_ids", "custom_impacts", "synergy_notes"]
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Pro for ranking logic
+      model: 'gemini-3-pro-preview',
       contents: `
-        Industry: ${pack.industry}
-        Priorities: ${JSON.stringify(priorities)}
-        Pain Points: ${JSON.stringify(painPoints)}
-        System Formulas: ${JSON.stringify(pack.roiFormulas)}
+        You are a Solution Architect for the ${pack.industry} industry.
+        
+        User Context:
+        - Primary Goal: ${priorities.mainPriority || 'Growth'}
+        - Sales Bottleneck: ${priorities.moneyFocus || 'Unknown'}
+        - Marketing Struggle: ${priorities.marketingFocus || 'Unknown'}
+        - Speed Bump: ${priorities.responseSpeed || 'Unknown'}
+
+        Available Systems:
+        ${JSON.stringify(pack.systemNames)}
+
+        System ROI Formulas (Use these as a base):
+        ${JSON.stringify(pack.roiFormulas)}
 
         Task:
-        1. Select top 3 systems from [lead_gen, content_studio, conversion_booster, crm_autopilot, whatsapp_assistant].
-        2. Rewrite the ROI impact string using the industry formulas provided.
+        1. Rank the top 2-3 systems that best solve the user's specific bottlenecks.
+        2. Mark these as 'recommended_ids'.
+        3. Rewrite the generic ROI formula for EVERY system to be hyper-specific to the user's situation. 
+           - E.g. Instead of "Increases leads", say "Captures missed leads from ${priorities.marketingFocus}".
+        4. Generate a 'synergy_notes' string explaining the strategy.
       `,
       config: {
-        thinkingConfig: { thinkingBudget: 1024 }, // Light thinking for ranking
+        thinkingConfig: { thinkingBudget: 1024 },
         responseMimeType: "application/json",
         responseSchema: schema
       }

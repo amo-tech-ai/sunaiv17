@@ -130,6 +130,7 @@ export default function App() {
           step={state.step} 
           industry={state.data.industry} 
           selectedServices={state.data.selectedServices} 
+          priorities={state.data.priorities}
         />
       }
       rightPanel={
@@ -169,7 +170,11 @@ export default function App() {
                 Back
               </Button>
             )}
-          <Button onClick={nextStep} className="group">
+          <Button 
+            onClick={nextStep} 
+            className="group"
+            disabled={state.step === 3 && state.data.selectedSystems.length === 0}
+          >
             {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </Button>

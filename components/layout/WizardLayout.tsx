@@ -18,7 +18,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
     <div className={`min-h-screen w-full flex flex-col md:flex-row bg-sun-bg transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
       
       {/* Left Panel - Sticky */}
-      <aside className="w-full md:w-[20%] md:h-screen md:sticky md:top-0 border-r border-sun-border bg-sun-bg z-10">
+      <aside className="w-full md:w-[20%] md:h-screen md:sticky md:top-0 border-r border-sun-border bg-sun-bg z-10 overflow-hidden">
         {leftPanel}
       </aside>
 
@@ -28,7 +28,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
       </main>
 
       {/* Right Panel - Sticky */}
-      <aside className="hidden md:block w-full md:w-[30%] md:h-screen md:sticky md:top-0 bg-sun-right">
+      <aside className="hidden md:block w-full md:w-[30%] md:h-screen md:sticky md:top-0 bg-sun-right overflow-hidden">
         {rightPanel}
       </aside>
     </div>

@@ -8,9 +8,92 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { businessName, website, selectedServices, description, docInsights } = await req.json();
+    const body = await req.json();
+    const { mode } = body;
     const ai = createGeminiClient();
 
+    // MODE 1: RESEARCH (Streaming)
+    if (mode === 'research') {
+        const { businessName, website } = body;
+        const response = await ai.models.generateContentStream({
+            model: 'gemini-3-flash-preview',
+            contents: `
+            System context: Role as senior business analyst.
+            Task: Research and verify business, detect industry, assess maturity.
+            Input: Company: "${businessName}", URL: "${website}".
+            
+            Key Instructions:
+            - Verify business existence before making claims.
+            - Use industry-specific search queries.
+            - Stream observations in real-time.
+            - Start with "Analyzing digital footprint for ${businessName}..."
+            `,
+            config: {
+                tools: [{ googleSearch: {} }],
+            }
+        });
+
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    for await (const chunk of response) {
+                        if (chunk.text) {
+                            controller.enqueue(new TextEncoder().encode(chunk.text));
+                        }
+                    }
+                    controller.close();
+                } catch (e) {
+                    controller.error(e);
+                }
+            }
+        });
+
+        return new Response(stream, { 
+            headers: { ...corsHeaders, 'Content-Type': 'text/plain' } 
+        });
+    }
+
+    // MODE 2: DOCUMENT SUMMARY
+    if (mode === 'summarize_docs') {
+        const { documents } = body;
+        
+        // Explicitly type the array to allow both text and inlineData parts to prevent TS inference errors
+        const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{
+            text: `Analyze the attached business documents. Extract key insights about:
+            1. Business Model & Strategy
+            2. Current Challenges or Goals
+            
+            Provide a concise summary to help tailor a consulting engagement.`
+        }];
+
+        for (const doc of documents) {
+            if (doc.base64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: doc.mimeType || 'application/pdf',
+                        data: doc.base64
+                    }
+                });
+            } else if (doc.textContent) {
+                parts.push({
+                    text: `Document: ${doc.name}\nContent:\n${doc.textContent}`
+                });
+            }
+        }
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: { parts },
+        });
+
+        return new Response(JSON.stringify({ summary: response.text }), { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+    }
+
+    // MODE 3: CLASSIFY (Default)
+    const { businessName, website, selectedServices, description, docInsights } = body;
+    
     const schema: Schema = {
       type: Type.OBJECT,
       properties: {

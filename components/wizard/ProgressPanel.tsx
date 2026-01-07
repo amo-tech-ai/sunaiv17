@@ -1,15 +1,16 @@
 
 import React from 'react';
 import { AppState } from '../../types';
-import { CheckCircle2, Server } from 'lucide-react';
+import { CheckCircle2, Server, Target } from 'lucide-react';
 
 interface ProgressPanelProps {
   step: number;
   industry: AppState['data']['industry'];
-  selectedServices?: string[]; // New optional prop
+  selectedServices?: string[];
+  priorities?: AppState['data']['priorities']; // New optional prop
 }
 
-export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [] }) => {
+export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [], priorities }) => {
   const progress = [10, 30, 55, 75, 100][step - 1];
 
   const titles = [
@@ -29,7 +30,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, se
   ];
 
   return (
-    <div className="h-full flex flex-col justify-between p-8 md:p-12">
+    <div className="h-full flex flex-col justify-between p-8 md:p-12 overflow-y-auto no-scrollbar">
       <div>
         <div className="mb-8">
           <span className="font-sans text-xs font-bold tracking-widest text-sun-accent uppercase mb-2 block">
@@ -51,7 +52,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, se
 
         {/* Dynamic Context Block - Appears from Step 2 onwards */}
         {step >= 2 && (
-          <div className="mt-12 animate-fade-in">
+          <div className="mt-12 animate-fade-in space-y-6">
             <div className="text-xs font-bold tracking-widest text-sun-muted uppercase mb-4 flex items-center gap-2">
               <CheckCircle2 size={12} className="text-green-600" />
               Verified Context
@@ -80,6 +81,25 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, se
                     )}
                   </div>
                 </div>
+              )}
+
+              {/* Priorities - Shows only on Step 3+ */}
+              {step >= 3 && priorities && priorities.mainPriority && (
+                 <div className="bg-white/50 border border-sun-border p-3 rounded-sm animate-fade-in">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target size={12} className="text-sun-tertiary"/>
+                      <span className="block text-[10px] text-sun-tertiary uppercase tracking-wider">Identified Priorities</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {[priorities.moneyFocus, priorities.marketingFocus, priorities.responseSpeed].map((p, i) => (
+                        p ? (
+                          <li key={i} className="text-xs text-sun-primary flex items-start gap-2">
+                            <span className="text-sun-accent mt-1">•</span> {p}
+                          </li>
+                        ) : null
+                      ))}
+                    </ul>
+                 </div>
               )}
             </div>
           </div>

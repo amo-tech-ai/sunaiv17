@@ -1,7 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
 
-if (!process.env.API_KEY) {
-  console.error("API_KEY is missing. AI features will not work.");
-}
-
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// DEPRECATED: Client-side AI usage is insecure.
+// All AI logic has been migrated to Supabase Edge Functions.
+// This file is kept as a placeholder to prevent build errors if any legacy imports remain.
+export const ai = null;

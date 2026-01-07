@@ -3,7 +3,7 @@
 
 **Progress Tracker:** Step 3 of 5 | Status: Ready for Dev | Priority: P0 Critical
 **Estimated Implementation:** 4-6 hours
-**Dependencies:** Step 2 (Diagnostics) Completion, Industry Packs (`data/industryPacks.ts`)
+**Dependencies:** Step 2 (Diagnostics) Completion, Industry Packs, Edge Functions
 
 ---
 
@@ -12,8 +12,8 @@
 Screen 3 is the **Prescription Phase**. After diagnosing the problems in Step 2, the AI now recommends specific "Systems" (products) to solve them.
 
 **The Upgrade:**
-Instead of a static list, this screen uses the **Optimizer Agent** (`gemini-3-pro`) to:
-1.  **Rank** systems based on the user's Step 2 answers.
+Instead of a static list, this screen uses the **Optimizer Agent** (`gemini-3-pro-preview`) running on Supabase Edge Functions to:
+1.  **Rank** systems based on the user's Step 2 answers (Priorities).
 2.  **Generate** custom ROI text specific to their Industry and Service inputs.
 3.  **Enforce** a selection limit (Max 3) to simulate a realistic rollout strategy.
 
@@ -92,14 +92,16 @@ Instead of a static list, this screen uses the **Optimizer Agent** (`gemini-3-pr
 
 ---
 
-## 5. Technical Implementation Steps (Prompts)
+## 5. Multistep Implementation Prompts
+
+Use these prompts sequentially to build the feature.
 
 ### Prompt 1: The Optimizer Agent (Edge Function)
 ```text
-Create `supabase/functions/optimizer/index.ts`.
-- Model: `gemini-3-pro-preview`.
+Update `supabase/functions/optimizer/index.ts`.
+- Ensure it uses `gemini-3-pro-preview`.
 - Inputs: `industry`, `priorities` (Step 2 answers), `painPoints`.
-- Import `getIndustryPack` from `_shared/industryPacks.ts`.
+- Import `getIndustryPack` from `../_shared/industryPacks.ts`.
 - Logic:
   1. Load the Industry Pack systems.
   2. Use Gemini to rank them based on the `priorities`.
@@ -114,7 +116,7 @@ Create `supabase/functions/optimizer/index.ts`.
 
 ### Prompt 2: Frontend UI (System Cards)
 ```text
-Create `components/wizard/Step3Systems.tsx`.
+Update `components/wizard/Step3Systems.tsx`.
 - Layout: Grid of cards (1 col mobile, 2 col desktop).
 - Props: `selectedSystems`, `recommendations` (from AI).
 - Card Component:
@@ -128,7 +130,7 @@ Create `components/wizard/Step3Systems.tsx`.
 ### Prompt 3: Integration & State
 ```text
 Update `WizardFlow.tsx` and `useWizardState.ts`.
-- Add `optimizer` service call on mount of Step 3.
+- Ensure `optimizer` service call triggers on mount of Step 3.
 - Store `recommendations` in `aiState`.
 - Pass `priorities` from Step 2 to the Optimizer service.
 - Render `<Step3Systems />` for step 3.
@@ -147,35 +149,7 @@ Update `WizardFlow.tsx` and `useWizardState.ts`.
 
 ---
 
-## 7. Mermaid Diagrams
-
-### Data Flow
-```mermaid
-sequenceDiagram
-    participant User
-    participant Step3UI
-    participant Optimizer as ⚖️ Optimizer (Edge)
-    participant Database
-
-    User->>Step3UI: Lands on Screen 3
-    Step3UI->>Optimizer: POST { industry, priorities }
-    
-    rect rgb(240, 248, 255)
-        note right of Optimizer: Gemini Pro Analysis
-        Optimizer->>Optimizer: Load Industry Pack
-        Optimizer->>Optimizer: Map Pain Points -> Systems
-        Optimizer->>Optimizer: Generate Custom ROI Text
-    end
-    
-    Optimizer-->>Step3UI: Return { recommended_ids, custom_impacts }
-    Step3UI->>User: Render Cards (Badges + Text)
-    User->>Step3UI: Selects 2 Systems
-    Step3UI->>Database: Save Selection
-```
-
----
-
-## 8. Production Checklist
+## 7. Progress Tracker
 
 - [ ] **Edge Function:** `optimizer` deployed with `gemini-3-pro`.
 - [ ] **Schema:** `industryPacks.ts` contains valid system IDs that match `types.ts`.

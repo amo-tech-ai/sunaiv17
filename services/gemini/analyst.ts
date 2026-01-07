@@ -1,98 +1,83 @@
 
-import { ai } from "./client"; // Kept for streaming (temporary) and doc analysis until full migration
 import { supabase } from "../supabase";
 import { BusinessAnalysis, UploadedDocument } from "../../types";
 
-const MODEL_NAME = "gemini-3-flash-preview";
+const getAnonKey = () => (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+const getFunctionUrl = (name: string) => {
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://necxcwhuzylsumlkkmlk.supabase.co';
+    return `${supabaseUrl}/functions/v1/${name}`;
+}
 
 export const analyst = {
   /**
    * Core Prompt: Business Research
-   * Currently keeps streaming local for UI responsiveness, 
-   * but should eventually move to a streaming Edge Function.
+   * Streaming via Edge Function
    */
   async *analyzeBusinessStream(name: string, website: string) {
     try {
-      const response = await ai.models.generateContentStream({
-        model: MODEL_NAME,
-        contents: `
-        System context: Role as senior business analyst.
-        Task: Research and verify business, detect industry, assess maturity.
-        Input: Company: "${name}", URL: "${website}".
-        
-        Key Instructions:
-        - Verify business existence before making claims.
-        - Use industry-specific search queries.
-        - Stream observations in real-time.
-        - Start with "Analyzing digital footprint for ${name}..."
-        `,
-        config: {
-          tools: [{ googleSearch: {} }],
-        }
+      const response = await fetch(getFunctionUrl('analyst'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAnonKey()}`
+        },
+        body: JSON.stringify({
+          mode: 'research',
+          businessName: name,
+          website
+        })
       });
 
-      for await (const chunk of response) {
-        if (chunk.text) {
-          yield chunk.text;
-        }
+      if (!response.ok) throw new Error('Stream request failed');
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) return;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        yield decoder.decode(value, { stream: true });
       }
     } catch (error) {
       console.error("Analyst Stream Error:", error);
-      yield "Unable to verify details via Search. Using internal analysis...";
+      yield "Unable to connect to Analyst Agent. Using offline analysis...";
     }
   },
 
   /**
    * Core Prompt: Document Analysis
-   * Remains client-side for now to handle large file buffers without Edge limits,
-   * but uses the secure client wrapper.
+   * Migrated to Edge Function to handle file processing securely
    */
   async analyzeDocuments(documents: UploadedDocument[]): Promise<string> {
     if (documents.length === 0) return "";
 
     try {
-      const parts = [];
-      
-      parts.push({
-        text: `Analyze the attached business documents. Extract key insights about:
-        1. Business Model & Strategy
-        2. Current Challenges or Goals
-        
-        Provide a concise summary to help tailor a consulting engagement.`
-      });
+      // Prepare documents for Edge Function
+      const payload = documents.map(doc => ({
+        name: doc.name,
+        mimeType: doc.type,
+        base64: doc.base64,
+        textContent: doc.content
+      }));
 
-      for (const doc of documents) {
-        if (doc.base64) {
-          if (doc.type === 'application/pdf' || doc.type.startsWith('image/')) {
-             parts.push({
-              inlineData: {
-                mimeType: doc.type,
-                data: doc.base64
-              }
-            });
-          } else if (doc.type.startsWith('text/') && doc.content) {
-             parts.push({
-               text: `Document: ${doc.name}\nContent:\n${doc.content}`
-             });
-          }
+      const { data, error } = await supabase.functions.invoke('analyst', {
+        body: {
+          mode: 'summarize_docs',
+          documents: payload
         }
-      }
-
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: { parts },
       });
 
-      return response.text || "No insights could be extracted.";
+      if (error) throw error;
+      return data?.summary || "No insights extracted.";
     } catch (error) {
       console.error("Document Analysis Error:", error);
-      return "Error analyzing documents.";
+      return "Error analyzing documents via Edge Function.";
     }
   },
 
   /**
    * Core Prompt: Industry Classification
-   * MIGRATED TO EDGE FUNCTION for security and consistent environment.
+   * Edge Function
    */
   async classifyBusiness(
     name: string, 
@@ -102,7 +87,6 @@ export const analyst = {
     docInsights: string = ""
   ): Promise<BusinessAnalysis> {
     try {
-      // Call Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('analyst', {
         body: {
           businessName: name,
@@ -120,7 +104,6 @@ export const analyst = {
 
     } catch (error) {
       console.error("Analyst Edge Function Error:", error);
-      // Fallback safe default if Edge Function fails or keys missing
       return {
         detected_industry: 'other',
         industry_confidence: 0,
