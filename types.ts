@@ -156,31 +156,31 @@ export const SYSTEMS = [
   {
     id: 'lead_gen',
     title: 'Automated Lead Pipeline',
-    description: 'Capture, qualify, and route high-value leads 24/7 without manual intervention.',
+    description: 'Stop chasing unqualified prospects. Automatically capture, filter, and route high-value leads 24/7 so your team only talks to buyers.',
     revenueImpact: 'Increases qualified pipeline volume by ~40% in 30 days.'
   },
   {
     id: 'content_studio',
     title: 'Strategic Content Engine',
-    description: 'Generate high-converting, on-brand assets for social, email, and web at scale.',
+    description: 'Eliminate creative burnout. Generate high-converting, on-brand assets for social, email, and web at scale to dominate your niche.',
     revenueImpact: 'Reduces CAC by building organic brand authority.'
   },
   {
     id: 'conversion_booster',
     title: 'Revenue Conversion Suite',
-    description: 'Turn more traffic into revenue with dynamic offers and personalized funnels.',
+    description: 'Turn traffic into revenue. Use dynamic offers and personalized funnels to capture the 98% of visitors who usually leave without buying.',
     revenueImpact: 'Directly uplifts average order value and conversion rates.'
   },
   {
     id: 'crm_autopilot',
     title: 'Customer Retention System',
-    description: 'Maximize lifetime value through automated nurturing and churn prevention.',
+    description: 'Maximize lifetime value (LTV). Automatically nurture existing clients and predict churn before it happens.',
     revenueImpact: 'Recovers ~20% of lost revenue automatically.'
   },
   {
     id: 'whatsapp_assistant',
     title: 'Smart Concierge Agent',
-    description: 'Instant, human-like responses across chat channels to book meetings and close deals.',
+    description: 'Instant gratification for your customers. Human-like responses across chat channels to book meetings and close deals instantly.',
     revenueImpact: 'Doubles speed-to-lead and booking rates instantly.'
   },
 ];

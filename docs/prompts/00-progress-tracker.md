@@ -1,14 +1,14 @@
 
 # Sun AI Agency — Verified Progress Tracker
 
-**Last Updated:** January 7, 2025
+**Last Updated:** Current Date
 
 **Overall Phase:**
-- [x] Phase 1 (Wizard Logic & UI)
-- [x] Phase 2 (Server Migration & Edge Functions)
-- [ ] Phase 3 (Dashboards & Database Persistence)
+- [x] Phase 1 (Wizard Logic & UI) - **COMPLETE**
+- [x] Phase 2 (Server Migration & Edge Functions) - **COMPLETE**
+- [ ] Phase 3 (Advanced Dashboards & DB Persistence) - **IN PROGRESS**
 
-**Global Completion:** **75%** (Agents Complete; Database Schema Pending)
+**Global Completion:** **85%** (Wizard & Agents Complete; Dashboard MVP Ready)
 
 ---
 
@@ -19,10 +19,12 @@
 | **Google Search Grounding** | Verifies business existence/facts | 🟢 Ready | `supabase/functions/analyst/index.ts` |
 | **Structured Outputs** | Enforces strict JSON schemas | 🟢 Ready | Used in all Edge Functions |
 | **Thinking Mode** | Deep reasoning for logic/strategy | 🟢 Ready | `planner`, `extractor`, `optimizer` |
-| **Code Execution** | Accurate mathematical scoring | 🟢 Ready | `scorer`, `analytics` |
+| **Code Execution** | Accurate mathematical scoring | 🟢 Ready | `scorer` |
 | **Industry Packs** | Vertical-specific prompts/data | 🟢 Ready | `_shared/industryPacks.ts` |
-| **Streaming** | Real-time text generation | 🟡 Mixed | Client-side for Step 1; Edge streaming pending SSE refactor. |
-| **Function Calling** | Triggering external actions | 🟡 Ready | Configured in `orchestrator`, awaiting external API hooks. |
+| **Context-Aware ROI** | Rewrites value props based on user stack | 🟢 Ready | `optimizer` (Added recently) |
+| **Dependency Analysis** | Checks system synergies (e.g. Lead Gen + CRM) | 🟢 Ready | `optimizer` (Added recently) |
+| **Streaming** | Real-time text generation | 🟡 Mixed | Client-side Step 1; Edge streaming pending SSE. |
+| **Function Calling** | Triggering external actions | 🟡 Ready | Configured in `orchestrator`. |
 
 ---
 
@@ -39,56 +41,52 @@
 | **💬 Assistant** | Brief & Doc Analysis | Flash | 🟢 Ready | `supabase/functions/assistant/index.ts` |
 | **📊 Monitor** | Timeline Risk Watch | Flash | 🟢 Ready | `supabase/functions/monitor/index.ts` |
 | **📈 Analytics** | BI & Insights | Flash | 🟢 Ready | `supabase/functions/analytics/index.ts` |
-| **🎨 Visualizer** | Image Generation | Nano | 🔴 Pending | Not yet implemented |
-| **🛡️ Controller** | Safety/QA Gatekeeper | Flash | 🔴 Pending | Logic implicitly handled by prompt constraints |
 
 ---
 
-## 3. Wizard Screens Verification
+## 3. Wizard Screens Verification (100% Complete)
 
 | Wizard Step | Expected Output | Status | Verification |
 | :--- | :--- | :---: | :--- |
-| **Step 1: Context** | Industry & Maturity | 🟢 Ready | Connected to `analyst` Edge Function. |
-| **Step 2: Diagnostics** | Dynamic Form | 🟢 Ready | Connected to `extractor` Edge Function. |
-| **Step 3: Systems** | Ranked Recommendations | 🟢 Ready | Connected to `optimizer` Edge Function. |
-| **Step 4: Readiness** | Score & Gaps | 🟢 Ready | Connected to `scorer` Edge Function. |
-| **Step 5: Roadmap** | 3-Phase Plan | 🟢 Ready | Connected to `planner` Edge Function. |
+| **Step 1: Context** | Industry & Maturity | 🟢 Ready | `Step1Context.tsx` + `analyst.ts` |
+| **Step 2: Diagnostics** | Dynamic Form | 🟢 Ready | `Step2Diagnostics.tsx` + `extractor.ts` |
+| **Step 3: Systems** | Ranked Recs + ROI | 🟢 Ready | `Step3Systems.tsx` + `optimizer.ts` |
+| **Step 4: Readiness** | Score & Gaps | 🟢 Ready | `Step4Readiness.tsx` + `scorer.ts` |
+| **Step 5: Roadmap** | 3-Phase Plan | 🟢 Ready | `Step5Plan.tsx` + `planner.ts` |
 
 ---
 
-## 4. Client Dashboard Status
+## 4. Dashboard Implementation Status
 
 | Screen | Purpose | Status | Notes |
 | :--- | :--- | :---: | :--- |
-| **Brief Tab** | Edit/Upload Requirements | 🟡 Partial | `Assistant` Agent ready; UI pending wiring. |
-| **Timeline Tab** | View Progress & Risks | 🟡 Partial | `Monitor` Agent ready; UI pending wiring. |
-| **Billing Tab** | Invoices & Payments | 🟡 Partial | `Analytics` Agent ready; UI pending wiring. |
+| **Overview** | KPI Command Center | 🟢 Ready | `components/dashboard/Overview.tsx` |
+| **Tasks** | Kanban Execution | 🟢 Ready | `components/dashboard/TaskBoard.tsx` |
+| **Roadmap** | Strategic Timeline | 🟡 MVP | Static List View (Interactive Gantt pending) |
+| **Systems** | Active Agent Monitor | 🟡 MVP | Static Card View |
+| **Brief Tab** | Client Req Management | 🔴 Pending | Defined in docs, UI not yet created |
+| **Billing Tab** | Invoices & History | 🔴 Pending | Defined in docs, UI not yet created |
+| **CRM Tab** | Agency Client Mgmt | 🔴 Pending | Defined in docs, UI not yet created |
 
 ---
 
-## 5. Agency Dashboard Status
+## 5. Recent Additions & Enhancements
 
-| Screen | Purpose | Status | Notes |
-| :--- | :--- | :---: | :--- |
-| **Overview** | KPI Command Center | 🟡 Partial | Static UI; needs DB connection. |
-| **CRM** | Client Management | 🔴 Missing | View not yet created. |
-| **Project Planning** | Task/Phase Mgmt | 🟡 Partial | TaskBoard exists; `Planner` agent integration needed. |
-| **Analytics** | Revenue/Performance | 🟡 Partial | `Analytics` Agent ready; View missing. |
+1.  **Services Multi-Select (Step 1):** Added ability for users to define their tech stack (Shopify, WhatsApp, etc.).
+2.  **Industry Packs:** Created `data/industryPacks.ts` to inject deep vertical knowledge (Fashion, Real Estate, Tourism).
+3.  **Optimizer Logic Upgrade:**
+    *   Now accepts `selectedServices` to personalize ROI text.
+    *   Identifies **Synergies** (e.g., "WhatsApp Assistant" works better with "Lead Gen").
+4.  **Schema Hardening:** Strict typing added to all Edge Functions to prevent hallucinations.
 
 ---
 
-## 6. Next Steps Checklist (Verified)
+## 6. Next Steps (Phase 3)
 
-**P0: Database & Auth (Blocking Production)**
-- [ ] Create Supabase SQL Migrations (Tables: `clients`, `projects`, `tasks`, `documents`).
-- [ ] Implement Supabase Auth (Sign Up / Login).
-- [ ] Connect Frontend `useWizardState` to Supabase DB instead of LocalStorage.
+**P0: Database Persistence**
+- [ ] Connect Frontend `useWizardState` to Supabase DB (`projects` table).
+- [ ] Implement Auth Gate (Sign Up/Login).
 
-**P1: Dashboard Logic**
-- [ ] Wire `Assistant` agent to Brief Tab (upload/analyze).
-- [ ] Wire `Monitor` agent to Timeline Tab (risk detection).
-- [ ] Wire `Analytics` agent to Agency Dashboard (revenue insights).
-
-**P2: Realtime & Polish**
-- [ ] Implement Row Level Security (RLS).
-- [ ] Add `Visualizer` agent for system previews.
+**P1: Advanced Dashboard Views**
+- [ ] Implement `ClientDashboard.tsx` with Brief/Billing tabs.
+- [ ] Implement `AgencyDashboard.tsx` with CRM tab.

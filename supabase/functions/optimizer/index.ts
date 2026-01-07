@@ -50,22 +50,22 @@ serve(async (req) => {
         - Pain Points: ${priorities.moneyFocus}, ${priorities.marketingFocus}, ${priorities.responseSpeed}
         - Current Tech Stack: ${services ? services.join(', ') : 'None'}
 
-        Available Systems:
+        Available Systems (Generic ID -> Specific Name):
         ${JSON.stringify(pack.systemNames)}
 
         ROI Formulas (Base):
         ${JSON.stringify(pack.roiFormulas)}
 
         Task:
-        1. Rank the top 2-3 systems that best solve the user's specific bottlenecks.
-        2. Mark these as 'recommended_ids'.
-        3. Rewrite the generic ROI formula for EVERY system to be hyper-specific to the user's situation. 
+        1. **Rank** the top 2-3 systems that best solve the user's specific bottlenecks.
+        2. **Rewrite** the ROI text for EVERY system to be hyper-specific to the user's situation. 
            - Use the user's tech stack in the text if relevant (e.g. "Since you use Shopify...").
            - Focus on the 'Benefit' not the 'Feature'.
-        4. Identify Dependencies (Synergy): 
-           - If recommending 'lead_gen', check if they need 'crm_autopilot' to catch the leads.
+           - Use industry jargon (e.g., 'AOV' for Fashion, 'Showings' for Real Estate).
+        3. **Analyze Dependencies**:
+           - If recommending 'lead_gen' (traffic), check if they need 'crm_autopilot' (retention) to catch the value.
            - If recommending 'whatsapp_assistant', check if 'lead_gen' is needed to feed it.
-           - Mention this dependency in 'synergy_notes'.
+           - Mention this in 'synergy_notes'.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },
