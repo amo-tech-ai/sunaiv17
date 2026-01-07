@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Check, BarChart3, Sparkles, AlertCircle } from 'lucide-react';
+import { Check, BarChart3, Sparkles, AlertCircle, Plus } from 'lucide-react';
 import { SYSTEMS, AppState } from '../../types';
 import { optimizer } from '../../services/gemini/optimizer';
 
@@ -53,27 +53,84 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
     }
   }, []);
 
+  const generateCumulativeInsight = (currentSelection: string[]) => {
+    if (currentSelection.length === 0) {
+      return "Select a system to see its projected impact on your business.";
+    }
+
+    // Helper for industry terms to make insights feel native
+    const customerTerm = data.industry === 'tourism' ? 'guests' : data.industry === 'fashion' ? 'shoppers' : 'leads';
+    const conversionTerm = data.industry === 'real_estate' ? 'tours' : 'sales';
+
+    const mainPriority = data.priorities.moneyFocus || "Revenue Growth";
+    
+    let narrative = `**Strategic Stack Analysis**\n\n`;
+    
+    // Individual Impacts
+    currentSelection.forEach(id => {
+      const sys = SYSTEMS.find(s => s.id === id);
+      const impact = aiRecommendations.impacts[id] || sys?.revenueImpact;
+      narrative += `• **${sys?.title}**: ${impact}\n`;
+    });
+
+    narrative += `\n`;
+
+    // Advanced Synergy Logic
+    if (currentSelection.length > 1) {
+      narrative += `**Synergistic Benefit:**\n`;
+      
+      const hasLeadGen = currentSelection.includes('lead_gen');
+      const hasCRM = currentSelection.includes('crm_autopilot');
+      const hasWhatsApp = currentSelection.includes('whatsapp_assistant');
+      const hasContent = currentSelection.includes('content_studio');
+      const hasConversion = currentSelection.includes('conversion_booster');
+
+      // Triads (High Value Combinations)
+      if (hasLeadGen && hasCRM && hasWhatsApp) {
+         narrative += `This is the **'Ultimate Speed-to-Lead'** stack. You capture interest (Lead Gen), engage instantly (WhatsApp), and nurture automatically (CRM). Expect a reduction in CAC and a significant boost in LTV.\n`;
+      } else if (hasContent && hasConversion && hasCRM) {
+         narrative += `The **'Brand Ecosystem'** stack. You attract with Content, convert with the Booster, and retain with CRM. This builds a defensible, high-margin brand machine.\n`;
+      } 
+      // Pairs
+      else if (hasLeadGen && hasCRM) {
+        narrative += `Combining **Lead Gen** with **Retention** creates a 'Closed Loop' engine. You aren't just capturing ${customerTerm}; you're maximizing their lifetime value.\n`;
+      } else if (hasLeadGen && hasWhatsApp) {
+        narrative += `Connecting **Lead Gen** directly to the **Concierge Agent** eliminates response delays. You catch ${customerTerm} at their moment of highest intent, doubling ${conversionTerm} rates.\n`;
+      } else if (hasContent && hasConversion) {
+        narrative += `This is a classic 'Traffic & Conversion' stack. The Content Engine fills the funnel, while the Conversion Suite ensures that traffic actually buys.\n`;
+      } else if (hasCRM && hasWhatsApp) {
+        narrative += `Hyper-personalized service. Your CRM data powers the WhatsApp agent, allowing for automated yet deeply personal interactions with ${customerTerm}.\n`;
+      } else if (hasLeadGen && hasConversion) {
+        narrative += `You are doubling down on acquisition. The Lead Pipeline brings them in, and the Conversion Suite ensures they convert. Ensure your operations can handle the volume.\n`;
+      } else {
+        narrative += `By integrating these ${currentSelection.length} systems, you create a cohesive workflow that addresses multiple bottlenecks simultaneously, compounding your ROI towards your goal of ${mainPriority}.\n`;
+      }
+    } else {
+      narrative += `**Strategic Fit:**\nThis system directly addresses your priority of ${mainPriority}. It is the foundational layer for your automation strategy.`;
+    }
+
+    return narrative;
+  };
+
   const handleSelection = (sysId: string) => {
     const isSelected = selectedSystems.includes(sysId);
-    
+    let newSelection: string[] = [];
+
     if (isSelected) {
-      updateData('selectedSystems', selectedSystems.filter(id => id !== sysId));
-      setStream("System removed. You can select another.");
+      newSelection = selectedSystems.filter(id => id !== sysId);
+      updateData('selectedSystems', newSelection);
     } else {
       if (selectedSystems.length >= 3) {
-        // Prevent selection and warn visually
         const shakeCard = document.getElementById(`card-${sysId}`);
-        shakeCard?.classList.add('animate-shake'); // Assuming an animate-shake class exists or handled via CSS elsewhere, otherwise standard alert
+        shakeCard?.classList.add('animate-shake'); 
         return;
       }
-      
-      updateData('selectedSystems', [...selectedSystems, sysId]);
-      
-      // Dynamic stream update on selection
-      const sys = SYSTEMS.find(s => s.id === sysId);
-      const customImpact = aiRecommendations.impacts[sysId] || sys?.revenueImpact;
-      setStream(`**${sys?.title}** added.\n\n${customImpact}`);
+      newSelection = [...selectedSystems, sysId];
+      updateData('selectedSystems', newSelection);
     }
+
+    // Update the stream with the cumulative insight
+    setStream(generateCumulativeInsight(newSelection));
   };
 
   return (
@@ -144,7 +201,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
                     <div className={`w-6 h-6 border rounded-full flex items-center justify-center transition-colors shrink-0 ml-2 ${
                       isSelected ? 'bg-sun-primary border-sun-primary text-white' : 'border-sun-border group-hover:border-sun-accent'
                     }`}>
-                      {isSelected && <Check size={14} />}
+                      {isSelected ? <Check size={14} /> : <Plus size={14} className="text-sun-tertiary group-hover:text-sun-primary" />}
                     </div>
                   </div>
                   <p className="text-sm text-sun-secondary leading-relaxed mb-4">

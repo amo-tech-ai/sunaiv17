@@ -4,7 +4,7 @@ import { AppState } from '../../types';
 import { Step1Context } from './Step1Context';
 import { Step2Diagnostics } from './Step2Diagnostics';
 import { Step3Systems } from './Step3Systems';
-import { Step4Readiness } from './Step4Readiness';
+import { Step4Summary } from './Step4Summary';
 import { Step5Plan } from './Step5Plan';
 
 interface WizardFlowProps {
@@ -72,12 +72,9 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
       );
     case 4:
       return (
-        <Step4Readiness 
-          readiness={data.readiness}
-          industry={data.industry}
-          selectedSystems={data.selectedSystems}
-          analysis={aiState.readinessAnalysis}
-          updateNestedData={updateNestedData}
+        <Step4Summary 
+          state={{ step, completed: false, data, aiState, dashboardState: { tasks: [], initialized: false } }} 
+          updateData={updateData}
           setAnalysis={setAnalysis}
           setStream={setStream}
         />
