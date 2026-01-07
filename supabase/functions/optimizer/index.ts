@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { industry, priorities } = await req.json();
+    const { industry, priorities, services } = await req.json();
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
 
@@ -23,7 +23,7 @@ serve(async (req) => {
         },
         custom_impacts: {
           type: Type.OBJECT,
-          description: "Map of system ID to a specific, one-sentence ROI projection string.",
+          description: "Map of system ID to a specific, benefit-oriented ROI projection string.",
           properties: {
             lead_gen: { type: Type.STRING },
             content_studio: { type: Type.STRING },
@@ -34,7 +34,7 @@ serve(async (req) => {
         },
         synergy_notes: {
           type: Type.STRING,
-          description: "A short insight explaining why these specific systems work well together for this user, mentioning dependencies if any."
+          description: "A short strategic insight highlighting system dependencies (e.g. why Lead Gen needs CRM) or stack synergies."
         }
       },
       required: ["recommended_ids", "custom_impacts", "synergy_notes"]
@@ -47,23 +47,25 @@ serve(async (req) => {
         
         User Context:
         - Primary Goal: ${priorities.mainPriority || 'Growth'}
-        - Sales Bottleneck: ${priorities.moneyFocus || 'Unknown'}
-        - Marketing Struggle: ${priorities.marketingFocus || 'Unknown'}
-        - Speed Bump: ${priorities.responseSpeed || 'Unknown'}
+        - Pain Points: ${priorities.moneyFocus}, ${priorities.marketingFocus}, ${priorities.responseSpeed}
+        - Current Tech Stack: ${services ? services.join(', ') : 'None'}
 
         Available Systems:
         ${JSON.stringify(pack.systemNames)}
 
-        System ROI Formulas (Use these as a base):
+        ROI Formulas (Base):
         ${JSON.stringify(pack.roiFormulas)}
 
         Task:
         1. Rank the top 2-3 systems that best solve the user's specific bottlenecks.
         2. Mark these as 'recommended_ids'.
         3. Rewrite the generic ROI formula for EVERY system to be hyper-specific to the user's situation. 
-           - E.g. Instead of "Increases leads", say "Captures missed leads from ${priorities.marketingFocus}".
-        4. Identify Dependencies: If a user needs 'CRM Autopilot', check if they also need 'WhatsApp Assistant' for data entry. Mention this in 'synergy_notes'.
-        5. Generate a 'synergy_notes' string explaining the strategy and any dependencies in simple, industry-specific language.
+           - Use the user's tech stack in the text if relevant (e.g. "Since you use Shopify...").
+           - Focus on the 'Benefit' not the 'Feature'.
+        4. Identify Dependencies (Synergy): 
+           - If recommending 'lead_gen', check if they need 'crm_autopilot' to catch the leads.
+           - If recommending 'whatsapp_assistant', check if 'lead_gen' is needed to feed it.
+           - Mention this dependency in 'synergy_notes'.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },

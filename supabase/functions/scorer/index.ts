@@ -3,43 +3,56 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getIndustryPack } from "../_shared/industryPacks.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { checklist, industry } = await req.json();
+    const { checklist, industry, selectedSystems } = await req.json();
+    const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
 
     const schema: Schema = {
       type: Type.OBJECT,
       properties: {
-        score: { type: Type.INTEGER },
-        risks: { type: Type.ARRAY, items: { type: Type.STRING } },
-        wins: { type: Type.ARRAY, items: { type: Type.STRING } },
-        summary: { type: Type.STRING }
+        score: { type: Type.INTEGER, description: "The calculated readiness score (0-100)" },
+        risks: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific implementation risks based on gaps." },
+        wins: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Immediate low-hanging fruit based on current strengths." },
+        summary: { type: Type.STRING, description: "A strategic summary of their readiness state." }
       },
       required: ["score", "risks", "wins", "summary"]
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // Flash is sufficient if we use Code Execution tool
+      model: 'gemini-3-pro-preview',
       contents: `
-        Calculate readiness score for ${industry}.
-        Checklist: ${JSON.stringify(checklist)}
+        You are a Senior Implementation Audit Agent for the ${pack.industry} industry.
         
-        Rules:
-        - dataReady = 30 points
-        - teamOwner = 20 points
-        - toolsReady = 20 points
-        - budgetApproved = 30 points
-        
+        Context:
+        - Current Checklist Status: ${JSON.stringify(checklist)}
+        - Selected AI Systems: ${JSON.stringify(selectedSystems)}
+        - Industry Context: ${JSON.stringify(pack.riskFactors)}
+
         Task:
-        1. Use Python to calculate the exact weighted score.
-        2. Identify missing items as 'Risks'.
-        3. Identify present items as 'Wins'.
+        1. **Reasoning (Thinking Mode):** Analyze the gaps. 
+           - IF they selected 'Data-Heavy' systems (like 'Prediction' or 'CRM') BUT 'dataReady' is false, flag this as a CRITICAL risk.
+           - Determine if the team structure ('teamOwner') supports the selected systems.
+        
+        2. **Scoring (Code Execution):** 
+           - Use Python to calculate a WEIGHTED score.
+           - Base Weights:
+             - Data Ready: 35%
+             - Team Owner: 25%
+             - Tools Ready: 20%
+             - Budget Approved: 20%
+           - Adjust weights slightly based on industry (e.g., Data is higher for SaaS/Fintech).
+           - Return the final integer score (0-100).
+
+        3. **Output:** Generate the JSON response with the calculated score, 2 specific risks, 2 quick wins, and a summary.
       `,
       config: {
+        thinkingConfig: { thinkingBudget: 2048 },
         tools: [{ codeExecution: {} }],
         responseMimeType: "application/json",
         responseSchema: schema
@@ -51,6 +64,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("Scorer Error:", error);
     return new Response(JSON.stringify({ error: error.message }), { 
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });

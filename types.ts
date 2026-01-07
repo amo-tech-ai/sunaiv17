@@ -29,6 +29,7 @@ export interface AIState {
   recommendations: {
     systemIds: string[];
     impacts: Record<string, string>;
+    summary?: string;
   };
   readinessAnalysis: {
     score: number;
@@ -154,32 +155,32 @@ export const INITIAL_STATE: AppState = {
 export const SYSTEMS = [
   {
     id: 'lead_gen',
-    title: 'Lead Generation Engine',
-    description: 'Automated outreach and inbound qualification.',
-    revenueImpact: 'Increases pipeline volume by 40% in 30 days.'
+    title: 'Automated Lead Pipeline',
+    description: 'Capture, qualify, and route high-value leads 24/7 without manual intervention.',
+    revenueImpact: 'Increases qualified pipeline volume by ~40% in 30 days.'
   },
   {
     id: 'content_studio',
-    title: 'Content Studio',
-    description: 'AI-driven content production for social & blog.',
-    revenueImpact: 'Reduces CAC by organic brand authority.'
+    title: 'Strategic Content Engine',
+    description: 'Generate high-converting, on-brand assets for social, email, and web at scale.',
+    revenueImpact: 'Reduces CAC by building organic brand authority.'
   },
   {
     id: 'conversion_booster',
-    title: 'Conversion Booster',
-    description: 'CRO systems and dynamic landing page copy.',
-    revenueImpact: 'Upsizes average deal value and conversion rates.'
+    title: 'Revenue Conversion Suite',
+    description: 'Turn more traffic into revenue with dynamic offers and personalized funnels.',
+    revenueImpact: 'Directly uplifts average order value and conversion rates.'
   },
   {
     id: 'crm_autopilot',
-    title: 'CRM Follow-up Autopilot',
-    description: 'Never let a lead go cold with AI sequences.',
-    revenueImpact: 'Recovers 20% of lost leads automatically.'
+    title: 'Customer Retention System',
+    description: 'Maximize lifetime value through automated nurturing and churn prevention.',
+    revenueImpact: 'Recovers ~20% of lost revenue automatically.'
   },
   {
     id: 'whatsapp_assistant',
-    title: 'WhatsApp Sales Assistant',
-    description: 'Instant 24/7 concierge for high-intent queries.',
-    revenueImpact: 'Doubles speed-to-lead and booking rates.'
+    title: 'Smart Concierge Agent',
+    description: 'Instant, human-like responses across chat channels to book meetings and close deals.',
+    revenueImpact: 'Doubles speed-to-lead and booking rates instantly.'
   },
 ];

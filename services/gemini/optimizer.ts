@@ -5,13 +5,15 @@ import { AppState } from "../../types";
 export const optimizer = {
   async recommendSystems(
     industry: string, 
-    priorities: AppState['data']['priorities']
+    priorities: AppState['data']['priorities'],
+    services: string[] = []
   ): Promise<{ systemIds: string[], impacts: Record<string, string>, summary?: string }> {
     try {
       const { data, error } = await supabase.functions.invoke('optimizer', {
         body: {
           industry,
           priorities,
+          services,
           painPoints: [] // Future: Aggregated pain point tags if needed
         }
       });

@@ -31,7 +31,8 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
         setStream("Analyzing your diagnostic priorities...\n\nConsulting our system library for the best fit...");
         
         try {
-          const recs = await optimizer.recommendSystems(data.industry, data.priorities);
+          // Pass industry, priorities, AND selected services for better context
+          const recs = await optimizer.recommendSystems(data.industry, data.priorities, data.selectedServices);
           setRecommendations(recs);
           
           if (recs.summary) {

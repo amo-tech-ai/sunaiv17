@@ -75,6 +75,7 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
         <Step4Readiness 
           readiness={data.readiness}
           industry={data.industry}
+          selectedSystems={data.selectedSystems}
           analysis={aiState.readinessAnalysis}
           updateNestedData={updateNestedData}
           setAnalysis={setAnalysis}

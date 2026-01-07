@@ -47,7 +47,7 @@ const FASHION_PACK: IndustryPack = {
     'lead_gen': 'Increases drop-day revenue by capturing high-intent traffic.',
     'content_studio': 'Reduces creative production costs by 40%.',
     'conversion_booster': 'Increases Add-to-Cart rate on product pages.',
-    'crm_autopilot': 'Increases repeat purchase rate (LTV).',
+    'crm_autopilot': 'Increases repeat purchase rate (LTV) and reduces churn.',
     'whatsapp_assistant': 'Reduces returns by answering sizing queries instantly.'
   },
   diagnosticTemplates: {
@@ -89,18 +89,18 @@ const REAL_ESTATE_PACK: IndustryPack = {
 const TOURISM_PACK: IndustryPack = {
   industry: 'tourism',
   systemNames: {
-    'lead_gen': 'WhatsApp Booking Concierge',
-    'content_studio': 'Review-to-Reputation Flywheel',
-    'conversion_booster': 'Itinerary Builder & Upsell Engine',
-    'crm_autopilot': 'Follow-Up & Referral Automations',
-    'whatsapp_assistant': 'Day-Of Ops Runbook Generator'
+    'lead_gen': 'Booking Inquiry Bot',
+    'content_studio': 'Review-to-Reputation Engine',
+    'conversion_booster': 'Itinerary Upsell Builder',
+    'crm_autopilot': 'Repeat Booking Automator',
+    'whatsapp_assistant': '24/7 Guest Concierge'
   },
   roiFormulas: {
-    'lead_gen': 'Expected 60% faster response time.',
+    'lead_gen': 'Expected 60% faster response time to international inquiries.',
     'content_studio': 'Increases review volume by 30%.',
-    'conversion_booster': 'Increases booking value by 25% through upsells.',
-    'crm_autopilot': 'Boosts repeat booking rate.',
-    'whatsapp_assistant': 'Streamlines daily operations.'
+    'conversion_booster': 'Increases booking value by 25% through automated upsells.',
+    'crm_autopilot': 'Boosts repeat booking rate and referrals.',
+    'whatsapp_assistant': 'Streamlines daily operations and guest communication.'
   },
   diagnosticTemplates: {
     'sales': 'What is blocking your booking conversion?',
