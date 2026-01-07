@@ -1,11 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { Input, Select } from '../Input';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { AppState } from '../../types';
 import { extractor } from '../../services/gemini/extractor';
 
 interface Step2DiagnosticsProps {
   industry: AppState['data']['industry'];
+  selectedServices: string[];
+  documentInsights?: string;
   priorities: AppState['data']['priorities'];
   aiQuestions: AppState['aiState']['questions'];
   updateNestedData: (section: 'priorities', key: string, value: any) => void;
@@ -15,6 +17,8 @@ interface Step2DiagnosticsProps {
 
 export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({ 
   industry, 
+  selectedServices,
+  documentInsights,
   priorities, 
   aiQuestions,
   updateNestedData,
@@ -24,16 +28,21 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // If we have questions for a different industry, or no questions, fetch them.
-    // Ideally we track which industry generated the questions, but for now check empty.
     if (aiQuestions.length === 0) {
       const fetchQuestions = async () => {
         setLoading(true);
-        setStream("Analyzing industry vertical to identify key operational metrics...");
-        const qs = await extractor.generateQuestions(industry);
-        setAiQuestions(qs);
-        setLoading(false);
-        setStream(`I've identified 3 key metrics for ${industry} that typically yield the highest ROI when automated.`);
+        setStream(`Consultant is analyzing your tech stack (${selectedServices.join(', ') || 'Standard'})...\n\nSearching for industry-specific bottlenecks in ${industry}...`);
+        
+        try {
+          const qs = await extractor.generateQuestions(industry, selectedServices, documentInsights);
+          setAiQuestions(qs);
+          setStream(`I've generated 4 diagnostic questions based on your specific context. These help me map your pain points to the right AI systems.`);
+        } catch (e) {
+          console.error(e);
+          setStream("I encountered an issue generating custom diagnostics. Please try again.");
+        } finally {
+          setLoading(false);
+        }
       };
       fetchQuestions();
     }
@@ -41,64 +50,89 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="h-10 bg-sun-border/30 rounded w-3/4"></div>
-        <div className="space-y-4">
-          <div className="h-20 bg-sun-border/20 rounded"></div>
-          <div className="h-20 bg-sun-border/20 rounded"></div>
-          <div className="h-20 bg-sun-border/20 rounded"></div>
+      <div className="flex flex-col items-center justify-center h-64 space-y-6 animate-fade-in">
+        <div className="relative">
+          <div className="absolute inset-0 bg-sun-accent/20 rounded-full animate-ping"></div>
+          <div className="bg-white p-4 rounded-full border border-sun-border shadow-sm relative z-10">
+            <Loader2 size={32} className="animate-spin text-sun-accent" />
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="font-serif text-xl text-sun-primary">Analyzing Business Context...</h3>
+          <p className="text-sm text-sun-secondary max-w-md">
+            The Extractor Agent is reviewing your services and documents to formulate relevant diagnostic questions.
+          </p>
         </div>
       </div>
     );
   }
 
-  // Map dynamic questions to our fixed state keys for simplicity in Phase 1
-  const keys = ['moneyFocus', 'marketingFocus', 'responseSpeed'];
+  // Mapping from Question Category to State Key
+  const categoryMap: Record<string, keyof typeof priorities> = {
+    'sales': 'moneyFocus',
+    'marketing': 'marketingFocus',
+    'speed': 'responseSpeed',
+    'priority': 'mainPriority'
+  };
 
   return (
-    <div className="animate-fade-in space-y-8">
-      <h1 className="font-serif text-4xl text-sun-primary mb-2">Industry Deep Dive</h1>
-      <p className="text-sun-secondary font-sans mb-8">Specific questions for {industry.replace('_', ' ')}.</p>
+    <div className="animate-fade-in space-y-12">
+      <div>
+        <h1 className="font-serif text-4xl text-sun-primary mb-3">Industry Diagnostics</h1>
+        <p className="text-sun-secondary font-sans max-w-xl leading-relaxed">
+          Select the option that best describes your current situation. 
+          <br/>These are tailored to the <span className="font-semibold text-sun-primary">{industry.replace('_', ' ')}</span> sector.
+        </p>
+      </div>
 
-      <div className="space-y-8 max-w-xl">
+      <div className="space-y-10">
         {aiQuestions.map((q, idx) => {
-           const stateKey = keys[idx];
-           if (!stateKey) return null;
+           const stateKey = categoryMap[q.category] || categoryMap['sales'];
+           const currentValue = priorities[stateKey];
 
            return (
-             <div key={q.id} onFocus={() => setStream(`**Context**: ${q.context}`)}>
-               <Input 
-                 label={`${idx + 1}. ${q.label}`}
-                 placeholder={q.placeholder || "Type your answer..."}
-                 value={priorities[stateKey as keyof typeof priorities]}
-                 onChange={(e) => updateNestedData('priorities', stateKey, e.target.value)}
-               />
+             <div 
+               key={q.id} 
+               className="group"
+               onMouseEnter={() => setStream(`**${q.title}**\n\n${q.context_reasoning}`)}
+             >
+               <div className="flex items-baseline gap-3 mb-4">
+                 <span className="text-xs font-bold text-sun-accent bg-sun-accent/10 px-2 py-1 rounded">
+                   {String(idx + 1).padStart(2, '0')}
+                 </span>
+                 <label className="text-lg font-serif font-medium text-sun-primary">
+                   {q.title}
+                 </label>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-10">
+                 {q.options.map(opt => {
+                   const isSelected = currentValue === opt.label;
+                   return (
+                     <button
+                       key={opt.id}
+                       onClick={() => updateNestedData('priorities', stateKey, opt.label)}
+                       className={`
+                         relative p-4 text-left border rounded-sm transition-all duration-200
+                         ${isSelected 
+                           ? 'border-sun-accent bg-sun-accent/5 shadow-sm' 
+                           : 'border-sun-border bg-white hover:border-sun-primary/50'
+                         }
+                       `}
+                     >
+                       <div className="flex justify-between items-start gap-2">
+                         <span className={`text-sm ${isSelected ? 'text-sun-primary font-medium' : 'text-sun-secondary'}`}>
+                           {opt.label}
+                         </span>
+                         {isSelected && <ArrowRight size={14} className="text-sun-accent mt-1 shrink-0" />}
+                       </div>
+                     </button>
+                   );
+                 })}
+               </div>
              </div>
            );
         })}
-        
-        {aiQuestions.length > 0 && (
-          <div className="pt-4">
-              <label className="text-xs font-semibold uppercase tracking-widest text-sun-muted font-sans block mb-4">
-              4. Main Priority for next quarter
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              {['Revenue Growth', 'Lead Volume', 'Conversion Rate', 'Retention'].map(opt => (
-                <button
-                  key={opt}
-                  onClick={() => updateNestedData('priorities', 'mainPriority', opt)}
-                  className={`p-4 border text-sm font-medium transition-all text-left ${
-                    priorities.mainPriority === opt 
-                    ? 'border-sun-primary bg-sun-primary text-white' 
-                    : 'border-sun-border text-sun-secondary hover:border-sun-underline'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

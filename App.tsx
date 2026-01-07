@@ -55,13 +55,23 @@ export default function App() {
   };
 
   const handleUrlBlur = async () => {
-    if (!state.data.website || !state.data.businessName) return;
+    if (!state.data.website && !state.data.businessName) return;
     
     setIsAnalyzing(true);
     setIntelligenceStream(""); 
 
     try {
-      // Trigger Stream Analysis
+      // 1. Trigger Document Analysis if docs exist
+      let docInsights = "";
+      if (state.data.uploadedDocuments && state.data.uploadedDocuments.length > 0) {
+        docInsights = await analyst.analyzeDocuments(state.data.uploadedDocuments);
+        setState(prev => ({ 
+          ...prev, 
+          aiState: { ...prev.aiState, documentInsights: docInsights } 
+        }));
+      }
+
+      // 2. Trigger Stream Analysis
       const stream = analyst.analyzeBusinessStream(state.data.businessName, state.data.website);
       let fullText = "";
       for await (const chunk of stream) {
@@ -69,11 +79,14 @@ export default function App() {
         setIntelligenceStream(prev => prev + chunk);
       }
       
-      // Trigger Classification with new Robust Logic
+      // 3. Trigger Classification with new Robust Logic
+      // Pass selected services AND document insights to help refine the model and maturity scoring
       const analysisResult = await analyst.classifyBusiness(
         state.data.businessName, 
         state.data.website, 
-        state.data.description
+        state.data.description,
+        state.data.selectedServices,
+        docInsights
       );
       
       // Store the full analysis object
@@ -123,6 +136,7 @@ export default function App() {
           step={state.step} 
           data={state.data}
           intelligenceStream={intelligenceStream}
+          documentInsights={state.aiState.documentInsights}
         />
       }
     >

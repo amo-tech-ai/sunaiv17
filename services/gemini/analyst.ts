@@ -1,7 +1,7 @@
 
 import { ai } from "./client";
 import { Type, Schema } from "@google/genai";
-import { BusinessAnalysis } from "../../types";
+import { BusinessAnalysis, UploadedDocument } from "../../types";
 
 const MODEL_NAME = "gemini-3-flash-preview";
 
@@ -46,10 +46,76 @@ export const analyst = {
   },
 
   /**
+   * Core Prompt: Document Analysis
+   * Purpose: Extract insights from uploaded documents to enhance context.
+   */
+  async analyzeDocuments(documents: UploadedDocument[]): Promise<string> {
+    if (documents.length === 0) return "";
+
+    try {
+      const parts = [];
+      
+      // Add text instructions
+      parts.push({
+        text: `Analyze the attached business documents. Extract key insights about:
+        1. Business Model & Strategy
+        2. Target Audience
+        3. Core Products/Services
+        4. Current Challenges or Goals
+        
+        Provide a concise summary of these insights to help tailor a consulting engagement.`
+      });
+
+      // Add document parts
+      for (const doc of documents) {
+        if (doc.base64) {
+          // Determine mime type for Gemini
+          // Gemini supports PDF, image/png, image/jpeg directly.
+          // For text, we might have stored it in 'content'.
+          
+          if (doc.type === 'application/pdf' || doc.type.startsWith('image/')) {
+             parts.push({
+              inlineData: {
+                mimeType: doc.type,
+                data: doc.base64
+              }
+            });
+          } else if (doc.type.startsWith('text/') && doc.content) {
+             parts.push({
+               text: `Document: ${doc.name}\nContent:\n${doc.content}`
+             });
+          } else {
+             // Fallback for unsupported types in this prototype (like .docx without backend conversion)
+             parts.push({
+               text: `[Attached File: ${doc.name} (${doc.type})] - Note: Content analysis limited for this file type in preview.`
+             });
+          }
+        }
+      }
+
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: { parts },
+      });
+
+      return response.text || "No insights could be extracted.";
+    } catch (error) {
+      console.error("Document Analysis Error:", error);
+      return "Error analyzing documents. Please verify file formats.";
+    }
+  },
+
+  /**
    * Core Prompt: Industry Classification
    * Purpose: Accurately classify business into supported industry vertical.
    */
-  async classifyBusiness(name: string, website: string, description: string): Promise<BusinessAnalysis> {
+  async classifyBusiness(
+    name: string, 
+    website: string, 
+    description: string, 
+    services: string[] = [], 
+    docInsights: string = ""
+  ): Promise<BusinessAnalysis> {
     try {
       const schema: Schema = {
         type: Type.OBJECT,
@@ -102,7 +168,13 @@ export const analyst = {
         contents: `
         System context: Industry classification specialist.
         Task: Classify business into one of supported industries and assess maturity.
-        Input: Name: ${name}, Website: ${website}, User Description: ${description}.
+        
+        Input Context:
+        - Name: ${name}
+        - Website: ${website}
+        - User Description: ${description}
+        - Current/Planned Services: ${services.join(', ')} (Use these as strong signals for maturity and business model)
+        - Document Insights: ${docInsights} (Use these to refine the business model and industry)
         
         Key Instructions:
         1. Match against supported industry packs:
@@ -112,7 +184,7 @@ export const analyst = {
            - SaaS (B2B, Startup)
            - Other (General)
         2. Provide confidence score (high if clear match, medium if uncertain).
-        3. Estimate Digital Maturity (1-5) based on tech stack hints and online presence.
+        3. Estimate Digital Maturity (1-5) based on tech stack hints, online presence, AND selected services (e.g. 'AI Agents' implies higher maturity).
         4. Identify specific industry signals (e.g. "Cart functionality" -> Fashion, "Booking engine" -> Tourism).
         `,
         config: {

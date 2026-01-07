@@ -1,15 +1,16 @@
 
 import React from 'react';
-import { BrainCircuit, Sparkles, CheckCircle2, Terminal } from 'lucide-react';
+import { BrainCircuit, Sparkles, CheckCircle2, Terminal, FileSearch } from 'lucide-react';
 import { AppState } from '../../types';
 
 interface IntelligencePanelProps {
   step: number;
   data: AppState['data'];
   intelligenceStream: string;
+  documentInsights?: string;
 }
 
-export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data, intelligenceStream }) => {
+export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data, intelligenceStream, documentInsights }) => {
   return (
     <div className="h-full bg-sun-right border-l border-sun-border p-8 md:p-12 relative overflow-hidden flex flex-col">
       <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
@@ -28,7 +29,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data
           </span>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
           
           {/* Dynamic AI Stream - Terminal Style */}
           {intelligenceStream ? (
@@ -108,6 +109,19 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data
                     </>
                 )}
              </div>
+          )}
+
+          {/* Document Insights Section */}
+          {documentInsights && (
+            <div className="animate-fade-in">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-sun-muted mb-3 border-t border-sun-border pt-6">
+                <FileSearch size={14} className="text-sun-accent" />
+                Document Insights
+              </div>
+              <div className="bg-white/80 p-4 border border-sun-border rounded-sm shadow-sm text-sm text-sun-secondary leading-relaxed font-sans">
+                {documentInsights}
+              </div>
+            </div>
           )}
 
         </div>

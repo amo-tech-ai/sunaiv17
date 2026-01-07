@@ -1,11 +1,19 @@
 
 export type IndustryType = 'fashion' | 'saas' | 'tourism' | 'real_estate' | 'other';
 
-export interface DiagnosticQuestion {
+export interface DiagnosticOption {
   id: string;
   label: string;
-  placeholder?: string;
-  context: string; // Context for the Right Panel
+  mapped_system_id: string; // The system this problem suggests
+  pain_point_tag: string;
+}
+
+export interface DiagnosticQuestion {
+  id: string;
+  category: 'sales' | 'marketing' | 'speed' | 'priority'; // Maps to AppState priorities keys
+  title: string; // Replaces label
+  context_reasoning: string; // Context for the Right Panel
+  options: DiagnosticOption[];
 }
 
 export interface RoadmapPhase {
@@ -27,6 +35,7 @@ export interface AIState {
     summary: string;
   };
   roadmap: RoadmapPhase[];
+  documentInsights?: string; // Insights from uploaded documents
 }
 
 export interface Task {
@@ -54,16 +63,28 @@ export interface BusinessAnalysis {
   verified: boolean;
 }
 
+export interface UploadedDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  base64?: string; // Stored for analysis
+  content?: string; // Text content if applicable
+}
+
 export interface AppState {
   step: number;
   completed: boolean;
   aiState: AIState;
   dashboardState: DashboardState;
   data: {
+    fullName: string; // User's name
     businessName: string;
     website: string;
     description: string;
     industry: IndustryType;
+    selectedServices: string[]; // Services currently used or planned
+    uploadedDocuments: UploadedDocument[]; // New: Documents
     analysis?: BusinessAnalysis; // New field for deep analysis
     priorities: {
       moneyFocus: string;
@@ -88,17 +109,21 @@ export const INITIAL_STATE: AppState = {
     questions: [],
     recommendations: { systemIds: [], impacts: {} },
     readinessAnalysis: { score: 0, risks: [], wins: [], summary: "" },
-    roadmap: []
+    roadmap: [],
+    documentInsights: ""
   },
   dashboardState: {
     tasks: [],
     initialized: false
   },
   data: {
+    fullName: '',
     businessName: '',
     website: '',
     description: '',
     industry: 'saas',
+    selectedServices: [],
+    uploadedDocuments: [],
     priorities: {
       moneyFocus: '',
       marketingFocus: '',

@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { CheckCircle2, ShieldCheck, Activity } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { CheckCircle2, ShieldCheck, Activity, Plus, Upload, X, FileText, File as FileIcon } from 'lucide-react';
 import { Input, TextArea, Select } from '../Input';
-import { AppState, IndustryType } from '../../types';
+import { AppState, IndustryType, UploadedDocument } from '../../types';
+import { analyst } from '../../services/gemini/analyst';
 
 interface Step1ContextProps {
   data: AppState['data'];
@@ -10,6 +11,16 @@ interface Step1ContextProps {
   onUrlBlur: () => void;
   isAnalyzing: boolean;
 }
+
+const AVAILABLE_SERVICES = [
+  "Web Applications",
+  "Mobile Apps",
+  "Chatbots",
+  "AI Agents",
+  "Ecommerce",
+  "Social Media",
+  "WhatsApp"
+];
 
 export const Step1Context: React.FC<Step1ContextProps> = ({ 
   data, 
@@ -19,6 +30,78 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
 }) => {
   const analysis = data.analysis;
   const isNameValid = data.businessName.length >= 2;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const toggleService = (service: string) => {
+    const currentServices = data.selectedServices || [];
+    if (currentServices.includes(service)) {
+      updateData('selectedServices', currentServices.filter(s => s !== service));
+    } else {
+      updateData('selectedServices', [...currentServices, service]);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    setUploadError(null);
+    const newDocs: UploadedDocument[] = [];
+    const maxFileSize = 25 * 1024 * 1024; // 25MB
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > maxFileSize) {
+        setUploadError(`File ${file.name} exceeds 25MB limit.`);
+        continue;
+      }
+
+      const reader = new FileReader();
+      
+      const docPromise = new Promise<UploadedDocument>((resolve) => {
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          // Extract base64 part
+          const base64 = result.split(',')[1];
+          
+          resolve({
+            id: `doc-${Date.now()}-${i}`,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            base64: base64,
+            content: file.type.startsWith('text/') ? atob(base64) : undefined // Simple text extraction for text files
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const doc = await docPromise;
+      newDocs.push(doc);
+    }
+
+    if (newDocs.length > 0) {
+      updateData('uploadedDocuments', [...(data.uploadedDocuments || []), ...newDocs]);
+      // Trigger analysis here or in parent? 
+      // Let's rely on parent or a separate effect, but parent doesn't know when upload finishes easily unless we prop drill.
+      // For simplicity, we won't auto-trigger full re-analysis immediately upon upload to save tokens, 
+      // or we can let the user trigger it / it triggers on next step.
+      // Actually, the prompt says "insights appear in right panel... as they're extracted".
+      // We should probably trigger document analysis.
+      // Since `analyst` is imported here, we can run it, but we need to update `aiState.documentInsights`.
+      // `Step1Context` doesn't have access to `setDocumentInsights` directly via props currently.
+      // We should probably invoke `onUrlBlur` or similar to refresh analysis, OR just let it happen when they blur the name/url next time.
+      // BETTER: We'll modify the parent to handle this via `updateData` triggering an effect if we wanted, 
+      // but simpler is to just let the "Verify" flow handle it, or add a specific prop.
+      // Given the props, let's trigger `onUrlBlur` which refreshes everything including docs.
+      onUrlBlur(); 
+    }
+  };
+
+  const removeDocument = (id: string) => {
+    updateData('uploadedDocuments', (data.uploadedDocuments || []).filter(d => d.id !== id));
+  };
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -37,15 +120,24 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
       
       <div className="space-y-8 max-w-xl">
         <Input 
-          label="Business Name" 
-          placeholder="e.g. Acme Corp" 
-          value={data.businessName}
-          onChange={(e) => updateData('businessName', e.target.value)}
-          className={!isNameValid && data.businessName.length > 0 ? "border-red-300" : ""}
+          label="Full Name" 
+          placeholder="e.g. Jane Doe" 
+          value={data.fullName}
+          onChange={(e) => updateData('fullName', e.target.value)}
         />
-        {!isNameValid && data.businessName.length > 0 && (
-          <p className="text-xs text-red-500 mt-[-20px]">Name must be at least 2 characters.</p>
-        )}
+
+        <div className="space-y-2">
+          <Input 
+            label="Business Name" 
+            placeholder="e.g. Acme Corp" 
+            value={data.businessName}
+            onChange={(e) => updateData('businessName', e.target.value)}
+            className={!isNameValid && data.businessName.length > 0 ? "border-red-300" : ""}
+          />
+          {!isNameValid && data.businessName.length > 0 && (
+            <p className="text-xs text-red-500">Name must be at least 2 characters.</p>
+          )}
+        </div>
         
         <div className="relative">
           <Input 
@@ -103,6 +195,88 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
           value={data.description}
           onChange={(e) => updateData('description', e.target.value)}
         />
+
+        {/* Document Upload */}
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-widest text-sun-muted font-sans block mb-3">
+            Upload Context (Optional)
+          </label>
+          <div 
+            className="border border-dashed border-sun-border rounded-sm p-6 text-center hover:bg-sun-right/50 transition-colors cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              className="hidden" 
+              multiple 
+              accept=".pdf,.docx,.xlsx,.txt,image/*"
+              onChange={handleFileUpload}
+            />
+            <div className="flex flex-col items-center gap-2 text-sun-secondary">
+              <Upload size={24} className="text-sun-tertiary" />
+              <span className="text-sm font-medium">Drop brand guides, pitch decks, or requirements here</span>
+              <span className="text-xs text-sun-muted">PDF, Images, TXT supported for AI Analysis (Max 25MB)</span>
+            </div>
+          </div>
+          {uploadError && <p className="text-xs text-red-500 mt-2">{uploadError}</p>}
+          
+          {/* File List */}
+          {data.uploadedDocuments && data.uploadedDocuments.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {data.uploadedDocuments.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-sun-border rounded-sm shadow-sm">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="bg-sun-right p-2 rounded-sm text-sun-tertiary">
+                      {doc.type.includes('image') ? <FileIcon size={16} /> : <FileText size={16} />}
+                    </div>
+                    <div className="truncate">
+                      <p className="text-sm font-medium text-sun-primary truncate">{doc.name}</p>
+                      <p className="text-xs text-sun-muted">{(doc.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => removeDocument(doc.id)}
+                    className="text-sun-tertiary hover:text-red-500 transition-colors p-1"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Services Multi-Select */}
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-widest text-sun-muted font-sans block mb-3">
+            Current / Planned Services
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_SERVICES.map(service => {
+              const isSelected = data.selectedServices?.includes(service);
+              return (
+                <button
+                  key={service}
+                  onClick={() => toggleService(service)}
+                  className={`
+                    px-4 py-2 text-sm font-medium rounded-full border transition-all duration-300
+                    ${isSelected 
+                      ? 'bg-sun-primary text-white border-sun-primary shadow-sm' 
+                      : 'bg-transparent text-sun-secondary border-sun-border hover:border-sun-primary hover:text-sun-primary'
+                    }
+                  `}
+                >
+                  <span className="flex items-center gap-2">
+                    {isSelected && <CheckCircle2 size={14} className="text-sun-accent" />}
+                    {!isSelected && <Plus size={14} className="opacity-50" />}
+                    {service}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Analysis Insights Preview (if available) */}
         {analysis && (

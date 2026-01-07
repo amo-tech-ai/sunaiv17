@@ -50,6 +50,8 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
       return (
         <Step2Diagnostics 
           industry={data.industry}
+          selectedServices={data.selectedServices}
+          documentInsights={aiState.documentInsights}
           priorities={data.priorities}
           aiQuestions={aiState.questions}
           updateNestedData={updateNestedData}
@@ -82,7 +84,7 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
     case 5:
       return (
         <Step5Plan 
-          state={{ step, completed: false, data, aiState, dashboardState: { tasks: [], initialized: false } }} // Constructing temp AppState or update props to take individual
+          state={{ step, completed: false, data, aiState, dashboardState: { tasks: [], initialized: false } }} 
           setRoadmap={setRoadmap}
           setStream={setStream}
         />
