@@ -129,6 +129,7 @@ export default function App() {
         <ProgressPanel 
           step={state.step} 
           industry={state.data.industry} 
+          selectedServices={state.data.selectedServices} 
         />
       }
       rightPanel={

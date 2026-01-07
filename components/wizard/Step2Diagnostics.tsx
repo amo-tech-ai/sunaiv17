@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, Lightbulb } from 'lucide-react';
 import { AppState } from '../../types';
 import { extractor } from '../../services/gemini/extractor';
 
@@ -75,6 +75,13 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
     'priority': 'mainPriority'
   };
 
+  const categoryLabels: Record<string, string> = {
+    'sales': 'Growth',
+    'marketing': 'Visibility',
+    'speed': 'Efficiency',
+    'priority': 'Focus'
+  };
+
   return (
     <div className="animate-fade-in space-y-12">
       <div>
@@ -93,19 +100,22 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
            return (
              <div 
                key={q.id} 
-               className="group"
+               className="group relative"
                onMouseEnter={() => setStream(`**${q.title}**\n\n${q.context_reasoning}`)}
              >
                <div className="flex items-baseline gap-3 mb-4">
-                 <span className="text-xs font-bold text-sun-accent bg-sun-accent/10 px-2 py-1 rounded">
-                   {String(idx + 1).padStart(2, '0')}
+                 <span className="text-[10px] font-bold tracking-widest text-sun-muted uppercase bg-sun-bg border border-sun-border px-2 py-1 rounded">
+                   {categoryLabels[q.category] || 'General'}
                  </span>
-                 <label className="text-lg font-serif font-medium text-sun-primary">
+                 <label className="text-lg font-serif font-medium text-sun-primary group-hover:text-sun-accent transition-colors">
                    {q.title}
                  </label>
+                 <div className="hidden group-hover:block absolute right-0 top-0">
+                    <Lightbulb size={16} className="text-sun-accent animate-pulse" />
+                 </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-10">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-2">
                  {q.options.map(opt => {
                    const isSelected = currentValue === opt.label;
                    return (
@@ -115,13 +125,13 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
                        className={`
                          relative p-4 text-left border rounded-sm transition-all duration-200
                          ${isSelected 
-                           ? 'border-sun-accent bg-sun-accent/5 shadow-sm' 
+                           ? 'border-sun-accent bg-sun-accent/5 shadow-sm scale-[1.01]' 
                            : 'border-sun-border bg-white hover:border-sun-primary/50'
                          }
                        `}
                      >
                        <div className="flex justify-between items-start gap-2">
-                         <span className={`text-sm ${isSelected ? 'text-sun-primary font-medium' : 'text-sun-secondary'}`}>
+                         <span className={`text-sm leading-snug ${isSelected ? 'text-sun-primary font-medium' : 'text-sun-secondary'}`}>
                            {opt.label}
                          </span>
                          {isSelected && <ArrowRight size={14} className="text-sun-accent mt-1 shrink-0" />}
