@@ -44,6 +44,16 @@ export interface DashboardState {
   initialized: boolean;
 }
 
+export interface BusinessAnalysis {
+  detected_industry: IndustryType;
+  industry_confidence: number;
+  business_model: string;
+  maturity_score: number;
+  industry_signals: string[];
+  observations: string[];
+  verified: boolean;
+}
+
 export interface AppState {
   step: number;
   completed: boolean;
@@ -54,6 +64,7 @@ export interface AppState {
     website: string;
     description: string;
     industry: IndustryType;
+    analysis?: BusinessAnalysis; // New field for deep analysis
     priorities: {
       moneyFocus: string;
       marketingFocus: string;

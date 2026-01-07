@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { BrainCircuit, Sparkles, CheckCircle2 } from 'lucide-react';
+import { BrainCircuit, Sparkles, CheckCircle2, Terminal } from 'lucide-react';
 import { AppState } from '../../types';
 
 interface IntelligencePanelProps {
@@ -10,27 +11,34 @@ interface IntelligencePanelProps {
 
 export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data, intelligenceStream }) => {
   return (
-    <div className="h-full bg-sun-right border-l border-sun-border p-8 md:p-12 relative overflow-hidden">
+    <div className="h-full bg-sun-right border-l border-sun-border p-8 md:p-12 relative overflow-hidden flex flex-col">
       <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
         <BrainCircuit size={120} className="text-sun-primary" />
       </div>
       
-      <div className="relative z-10 flex flex-col h-full gap-8">
+      <div className="relative z-10 flex flex-col h-full gap-6">
         <div className="flex items-center gap-3 text-sun-accent">
-          <Sparkles size={18} className="animate-pulse" />
-          <span className="text-xs font-bold tracking-widest uppercase">AI Intelligence</span>
+          {intelligenceStream ? (
+             <Terminal size={18} className="animate-pulse" />
+          ) : (
+             <Sparkles size={18} />
+          )}
+          <span className="text-xs font-bold tracking-widest uppercase">
+            {intelligenceStream ? 'Live Analysis' : 'Sun Intelligence'}
+          </span>
         </div>
 
-        <div className="flex-1 font-editorial text-sun-secondary text-lg leading-loose italic overflow-y-auto no-scrollbar">
+        <div className="flex-1 overflow-y-auto no-scrollbar">
           
-          {/* Dynamic AI Stream takes precedence if active */}
+          {/* Dynamic AI Stream - Terminal Style */}
           {intelligenceStream ? (
-              <div className="whitespace-pre-wrap animate-fade-in text-sun-primary">
+              <div className="font-mono text-sm leading-relaxed text-sun-primary whitespace-pre-wrap animate-fade-in bg-white/50 p-6 rounded-sm border border-sun-border/50 shadow-sm">
                 {intelligenceStream}
+                <span className="inline-block w-2 h-4 bg-sun-accent ml-1 animate-pulse align-middle" />
               </div>
           ) : (
-             <>
-                {/* Fallback Static Context per Step */}
+             /* Fallback Static Context - Editorial Style */
+             <div className="font-editorial text-sun-secondary text-lg leading-loose italic">
                 {step === 1 && (
                     <>
                       <p className="mb-6">"I am analyzing your business inputs to verify your market positioning."</p>
@@ -99,7 +107,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({ step, data
                     </div>
                     </>
                 )}
-             </>
+             </div>
           )}
 
         </div>

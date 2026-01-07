@@ -1,31 +1,34 @@
+
 import { ai } from "./client";
 import { Type, Schema } from "@google/genai";
+import { BusinessAnalysis } from "../../types";
 
 const MODEL_NAME = "gemini-3-flash-preview";
 
-export interface BusinessClassification {
-  industry: 'saas' | 'fashion' | 'real_estate' | 'tourism' | 'other';
-  confidence: number;
-  summary: string;
-  verified: boolean;
-}
-
 export const analyst = {
   /**
-   * Streams intelligence notes about the business using Google Search.
+   * Core Prompt: Business Research
+   * Purpose: Generate comprehensive business intelligence through Google Search.
    */
   async *analyzeBusinessStream(name: string, website: string) {
     try {
       const response = await ai.models.generateContentStream({
         model: MODEL_NAME,
-        contents: `Analyze this business: ${name} ${website ? `(${website})` : ''}. 
+        contents: `
+        System context: Role as senior business analyst.
+        Task: Research and verify business, detect industry, assess maturity.
+        Input: Company: "${name}", URL: "${website}".
         
-        Provide 3 brief, high-value bullet points summarizing their:
-        1. Business Model
-        2. Primary Market / Audience
-        3. Key Value Proposition
+        Key Instructions:
+        - Verify business existence before making claims.
+        - Use industry-specific search queries (e.g. search for reviews, pricing, business model).
+        - Stream observations in real-time for transparency.
+        - Be honest about what you find and what you don't know.
+        - Use natural business language, avoid AI jargon.
+        - Structure the output as a streaming narrative with bullet points for key findings.
         
-        Keep it professional, concise, and insightful. Focus on facts found via search.`,
+        Start with "Analyzing digital footprint for ${name}..."
+        `,
         config: {
           tools: [{ googleSearch: {} }],
         }
@@ -38,64 +41,103 @@ export const analyst = {
       }
     } catch (error) {
       console.error("Analyst Stream Error:", error);
-      yield "Unable to verify business details at this moment. Proceeding with manual entry.";
+      yield "Unable to verify business details via Search. Proceeding with internal analysis based on provided text.";
     }
   },
 
   /**
-   * Classifies the business into a specific industry category.
+   * Core Prompt: Industry Classification
+   * Purpose: Accurately classify business into supported industry vertical.
    */
-  async classifyBusiness(name: string, website: string, description: string): Promise<BusinessClassification> {
+  async classifyBusiness(name: string, website: string, description: string): Promise<BusinessAnalysis> {
     try {
       const schema: Schema = {
         type: Type.OBJECT,
         properties: {
-          industry: {
+          detected_industry: {
             type: Type.STRING,
             enum: ['saas', 'fashion', 'real_estate', 'tourism', 'other'],
-            description: "The most fitting industry category for the business."
+            description: "The most fitting industry category."
           },
-          confidence: {
+          industry_confidence: {
             type: Type.NUMBER,
-            description: "Confidence score between 0 and 1."
+            description: "Confidence score between 0 and 100."
           },
-          summary: {
+          business_model: {
             type: Type.STRING,
-            description: "A one-sentence summary of what the business does."
+            description: "Specific model e.g., 'Premium DTC Fashion', 'Commercial Brokerage', 'B2B SaaS'."
+          },
+          maturity_score: {
+            type: Type.INTEGER,
+            description: "Digital maturity from 1 (Manual/Legacy) to 5 (Fully Automated/Tech-Native).",
+          },
+          industry_signals: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "Specific evidence found (e.g., 'Uses Shopify', 'High social traffic', 'Manual lead forms')."
+          },
+          observations: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "Key strategic observations about revenue leaks or opportunities."
           },
           verified: {
             type: Type.BOOLEAN,
-            description: "True if the business appears to be a real, operating entity."
+            description: "True if the business was successfully verified via search."
           }
         },
-        required: ["industry", "confidence", "summary", "verified"]
+        required: [
+          "detected_industry", 
+          "industry_confidence", 
+          "business_model", 
+          "maturity_score", 
+          "industry_signals", 
+          "observations",
+          "verified"
+        ]
       };
 
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
-        contents: `Classify this business based on the following info:
-        Name: ${name}
-        Website: ${website}
-        User Description: ${description}
+        contents: `
+        System context: Industry classification specialist.
+        Task: Classify business into one of supported industries and assess maturity.
+        Input: Name: ${name}, Website: ${website}, User Description: ${description}.
         
-        Determine the industry, confidence level, and verification status.`,
+        Key Instructions:
+        1. Match against supported industry packs:
+           - Fashion (DTC, Retail)
+           - Real Estate (Brokerage, Property Management)
+           - Tourism (Tours, Experiences)
+           - SaaS (B2B, Startup)
+           - Other (General)
+        2. Provide confidence score (high if clear match, medium if uncertain).
+        3. Estimate Digital Maturity (1-5) based on tech stack hints and online presence.
+        4. Identify specific industry signals (e.g. "Cart functionality" -> Fashion, "Booking engine" -> Tourism).
+        `,
         config: {
           responseMimeType: "application/json",
           responseSchema: schema,
+          // Using Search to back up the classification if website is provided
+          tools: website ? [{ googleSearch: {} }] : undefined,
         }
       });
 
       if (response.text) {
-        return JSON.parse(response.text) as BusinessClassification;
+        return JSON.parse(response.text) as BusinessAnalysis;
       }
       
       throw new Error("No JSON response received");
     } catch (error) {
       console.error("Analyst Classification Error:", error);
+      // Fallback safe default
       return {
-        industry: 'other',
-        confidence: 0,
-        summary: '',
+        detected_industry: 'other',
+        industry_confidence: 0,
+        business_model: 'Unidentified',
+        maturity_score: 1,
+        industry_signals: [],
+        observations: ["Could not verify details automatically."],
         verified: false
       };
     }
