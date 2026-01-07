@@ -13,7 +13,7 @@ const GENERIC_PACK: IndustryPack = {
   roiFormulas: {
     'lead_gen': 'Projected 20% increase in lead volume.',
     'content_studio': 'Saves 15+ hours/week in manual creation.',
-    'conversion_booster': 'uplift in conversion rates.',
+    'conversion_booster': 'Uplift in conversion rates.',
     'crm_autopilot': 'Recovers lost leads automatically.',
     'whatsapp_assistant': '24/7 response capability.'
   },
@@ -79,12 +79,38 @@ const REAL_ESTATE_PACK: IndustryPack = {
   riskFactors: ['Slow Response Time', 'Unqualified Tours', 'Manual Follow-up']
 };
 
+const TOURISM_PACK: IndustryPack = {
+  industry: 'tourism',
+  systemNames: {
+    'lead_gen': 'WhatsApp Booking Concierge',
+    'content_studio': 'Review-to-Reputation Flywheel',
+    'conversion_booster': 'Itinerary Builder & Upsell Engine',
+    'crm_autopilot': 'Follow-Up & Referral Automations',
+    'whatsapp_assistant': 'Day-Of Ops Runbook Generator'
+  },
+  roiFormulas: {
+    'lead_gen': 'Expected 60% faster response time.',
+    'content_studio': 'Increases review volume by 30%.',
+    'conversion_booster': 'Increases booking value by 25% through upsells.',
+    'crm_autopilot': 'Boosts repeat booking rate.',
+    'whatsapp_assistant': 'Streamlines daily operations.'
+  },
+  diagnosticTemplates: {
+    'sales': 'What is blocking your booking conversion?',
+    'marketing': 'How effective is your current review collection?',
+    'speed': 'Which operational task consumes the most time?',
+    'priority': 'What is your biggest operational challenge?'
+  },
+  kpis: ['Response Time', 'Booking Value', 'Review Rating', 'Repeat Rate'],
+  riskFactors: ['Manual Booking Entry', 'Slow Response', 'Seasonality']
+};
+
 export const INDUSTRY_PACKS: Record<IndustryType, IndustryPack> = {
   'fashion': FASHION_PACK,
   'real_estate': REAL_ESTATE_PACK,
-  'saas': { ...GENERIC_PACK, industry: 'saas' }, // Placeholder for now
-  'tourism': { ...GENERIC_PACK, industry: 'tourism' }, // Placeholder
-  'events': { ...GENERIC_PACK, industry: 'events' }, // Placeholder
+  'tourism': TOURISM_PACK,
+  'saas': { ...GENERIC_PACK, industry: 'saas' }, 
+  'events': { ...GENERIC_PACK, industry: 'events' },
   'other': GENERIC_PACK
 };
 

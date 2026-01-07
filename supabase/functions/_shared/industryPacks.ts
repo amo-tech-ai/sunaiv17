@@ -1,7 +1,4 @@
 
-// Duplicate of frontend data/industryPacks.ts for Deno context
-// In a real repo, this might be a symlink or a shared workspace package.
-
 export interface IndustryPack {
   industry: string;
   systemNames: Record<string, string>;
@@ -89,17 +86,42 @@ const REAL_ESTATE_PACK: IndustryPack = {
   riskFactors: ['Slow Response Time', 'Unqualified Tours', 'Manual Follow-up']
 };
 
+const TOURISM_PACK: IndustryPack = {
+  industry: 'tourism',
+  systemNames: {
+    'lead_gen': 'WhatsApp Booking Concierge',
+    'content_studio': 'Review-to-Reputation Flywheel',
+    'conversion_booster': 'Itinerary Builder & Upsell Engine',
+    'crm_autopilot': 'Follow-Up & Referral Automations',
+    'whatsapp_assistant': 'Day-Of Ops Runbook Generator'
+  },
+  roiFormulas: {
+    'lead_gen': 'Expected 60% faster response time.',
+    'content_studio': 'Increases review volume by 30%.',
+    'conversion_booster': 'Increases booking value by 25% through upsells.',
+    'crm_autopilot': 'Boosts repeat booking rate.',
+    'whatsapp_assistant': 'Streamlines daily operations.'
+  },
+  diagnosticTemplates: {
+    'sales': 'What is blocking your booking conversion?',
+    'marketing': 'How effective is your current review collection?',
+    'speed': 'Which operational task consumes the most time?',
+    'priority': 'What is your biggest operational challenge?'
+  },
+  kpis: ['Response Time', 'Booking Value', 'Review Rating', 'Repeat Rate'],
+  riskFactors: ['Manual Booking Entry', 'Slow Response', 'Seasonality']
+};
+
 export const INDUSTRY_PACKS: Record<string, IndustryPack> = {
   'fashion': FASHION_PACK,
   'real_estate': REAL_ESTATE_PACK,
+  'tourism': TOURISM_PACK,
   'saas': { ...GENERIC_PACK, industry: 'saas' },
-  'tourism': { ...GENERIC_PACK, industry: 'tourism' },
   'events': { ...GENERIC_PACK, industry: 'events' },
   'other': GENERIC_PACK
 };
 
 export const getIndustryPack = (industry: string): IndustryPack => {
-  // Normalize checking
   const keys = Object.keys(INDUSTRY_PACKS);
   const matched = keys.find(k => k === industry.toLowerCase()) || 'other';
   return INDUSTRY_PACKS[matched];

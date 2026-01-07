@@ -8,7 +8,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { businessName, website, selectedServices } = await req.json();
+    const { businessName, website, selectedServices, description, docInsights } = await req.json();
     const ai = createGeminiClient();
 
     const schema: Schema = {
@@ -35,13 +35,19 @@ serve(async (req) => {
       model: 'gemini-3-flash-preview',
       contents: `
         Analyze this business: ${businessName} (${website || 'No URL'}).
-        Services used: ${selectedServices ? selectedServices.join(', ') : 'None'}.
         
-        Task:
-        1. Verify if it exists via Google Search.
+        CONTEXT:
+        - User Description: ${description || 'N/A'}
+        - Selected Tech/Services: ${selectedServices ? selectedServices.join(', ') : 'None'}
+        - Document Insights: ${docInsights || 'None'}
+        
+        TASK:
+        1. Verify if it exists via Google Search (if URL/Name allows).
         2. Classify into [saas, fashion, real_estate, tourism, events, other].
-        3. Assess digital maturity (1-5). If they use 'AI Agents' or 'Web Apps', maturity is likely higher.
-        4. Provide industry specific observations.
+        3. Assess digital maturity (1-5). 
+           - High maturity signals: 'AI Agents', 'Web Apps' in services, sophisticated tech stack.
+           - Low maturity signals: 'WhatsApp' only, manual processes mentioned in docs.
+        4. Provide industry specific observations based on the uploaded documents and services.
       `,
       config: {
         tools: [{ googleSearch: {} }],
@@ -55,6 +61,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("Analyst Function Error:", error);
     return new Response(JSON.stringify({ error: error.message }), { 
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
