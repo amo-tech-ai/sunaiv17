@@ -12,7 +12,7 @@ serve(async (req) => {
     const data = wizardState.data;
     const ai = createGeminiClient();
 
-    // 1. Deterministic Scoring Logic (No Randomness)
+    // 1. Deterministic Scoring Logic
     let score = 0;
     
     // Base: Maturity Score (1-5) * 15. Max 75.
@@ -20,6 +20,7 @@ serve(async (req) => {
     score += maturity * 15;
 
     // Bonus: Clarity of Vision (Step 2)
+    // If they selected specific priorities, they are more ready.
     if (data.priorities?.mainPriority) {
       score += 10;
     }
@@ -30,12 +31,12 @@ serve(async (req) => {
     score += Math.min(serviceCount * 2, 10);
 
     // Adjustment: Implementation Complexity (Step 3)
-    // Slight penalty for more complex stacks to keep expectations realistic
+    // Slight penalty for more complex stacks to manage expectations
     const systemCount = data.selectedSystems?.length || 0;
     score -= (systemCount * 5);
 
-    // Clamp score between 10 and 95
-    score = Math.max(10, Math.min(score, 95));
+    // Clamp score between 15 and 95 (never 0, never 100)
+    score = Math.max(15, Math.min(score, 95));
 
     // 2. AI Narrative Generation
     const schema: Schema = {
@@ -81,10 +82,10 @@ serve(async (req) => {
 
     // 3. Return Combined Result
     return new Response(JSON.stringify({
-      score, // Deterministic
+      score, // Deterministic score calculated in code
       headline: aiData.headline,
-      summary: aiData.narrative, // Mapping narrative to summary for frontend compatibility
-      wins: aiData.strengths,    // Mapping strengths to wins
+      summary: aiData.narrative, // Mapped to 'summary' for frontend compatibility
+      wins: aiData.strengths,    // Mapped to 'wins'
       risks: aiData.risks
     }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

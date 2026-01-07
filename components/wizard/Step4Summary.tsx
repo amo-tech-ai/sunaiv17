@@ -29,7 +29,7 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
         setLoading(true);
         setHasRun(true);
         
-        // Simulated "Processing" sequence for UX
+        // Simulated "Processing" sequence for UX - deterministically shows progress
         setStream("Aggregating wizard inputs...\n\nVerifying industry context...");
         await new Promise(r => setTimeout(r, 800));
         setStream("Calculating readiness score based on tech stack...");
@@ -86,10 +86,10 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
         <h1 className="font-serif text-3xl text-sun-primary">Executive Summary</h1>
       </div>
 
-      <div className="flex flex-col gap-12 h-full">
+      <div className="flex flex-col gap-8 h-full overflow-y-auto no-scrollbar pb-20">
         
         {/* SECTION 1: Strategic Brief (The "Hook") */}
-        <div className="bg-white border border-sun-border p-8 rounded-sm shadow-sm relative overflow-hidden">
+        <div className="bg-white border border-sun-border p-8 rounded-sm shadow-sm relative overflow-hidden shrink-0">
            <div className="absolute top-0 left-0 w-1 h-full bg-sun-accent"></div>
            
            {loading ? (
@@ -111,10 +111,10 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
         </div>
 
         {/* SECTION 2: The Data (Score + Stack) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start shrink-0">
           
           {/* Readiness Dial */}
-          <div className="flex flex-col items-center justify-center p-8 bg-sun-right border border-sun-border rounded-sm">
+          <div className="flex flex-col items-center justify-center p-8 bg-sun-right border border-sun-border rounded-sm h-full">
              <div className="relative w-40 h-40 flex items-center justify-center mb-6">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="80" cy="80" r="70" fill="none" stroke="#EFE9E4" strokeWidth="8" />
@@ -170,7 +170,7 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
 
         {/* SECTION 3: Key Strengths (from AI) */}
         {!loading && aiState.readinessAnalysis.wins.length > 0 && (
-          <div className="border-t border-sun-border pt-8">
+          <div className="border-t border-sun-border pt-8 shrink-0">
              <div className="text-xs font-bold uppercase tracking-widest text-sun-muted mb-6">Key Strengths Identified</div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {aiState.readinessAnalysis.wins.map((win, i) => (
