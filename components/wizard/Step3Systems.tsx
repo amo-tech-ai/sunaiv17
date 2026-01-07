@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Check, BarChart3, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, BarChart3, Sparkles, AlertCircle } from 'lucide-react';
 import { SYSTEMS, AppState } from '../../types';
 import { optimizer } from '../../services/gemini/optimizer';
 
@@ -24,7 +24,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Only fetch if we haven't already populated recommendations
+    // Only fetch if we haven't already populated recommendations or if it's empty
     if (aiRecommendations.systemIds.length === 0) {
       const fetchRecs = async () => {
         setLoading(true);
@@ -34,13 +34,13 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
           const recs = await optimizer.recommendSystems(data.industry, data.priorities);
           setRecommendations(recs);
           
-          // Stream the synergy notes if available from the backend response structure
-          // Note: We might need to adjust the type if we want to store synergy_notes in Redux/State, 
-          // but for now we can just stream a generic success message or the impact of the top rec.
-          const topRecId = recs.systemIds[0];
-          const topRecName = SYSTEMS.find(s => s.id === topRecId)?.title;
-          
-          setStream(`Based on your focus on **${data.priorities.moneyFocus || 'Growth'}**, I highly recommend starting with the **${topRecName}**. \n\nSelect up to 3 systems to build your stack.`);
+          if (recs.summary) {
+             setStream(recs.summary);
+          } else if (recs.systemIds.length > 0) {
+             const topRecId = recs.systemIds[0];
+             const topRecName = SYSTEMS.find(s => s.id === topRecId)?.title;
+             setStream(`Based on your focus on **${data.priorities.moneyFocus || 'Growth'}**, I highly recommend starting with the **${topRecName}**. \n\nSelect up to 3 systems to build your stack.`);
+          }
         } catch (e) {
           console.error("Optimizer error", e);
           setStream("I had trouble optimizing the list, but you can still select the systems that look best to you.");
@@ -60,10 +60,9 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
       setStream("System removed. You can select another.");
     } else {
       if (selectedSystems.length >= 3) {
-        // Prevent selection and warn
+        // Prevent selection and warn visually
         const shakeCard = document.getElementById(`card-${sysId}`);
-        shakeCard?.classList.add('animate-shake');
-        setTimeout(() => shakeCard?.classList.remove('animate-shake'), 500);
+        shakeCard?.classList.add('animate-shake'); // Assuming an animate-shake class exists or handled via CSS elsewhere, otherwise standard alert
         return;
       }
       
@@ -95,10 +94,12 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-48 border border-sun-border bg-white/50 rounded-sm animate-pulse p-6 space-y-4">
+            <div key={i} className="h-64 border border-sun-border bg-white/50 rounded-sm animate-pulse p-6 space-y-4">
               <div className="h-6 w-3/4 bg-sun-border/50 rounded"></div>
               <div className="h-4 w-full bg-sun-border/30 rounded"></div>
               <div className="h-4 w-1/2 bg-sun-border/30 rounded"></div>
+              <div className="mt-8 h-px bg-sun-border/30"></div>
+              <div className="h-4 w-1/3 bg-sun-border/30 rounded"></div>
             </div>
           ))}
         </div>
@@ -114,13 +115,13 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
               <div 
                 key={sys.id}
                 id={`card-${sys.id}`}
-                onClick={() => handleSelection(sys.id)}
+                onClick={() => !isDisabled && handleSelection(sys.id)}
                 className={`
                   p-6 border rounded-sm transition-all duration-300 cursor-pointer group relative flex flex-col justify-between min-h-[220px]
                   ${isSelected 
                     ? 'border-sun-primary bg-white shadow-md scale-[1.01]' 
                     : isDisabled 
-                      ? 'opacity-50 border-sun-border bg-sun-bg grayscale' 
+                      ? 'opacity-50 border-sun-border bg-sun-bg grayscale cursor-not-allowed' 
                       : 'border-sun-border bg-white/50 hover:border-sun-accent/50 hover:shadow-sm'
                   }
                   ${isRecommended && !isSelected && !isDisabled ? 'ring-1 ring-sun-accent/30 bg-sun-accent/5' : ''}

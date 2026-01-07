@@ -12,7 +12,7 @@ export const optimizer = {
         body: {
           industry,
           priorities,
-          painPoints: [] // Future: Aggregated pain point tags
+          painPoints: [] // Future: Aggregated pain point tags if needed
         }
       });
 

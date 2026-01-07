@@ -34,7 +34,7 @@ serve(async (req) => {
         },
         synergy_notes: {
           type: Type.STRING,
-          description: "A short insight explaining why these specific systems work well together for this user."
+          description: "A short insight explaining why these specific systems work well together for this user, mentioning dependencies if any."
         }
       },
       required: ["recommended_ids", "custom_impacts", "synergy_notes"]
@@ -62,7 +62,8 @@ serve(async (req) => {
         2. Mark these as 'recommended_ids'.
         3. Rewrite the generic ROI formula for EVERY system to be hyper-specific to the user's situation. 
            - E.g. Instead of "Increases leads", say "Captures missed leads from ${priorities.marketingFocus}".
-        4. Generate a 'synergy_notes' string explaining the strategy.
+        4. Identify Dependencies: If a user needs 'CRM Autopilot', check if they also need 'WhatsApp Assistant' for data entry. Mention this in 'synergy_notes'.
+        5. Generate a 'synergy_notes' string explaining the strategy and any dependencies in simple, industry-specific language.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },
