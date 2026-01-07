@@ -5,7 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 // Cast to any to resolve TypeScript error: Property 'env' does not exist on type 'ImportMeta'
 const env = (import.meta as any).env || {};
 
-// Credentials provided in prompt
+// These should be defined in your .env file or environment variables
+// Using provided fallbacks if env vars are missing
 const supabaseUrl = env.VITE_SUPABASE_URL || 'https://necxcwhuzylsumlkkmlk.supabase.co';
 const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_LFstdKVxHEJ5wntLWtmCoA_P-mQ92kS';
 

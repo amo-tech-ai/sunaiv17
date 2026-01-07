@@ -13,7 +13,7 @@ const GENERIC_PACK: IndustryPack = {
   roiFormulas: {
     'lead_gen': 'Projected 20% increase in lead volume.',
     'content_studio': 'Saves 15+ hours/week in manual creation.',
-    'conversion_booster': 'Uplift in conversion rates.',
+    'conversion_booster': 'uplift in conversion rates.',
     'crm_autopilot': 'Recovers lost leads automatically.',
     'whatsapp_assistant': '24/7 response capability.'
   },
