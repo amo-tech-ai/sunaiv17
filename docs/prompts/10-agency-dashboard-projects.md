@@ -90,6 +90,11 @@ The Project Planning Tab provides agency team with comprehensive project plannin
   - Complete phase button
   - Generate report button (future)
 
+- **Real-time updates via Supabase Realtime:**
+  - Listen to `projects` table for status/phase changes.
+  - Listen to `tasks` table for completion updates.
+  - Listen to `roadmap_phases` for progress updates.
+
 **User Experience:**
 - AI insights are proactive and helpful
 - Risk alerts prevent surprises
@@ -272,7 +277,7 @@ This screen enables project managers and team members to plan projects, assign t
 
 **Thinking Mode:**
 - Purpose: Deep analysis for progress predictions and risk assessment
-- Budget: 1024 tokens for complex project analysis
+- **Budget: 4096 tokens** (Increased for complex project analysis)
 - Process: Analyzes dependencies, calculates predictions, identifies risks
 - Output: Comprehensive project insights with reasoning
 - Performance: Adds 5-10 seconds but ensures quality
@@ -287,13 +292,15 @@ This screen enables project managers and team members to plan projects, assign t
 
 **Code Execution:**
 - Purpose: Progress calculations and timeline predictions
-- Implementation: Mathematical calculations for progress and predictions
+- Implementation: Python sandbox for calculating critical path and project velocity.
+- **Spec:** Input `tasks` with duration and dependencies. Script outputs `completion_date` and `critical_path` array.
 - Output: Accurate progress percentages and completion dates
 - Performance: Must complete within 1 second for calculations
 
 ### Model Selection
 
-**Gemini 3 Pro:**
+**Gemini 3 Pro Preview (`gemini-3-pro-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Deep reasoning required for project planning and risk assessment
 - Performance: 5-10 seconds for project analysis with thinking
 - Quality: Ensures accurate progress predictions and risk identification
@@ -306,7 +313,7 @@ This screen enables project managers and team members to plan projects, assign t
 ### Agent Profile
 
 **Agent Type:** Planner & Project Management Specialist  
-**Model:** Gemini 3 Pro  
+**Model:** `gemini-3-pro-preview`  
 **Primary Responsibility:** Project planning, progress analysis, and resource management  
 **Persona:** Senior project manager with strategic planning expertise
 
@@ -456,9 +463,13 @@ This screen enables project managers and team members to plan projects, assign t
 - Deliverable data (status, assignee, due date)
 - Team data (workload, capacity)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists.
+- **Validation:** Check if required fields exist.
+
 **Processing:**
 - Analyze project progress and health
-- Calculate progress predictions using Thinking Mode
+- Calculate progress predictions using Thinking Mode (4096 tokens)
 - Identify risks and bottlenecks
 - Analyze resource allocation
 - Generate summary and insights
@@ -467,10 +478,10 @@ This screen enables project managers and team members to plan projects, assign t
 - Structured JSON with project summary, progress insights, resource insights, timeline insights, risks
 
 **Error Handling:**
-- Handle missing data gracefully
-- Provide fallback summaries if analysis fails
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API errors.
+- **Fallbacks:** If thinking mode fails, retry with standard generation.
+- **User Messages:** Specific error messages.
+- **Logging:** Log failures to Supabase.
 
 **Performance:**
 - Target: Complete within 10 seconds

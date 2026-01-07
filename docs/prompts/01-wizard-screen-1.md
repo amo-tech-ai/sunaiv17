@@ -359,7 +359,8 @@ This screen serves as the foundation for all subsequent wizard steps. By verifyi
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for streaming UX
 - Performance: Sub-2 second first token, complete response in 10-15 seconds
 - Cost: Lower cost per request enables frequent research
@@ -377,7 +378,7 @@ This screen serves as the foundation for all subsequent wizard steps. By verifyi
 ### Agent Profile
 
 **Agent Type:** Research & Discovery Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Business verification and intelligence gathering  
 **Persona:** Senior business analyst with deep industry knowledge
 
@@ -555,6 +556,14 @@ This screen serves as the foundation for all subsequent wizard steps. By verifyi
 - Business description (optional)
 - Industry hint (optional)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists in environment variables. If missing, throw 500 error immediately.
+
+**Streaming Implementation:**
+- Use **Server-Sent Events (SSE)** or chunked HTTP response to stream text to the client.
+- Flush buffer every ~10 tokens or on sentence boundaries to ensure smooth UI updates.
+- Stream structure should allow concurrent transmission of text chunks and final structured JSON block.
+
 **Processing:**
 - Execute Google Search queries
 - Optionally analyze website with URL Context
@@ -568,16 +577,15 @@ This screen serves as the foundation for all subsequent wizard steps. By verifyi
 - Citations array for verification
 
 **Error Handling:**
-- Handle API rate limits gracefully
-- Provide fallback content if research fails
-- Log errors for monitoring and improvement
-- User-friendly error messages
+- **Retry Logic:** Implement exponential backoff for 503 (Service Unavailable) or 429 (Rate Limit) errors. Max 3 retries.
+- **Fallback:** If search fails completely, provide a generic "Unable to verify" message but allow manual entry.
+- **User Messages:** Return friendly JSON error messages to the UI (e.g., "Research service busy, please try again") instead of raw stack traces.
+- **Logging:** Log all API failures to Supabase logs.
 
 **Performance:**
 - Target: Complete within 30 seconds
 - Streaming: First chunk within 2 seconds
 - Timeout: 60 seconds maximum
-- Retry logic for transient failures
 
 ---
 

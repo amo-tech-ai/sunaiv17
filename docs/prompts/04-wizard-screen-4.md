@@ -409,6 +409,7 @@ This screen provides honest feedback about readiness for AI implementation. By c
 **Code Execution:**
 - Purpose: Mathematical calculations for readiness scoring
 - Implementation: Python calculations for weighted scores
+- **Spec:** Use a secure Python sandbox environment. Pass the checklist boolean array. Execute a weighted sum function.
 - Accuracy: Ensures mathematical precision, not LLM guessing
 - Output: Accurate readiness scores with category breakdowns
 
@@ -420,7 +421,8 @@ This screen provides honest feedback about readiness for AI implementation. By c
 
 ### Model Selection
 
-**Gemini 3 Pro:**
+**Gemini 3 Pro Preview (`gemini-3-pro-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Complex reasoning required for risk analysis and gap identification
 - Performance: 15-20 seconds for assessment with thinking
 - Quality: Ensures accurate assessment and honest feedback
@@ -438,7 +440,7 @@ This screen provides honest feedback about readiness for AI implementation. By c
 ### Agent Profile
 
 **Agent Type:** Analyst & Risk Assessment Specialist  
-**Model:** Gemini 3 Pro  
+**Model:** `gemini-3-pro-preview`  
 **Primary Responsibility:** Readiness assessment and gap identification  
 **Persona:** Senior risk analyst with deep industry expertise
 
@@ -468,13 +470,13 @@ This screen provides honest feedback about readiness for AI implementation. By c
 - Load industry benchmarks
 - Load quick win templates
 
-**Step 2: Calculate Category Scores**
+**Step 2: Calculate Category Scores (via Code Exec)**
 - Calculate Data Readiness (data quality, availability, structure)
 - Calculate Infrastructure Readiness (API access, webhooks, integrations)
 - Calculate Culture Readiness (team comfort, executive buy-in, change readiness)
 - Use Code Execution for mathematical accuracy
 
-**Step 3: Calculate Overall Score**
+**Step 3: Calculate Overall Score (via Code Exec)**
 - Average three category scores
 - Apply industry-specific weighting if applicable
 - Provide reasoning for score
@@ -631,10 +633,13 @@ This screen provides honest feedback about readiness for AI implementation. By c
 - Checklist responses (user toggles)
 - Industry Pack (readiness criteria and risk factors)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY`.
+- **Validation:** Ensure checklist responses match required fields.
+
 **Processing:**
 - Load industry-specific readiness criteria
-- Calculate category scores using Code Execution
-- Calculate overall score
+- **Code Execution:** Pass boolean checklist to Python environment. Execute weighted sum script. Return integer score (0-100).
 - Identify critical gaps
 - Suggest quick wins
 - Analyze risk factors using Thinking Mode
@@ -646,13 +651,13 @@ This screen provides honest feedback about readiness for AI implementation. By c
 - Quick win descriptions with actionability
 
 **Error Handling:**
-- Handle missing checklist responses gracefully
-- Provide fallback assessment if calculation fails
-- Log errors for monitoring and improvement
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff.
+- **Score Validation:** Check if Code Execution returned valid integer 0-100.
+- **Industry Pack:** Fallback if missing.
+- **User Messages:** Specific error feedback.
 
 **Performance:**
-- Target: Complete within 60 seconds
+- Target: Complete within **45 seconds**.
 - Thinking Mode: 15-20 seconds for risk analysis
 - Code Execution: 5-10 seconds for score calculation
 - Timeout: 90 seconds maximum
@@ -679,5 +684,5 @@ This screen provides honest feedback about readiness for AI implementation. By c
 - 85%+ alignment with expert assessment
 - 90%+ accuracy in gap identification
 - 80%+ of quick wins achievable within 30 days
-- <60 second assessment completion time
+- <45 second assessment completion time
 - Positive user feedback on assessment honesty

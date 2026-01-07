@@ -98,7 +98,10 @@ The Timeline Tab provides clients with clear visibility into project timeline, p
   - Milestone completions (with dates)
   - Deliverable submissions (with status)
   - Task completions (with updates)
-  - Real-time updates via Supabase Realtime
+  - **Real-time updates via Supabase Realtime:**
+    - Listen to `roadmap_phases` for status changes.
+    - Listen to `tasks` for completion updates.
+    - Listen to `milestones` for due date changes.
 
 **User Experience:**
 - AI insights are proactive and helpful
@@ -295,7 +298,8 @@ This screen enables clients to understand exactly where their project stands, wh
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for timeline summaries
 - Performance: Sub-2 second first token, complete in 3-5 seconds
 - Cost: Lower cost enables frequent updates
@@ -308,7 +312,7 @@ This screen enables clients to understand exactly where their project stands, wh
 ### Agent Profile
 
 **Agent Type:** Monitor & Progress Tracking Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Timeline monitoring and progress insights  
 **Persona:** Proactive project monitor with analytical capabilities
 
@@ -449,6 +453,10 @@ This screen enables clients to understand exactly where their project stands, wh
 - Progress data (completion percentages, status)
 - Historical data (previous progress, trends)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY`.
+- **Validation:** Check if required fields (progress %, phase status) exist.
+
 **Processing:**
 - Calculate progress percentages
 - Analyze timeline health
@@ -464,10 +472,10 @@ This screen enables clients to understand exactly where their project stands, wh
 - Milestone reminders
 
 **Error Handling:**
-- Handle missing data gracefully
-- Provide fallback summaries if calculation fails
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API timeouts.
+- **Fallbacks:** Return "Progress tracking unavailable" if calculation fails.
+- **User Messages:** Specific error messages if data is incomplete (e.g., "Missing task data").
+- **Logging:** Log API failures to Supabase.
 
 **Performance:**
 - Target: Complete within 3 seconds

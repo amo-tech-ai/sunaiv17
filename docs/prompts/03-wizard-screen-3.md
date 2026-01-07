@@ -384,7 +384,7 @@ This screen bridges the gap between problem identification and solution selectio
 
 **Thinking Mode:**
 - Purpose: Extended reasoning for system ranking and ROI calculations
-- Budget: 1024 tokens for system selection logic
+- **Budget: 4096 tokens** (Increased from 1024 to ensure high-quality ranking logic)
 - Process: Analyzes problems, ranks systems, calculates ROI
 - Output: Ranked system recommendations with reasoning
 - Performance: Adds 5-10 seconds but ensures quality
@@ -397,7 +397,8 @@ This screen bridges the gap between problem identification and solution selectio
 
 ### Model Selection
 
-**Gemini 3 Pro:**
+**Gemini 3 Pro Preview (`gemini-3-pro-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Reasoning required for system ranking and ROI calculations
 - Performance: 5-10 seconds for system recommendation with thinking
 - Quality: Ensures accurate system ranking and ROI calculations
@@ -415,7 +416,7 @@ This screen bridges the gap between problem identification and solution selectio
 ### Agent Profile
 
 **Agent Type:** Architect & Solution Mapping Specialist  
-**Model:** Gemini 3 Pro  
+**Model:** `gemini-3-pro-preview`  
 **Primary Responsibility:** System stack optimization and recommendations  
 **Persona:** Senior solution architect with deep industry expertise
 
@@ -580,9 +581,13 @@ This screen bridges the gap between problem identification and solution selectio
 - Industry context (from Step 1)
 - Industry Pack (system names and ROI formulas)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY`.
+- **Validation:** Check Industry Pack availability.
+
 **Processing:**
 - Load industry-specific systems from pack
-- Rank systems by relevance to problems
+- Rank systems by relevance to problems using **Thinking Mode** (4096 tokens)
 - Calculate ROI using industry formulas
 - Identify recommended systems
 - Generate problem-to-solution mapping
@@ -594,13 +599,13 @@ This screen bridges the gap between problem identification and solution selectio
 - Strategic insights about combinations
 
 **Error Handling:**
-- Handle missing industry pack gracefully
-- Provide fallback recommendations if generation fails
-- Log errors for monitoring and improvement
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff.
+- **ROI Validation:** Ensure ROI text is not hallucinated promises (e.g., "Guaranteed 100%"). Implement simple regex checks for realistic numbers.
+- **Industry Pack:** Fallback if pack is missing.
+- **User Messages:** Specific error feedback.
 
 **Performance:**
-- Target: Complete within 60 seconds
+- Target: Complete within **45 seconds**.
 - Thinking Mode: 5-10 seconds for ranking
 - ROI calculation: 10-15 seconds
 - Timeout: 90 seconds maximum
@@ -627,5 +632,5 @@ This screen bridges the gap between problem identification and solution selectio
 - 90%+ of recommended systems are relevant
 - 95%+ accuracy in problem-to-solution mapping
 - ROI projections are realistic and achievable
-- <60 second system recommendation time
+- <45 second system recommendation time
 - Positive user feedback on recommendation quality

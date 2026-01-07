@@ -385,7 +385,7 @@ This screen transforms the generic "what are your pain points?" question into a 
 
 **Thinking Mode:**
 - Purpose: Deep reasoning for industry-specific question generation
-- Budget: 4096 tokens for complex industry analysis
+- Budget: **4096 tokens** for complex industry analysis
 - Process: Analyzes industry context, business model, maturity level
 - Output: Industry-specific questions with proper terminology
 - Performance: Adds 10-15 seconds but ensures quality
@@ -398,7 +398,8 @@ This screen transforms the generic "what are your pain points?" question into a 
 
 ### Model Selection
 
-**Gemini 3 Pro:**
+**Gemini 3 Pro Preview (`gemini-3-pro-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Complex reasoning required for industry-specific question generation
 - Performance: 10-15 seconds for question generation with thinking
 - Quality: Ensures questions use correct industry terminology
@@ -416,7 +417,7 @@ This screen transforms the generic "what are your pain points?" question into a 
 ### Agent Profile
 
 **Agent Type:** Consultant & Data Structuring Specialist  
-**Model:** Gemini 3 Pro  
+**Model:** `gemini-3-pro-preview`  
 **Primary Responsibility:** Industry-specific diagnostic question generation  
 **Persona:** Senior industry consultant with deep vertical expertise
 
@@ -433,7 +434,7 @@ This screen transforms the generic "what are your pain points?" question into a 
 - Question templates for detected industry
 - Problem examples specific to industry
 - AI system names constrained to industry pack
-- Industry-specific business workflow patterns
+- Industry-specific terminology and language
 
 ### Processing Logic
 
@@ -589,9 +590,13 @@ This screen transforms the generic "what are your pain points?" question into a 
 - Business context (business model, maturity, observations)
 - Industry Pack (loaded dynamically)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists.
+- **Validation:** Check if Industry Pack exists for the given industry. If not, fallback to 'general' pack or throw error.
+
 **Processing:**
 - Load industry-specific question templates
-- Generate four diagnostic questions using Thinking Mode
+- Generate four diagnostic questions using **Thinking Mode** (4096 tokens)
 - Create problem options using industry examples
 - Map problems to AI systems from industry pack
 - Generate explanations and intelligence narrative
@@ -602,16 +607,16 @@ This screen transforms the generic "what are your pain points?" question into a 
 - Problem-to-solution mapping preview
 
 **Error Handling:**
-- Handle missing industry pack gracefully
-- Provide fallback questions if generation fails
-- Log errors for monitoring and improvement
-- User-friendly error messages
+- **Retry Logic:** Implement exponential backoff for API errors.
+- **Industry Pack:** If pack is missing or corrupted, fail gracefully to a "Generic Business" pack.
+- **Validation:** Ensure generated JSON matches the schema exactly (4 questions, 4 options each).
+- **User Messages:** Return specific error messages (e.g., "Unable to load industry data").
 
 **Performance:**
-- Target: Complete within 45 seconds
-- Thinking Mode: 10-15 seconds for deep analysis
-- Question generation: 20-30 seconds total
-- Timeout: 90 seconds maximum
+- Target: Complete within **45 seconds**.
+- Thinking Mode: 10-15 seconds for deep analysis.
+- Question generation: 20-30 seconds total.
+- Timeout: 90 seconds maximum.
 
 ---
 

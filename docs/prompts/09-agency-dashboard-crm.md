@@ -89,6 +89,10 @@ The CRM Tab provides agency team with comprehensive client relationship manageme
   - Create project button
   - Generate proposal button (future)
 
+- **Real-time updates via Supabase Realtime:**
+  - Listen to `clients` table for status/assignment changes.
+  - Listen to `activities` table for new interactions.
+
 **User Experience:**
 - AI insights are relevant and actionable
 - Quick actions are easily accessible
@@ -294,7 +298,8 @@ This screen enables team members to manage all client relationships in one place
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for client summaries
 - Performance: Sub-2 second first token, complete in 3-5 seconds
 - Cost: Lower cost enables frequent updates
@@ -307,7 +312,7 @@ This screen enables team members to manage all client relationships in one place
 ### Agent Profile
 
 **Agent Type:** Account Manager & Relationship Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Client relationship management and pipeline insights  
 **Persona:** Senior account manager with relationship expertise
 
@@ -448,6 +453,10 @@ This screen enables team members to manage all client relationships in one place
 - Project data
 - Team assignments
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists.
+- **Validation:** Check if required fields exist.
+
 **Processing:**
 - Analyze client data and activity
 - Calculate relationship health score
@@ -459,10 +468,10 @@ This screen enables team members to manage all client relationships in one place
 - Structured JSON with client summary, pipeline insights, recommendations, health score
 
 **Error Handling:**
-- Handle missing data gracefully
-- Provide fallback summaries if analysis fails
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API errors.
+- **Fallbacks:** If analysis fails, return "Relationship status unavailable."
+- **User Messages:** Specific error messages.
+- **Logging:** Log failures to Supabase.
 
 **Performance:**
 - Target: Complete within 3 seconds

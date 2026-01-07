@@ -98,10 +98,9 @@ Screen 5 synthesizes all wizard inputs into a realistic, executable three-phase 
 - Industry-specific success metrics and benchmarks
 
 **Streaming Content:**
-- Optional streaming of roadmap generation process
-- Shows AI thinking about dependencies and sequencing
-- Displays strategic reasoning in real-time
-- Provides transparency in planning process
+- **Live Thinking Stream:** Shows the AI "thinking" about dependencies and sequencing in real-time.
+- Strategic reasoning displayed as it generates.
+- Provides transparency in planning process.
 
 **Visual Design:**
 - Terminal-like appearance for thinking process
@@ -261,7 +260,7 @@ This screen delivers the core value proposition of the wizard. By creating a com
 - Explains why Phase 1 focuses on data and infrastructure
 - Shows how Phase 2 deploys systems based on readiness
 - Maps Phase 3 optimization to scaling and personalization
-- Provides fashion industry benchmarks and success metrics
+- Provides fashion industry benchmarks
 
 **User Experience:**
 - User sees comprehensive, actionable roadmap
@@ -500,7 +499,7 @@ This screen delivers the core value proposition of the wizard. By creating a com
 
 **Thinking Mode:**
 - Purpose: Deep reasoning for strategic planning and dependency analysis
-- Budget: 4096 tokens for complex strategic planning
+- Budget: **4096 tokens** for complex strategic planning
 - Process: Analyzes dependencies, sequences phases, allocates resources
 - Output: Comprehensive roadmap with strategic reasoning
 - Performance: Adds 15-20 seconds but ensures quality
@@ -521,7 +520,8 @@ This screen delivers the core value proposition of the wizard. By creating a com
 
 ### Model Selection
 
-**Gemini 3 Pro:**
+**Gemini 3 Pro Preview (`gemini-3-pro-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Complex strategic planning requires deep reasoning
 - Performance: 15-20 seconds for roadmap generation with thinking
 - Quality: Ensures accurate roadmap with logical dependencies
@@ -539,7 +539,7 @@ This screen delivers the core value proposition of the wizard. By creating a com
 ### Agent Profile
 
 **Agent Type:** Strategic Planner & Roadmap Specialist  
-**Model:** Gemini 3 Pro  
+**Model:** `gemini-3-pro-preview`  
 **Primary Responsibility:** Strategic roadmap synthesis  
 **Persona:** Senior strategic consultant with deep industry expertise
 
@@ -756,6 +756,15 @@ This screen delivers the core value proposition of the wizard. By creating a com
 - Readiness assessment (from Step 4)
 - Industry Pack (phase templates, KPIs, ROI formulas)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY`.
+- **Validation:** Check input context completeness.
+
+**Streaming Implementation:**
+- Use **Server-Sent Events (SSE)**.
+- **Thinking Stream:** Stream "thought" chunks as the model reasons (Step 1: Analyzing dependencies... Step 2: Sequencing...).
+- **Final Output:** Stream the structured JSON as a final event block.
+
 **Processing:**
 - Load industry-specific phase templates
 - Generate Phase 1: Foundation (address gaps, prepare infrastructure)
@@ -765,7 +774,7 @@ This screen delivers the core value proposition of the wizard. By creating a com
 - Define deliverables per phase
 - Set KPI targets using industry definitions
 - Calculate ROI using industry formulas
-- Identify dependencies using Thinking Mode
+- Identify dependencies using **Thinking Mode** (4096 tokens)
 
 **Output:**
 - Structured JSON with three-phase roadmap
@@ -774,13 +783,13 @@ This screen delivers the core value proposition of the wizard. By creating a com
 - Phase dependencies
 
 **Error Handling:**
-- Handle missing wizard context gracefully
-- Provide fallback roadmap if generation fails
-- Log errors for monitoring and improvement
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff.
+- **Validation:** Ensure 3 distinct phases are returned.
+- **Fallback:** If generation fails, return a generic "Standard Implementation Plan" based on industry.
+- **User Messages:** Specific error feedback.
 
 **Performance:**
-- Target: Complete within 60 seconds
+- Target: Complete within **60 seconds**.
 - Thinking Mode: 15-20 seconds for strategic planning
 - Roadmap generation: 30-40 seconds total
 - Optional streaming: Adds engagement, minimal latency

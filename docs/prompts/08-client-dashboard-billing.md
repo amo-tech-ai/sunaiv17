@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The Billing Tab provides clients with complete transparency into project billing, invoices, and payment status. This screen enables clients to view all invoices, track payment history, download receipts, and manage payment methods. The AI-powered insights provide billing summaries, payment pattern analysis, and budget tracking, building trust through transparent financial communication.
+The Billing Tab provides clients with complete transparency into project billing, invoices, and payment status. This screen enables clients to view all invoices, track payment history, download receipts, and manage payment methods. The AI-powered insights provide billing summaries, payment pattern analysis, and budget tracking via code execution, building trust through transparent financial communication.
 
 **Core Value:** Clients have full visibility into their project finances with intelligent insights. The AI analyzes payment patterns, tracks budget utilization, and provides proactive reminders, giving clients confidence and control over their financial relationship with the agency.
 
@@ -87,7 +87,7 @@ The Billing Tab provides clients with complete transparency into project billing
 - **Intelligence Panel:**
   - Billing summary (AI-generated billing status)
   - Payment insights (payment patterns, upcoming payments)
-  - Budget analysis (spend vs budget if applicable)
+  - **Budget Analysis** (Computed via Code Execution)
   - Payment reminders (upcoming due dates)
   - Payment alerts (overdue or failed payments)
 
@@ -96,6 +96,10 @@ The Billing Tab provides clients with complete transparency into project billing
   - Update payment method option
   - Auto-pay status (enabled/disabled)
   - Billing preferences
+
+- **Real-time updates via Supabase Realtime:**
+  - Listen to `invoices` table for status changes (paid, overdue).
+  - Listen to `payments` table for new transactions.
 
 **User Experience:**
 - AI insights are relevant and helpful
@@ -157,7 +161,7 @@ This screen enables clients to understand their financial relationship with the 
 **Goal 5: Budget Visibility**
 - Show spend vs budget (if applicable)
 - Success metric: Budget calculations are accurate
-- Verification method: Budget calculation testing
+- Verification method: Budget calculation testing via Code Execution
 - Edge cases: No budget, over-budget, budget changes
 
 **Goal 6: Trust Building**
@@ -188,8 +192,8 @@ This screen enables clients to understand their financial relationship with the 
 - Client checks budget analysis in right panel
 
 **AI Processing:**
-- Analytics Agent analyzes billing data
-- Calculates budget utilization
+- Analytics Agent receives billing data
+- **Code Execution:** Calculates exact budget burn rate and runway
 - Identifies upcoming payment
 - Generates billing summary
 
@@ -287,13 +291,15 @@ This screen enables clients to understand their financial relationship with the 
 
 **Code Execution:**
 - Purpose: Budget calculations and spend analysis
-- Implementation: Mathematical calculations for budget tracking
-- Output: Budget utilization, spend analysis, calculations
-- Performance: Must complete within 1 second for calculations
+- Implementation: Python sandbox environment to calculate burn rates, percentage utilization, and projections.
+- **Spec:** Input JSON with `total_budget`, `paid_invoices`, `pending_invoices`. Script calculates `remaining`, `burn_rate`, and `projected_overage`.
+- Output: Exact figures for budget analysis.
+- Performance: Must complete within 1-2 seconds.
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for billing summaries
 - Performance: Sub-2 second first token, complete in 3-5 seconds
 - Cost: Lower cost enables frequent updates
@@ -306,7 +312,7 @@ This screen enables clients to understand their financial relationship with the 
 ### Agent Profile
 
 **Agent Type:** Analyst & Financial Insights Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Billing analysis and payment insights  
 **Persona:** Financial analyst with billing expertise
 
@@ -335,10 +341,10 @@ This screen enables clients to understand their financial relationship with the 
 - Identify payment patterns
 - Detect anomalies or issues
 
-**Step 3: Budget Analysis (if applicable)**
-- Calculate budget utilization
-- Compare spend vs budget
-- Identify budget risks or opportunities
+**Step 3: Budget Analysis (Code Exec)**
+- Execute Python script to calculate budget health.
+- Compare spend vs budget with precision.
+- Identify budget risks or opportunities.
 
 **Step 4: Payment Reminder Generation**
 - Identify upcoming payments
@@ -369,7 +375,7 @@ This screen enables clients to understand their financial relationship with the 
 - Payment recommendations provided
 
 **Budget Analysis:**
-- Budget utilization calculated
+- Budget utilization calculated (Exact %)
 - Spend vs budget comparison
 - Budget risks or opportunities identified
 
@@ -423,23 +429,26 @@ This screen enables clients to understand their financial relationship with the 
 - Use clear, helpful language
 - Be specific about patterns and timing
 
-### Core Prompt: Budget Analysis
+### Core Prompt: Budget Analysis (Code Execution)
 
 **Purpose:** Analyze budget utilization and provide insights.
 
 **Prompt Structure:**
 - System context: Budget analyst with financial expertise
-- Task: Analyze budget utilization and compare to actual spend
+- Task: Analyze budget utilization using provided Python tool
 - Input: Budget data, spend data, project phases
 - Output format: Budget analysis with insights
-- Constraints: Must be accurate, use Code Execution for calculations
+- Constraints: Must use Code Execution for calculations
 
 **Key Instructions:**
-- Calculate budget utilization accurately using Code Execution
+- **Tool Use:** Use `code_execution` tool. Write Python code to:
+  1. Sum `paid` invoices.
+  2. Sum `pending` invoices.
+  3. Calculate `utilization_rate = (paid + pending) / budget`.
+  4. Return precise floats.
 - Compare spend vs budget
 - Identify budget risks or opportunities
-- Provide actionable insights
-- Use clear, professional language
+- Provide actionable insights based on calculated data
 
 ### Edge Function Architecture
 
@@ -452,10 +461,14 @@ This screen enables clients to understand their financial relationship with the 
 - Payment history (amounts, dates, methods)
 - Budget data (if applicable)
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY`.
+- **Validation:** Check input data format (dates, amounts).
+
 **Processing:**
 - Calculate billing summary (total, paid, due)
 - Analyze payment patterns
-- Calculate budget utilization (if applicable)
+- **Code Execution:** Calculate budget utilization with Python.
 - Identify upcoming payments
 - Detect payment issues
 - Generate summary and insights
@@ -468,10 +481,10 @@ This screen enables clients to understand their financial relationship with the 
 - Payment alerts
 
 **Error Handling:**
-- Handle missing data gracefully
-- Provide fallback summaries if calculation fails
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API errors.
+- **Fallbacks:** If Code Exec fails, perform simple calculation in JS and flag as "estimate".
+- **User Messages:** Specific error messages.
+- **Logging:** Log failures to Supabase.
 
 **Performance:**
 - Target: Complete within 3 seconds
@@ -491,7 +504,7 @@ This screen enables clients to understand their financial relationship with the 
 **Estimated Completion:** 5-7 days from start of implementation
 
 **Key Deliverables:**
-- Analytics Agent | Invoice display | Payment tracking | Budget calculation
+- Analytics Agent | Invoice display | Payment tracking | Budget calculation (Code Exec)
 - Payment reminders/alerts | PDF generation
 
 **Success Metrics:**

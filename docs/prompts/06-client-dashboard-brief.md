@@ -99,7 +99,10 @@ The Brief Tab is the primary interface for client brief management. This screen 
   - Document uploads (with file names)
   - Agency comments (with author and timestamp)
   - Status changes (with timestamps)
-  - Real-time updates via Supabase Realtime
+  - **Real-time updates via Supabase Realtime:**
+    - Listen to `briefs` table for `UPDATE` events.
+    - Listen to `documents` table for `INSERT` events.
+    - Listen to `comments` table for `INSERT` events.
 
 **User Experience:**
 - AI insights are relevant and actionable
@@ -144,7 +147,7 @@ This screen enables clients to maintain control over their project brief while r
 - Enable document upload, categorization, and management
 - Success metric: 100% of supported file types upload successfully
 - Verification method: File type testing, size limit testing
-- Edge cases: Large files, unsupported formats, corrupted files
+- Edge cases: Large files (>25MB), unsupported formats, corrupted files
 
 **Goal 3: Change Tracking**
 - Track all brief changes with version history
@@ -310,7 +313,8 @@ This screen enables clients to maintain control over their project brief while r
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for brief summaries
 - Performance: Sub-2 second first token, complete in 3-5 seconds
 - Cost: Lower cost enables frequent updates
@@ -323,7 +327,7 @@ This screen enables clients to maintain control over their project brief while r
 ### Agent Profile
 
 **Agent Type:** Assistant & Document Analysis Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Brief summary generation and document insights  
 **Persona:** Helpful project assistant with document analysis capabilities
 
@@ -453,12 +457,17 @@ This screen enables clients to maintain control over their project brief while r
 **Purpose:** Analyze uploaded documents and extract insights.
 
 **Input:**
-- Document file (PDF, DOCX, XLSX, images, text)
-- Document type and metadata
+- Document file ID (stored in Storage bucket)
+- Document metadata
 - Project context
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists.
+- **Validation:** Check file size (<25MB) and type before processing.
+
 **Processing:**
-- Extract text from document
+- Download document from Storage
+- Extract text content
 - Analyze content for key themes
 - Generate document insights
 - Connect insights to brief content
@@ -469,10 +478,10 @@ This screen enables clients to maintain control over their project brief while r
 - Recommendations based on document content
 
 **Error Handling:**
-- Handle unsupported file types gracefully
-- Provide fallback for unreadable documents
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API timeouts (503/429 errors). Max 3 retries.
+- **Fallbacks:** If document is unreadable (e.g., scanned PDF without OCR), return "Document uploaded but text content could not be analyzed."
+- **User Messages:** Return actionable errors (e.g., "File too large," "Password protected PDF").
+- **Logging:** Log API failures to Supabase.
 
 **Performance:**
 - Target: Complete within 10 seconds

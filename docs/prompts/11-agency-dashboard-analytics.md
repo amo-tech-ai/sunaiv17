@@ -277,7 +277,8 @@ This screen enables agency leaders and project managers to track KPIs, monitor r
 
 **Code Execution:**
 - Purpose: Analytics calculations (averages, percentages, trends)
-- Implementation: Mathematical calculations for metrics
+- Implementation: Python sandbox environment.
+- **Spec:** Input JSON data (revenue, clients). Script executes numpy/pandas logic to find trends, outliers, and forecast growth.
 - Output: Accurate metrics calculations
 - Performance: Must complete within 1 second for calculations
 
@@ -291,7 +292,8 @@ This screen enables agency leaders and project managers to track KPIs, monitor r
 
 ### Model Selection
 
-**Gemini 3 Flash:**
+**Gemini 3 Flash Preview (`gemini-3-flash-preview`):**
+- **CRITICAL:** Must use the `-preview` suffix.
 - Rationale: Fast response time critical for analytics summaries
 - Performance: Sub-2 second first token, complete in 3-5 seconds
 - Cost: Lower cost enables frequent updates
@@ -304,7 +306,7 @@ This screen enables agency leaders and project managers to track KPIs, monitor r
 ### Agent Profile
 
 **Agent Type:** Analyst & Business Intelligence Specialist  
-**Model:** Gemini 3 Flash  
+**Model:** `gemini-3-flash-preview`  
 **Primary Responsibility:** Business intelligence and performance insights  
 **Persona:** Senior business analyst with strategic expertise
 
@@ -456,9 +458,13 @@ This screen enables agency leaders and project managers to track KPIs, monitor r
 - Project data
 - Team data
 
+**Authentication:**
+- **CRITICAL:** Validate `GEMINI_API_KEY` exists.
+- **Validation:** Check if required fields exist.
+
 **Processing:**
 - Aggregate analytics data
-- Calculate key metrics using Code Execution
+- Calculate key metrics using Code Execution (Python script)
 - Identify trends and patterns
 - Generate insights and recommendations
 - Detect anomalies and alerts
@@ -468,10 +474,10 @@ This screen enables agency leaders and project managers to track KPIs, monitor r
 - Structured JSON with business summary, key insights, recommendations, alerts, benchmarks
 
 **Error Handling:**
-- Handle missing data gracefully
-- Provide fallback summaries if calculation fails
-- Log errors for monitoring
-- User-friendly error messages
+- **Retry Logic:** Exponential backoff for API errors.
+- **Fallbacks:** If Code Exec fails, use basic math.
+- **User Messages:** Specific error messages.
+- **Logging:** Log failures to Supabase.
 
 **Performance:**
 - Target: Complete within 5 seconds
