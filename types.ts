@@ -1,5 +1,5 @@
 
-export type IndustryType = 'fashion' | 'saas' | 'tourism' | 'real_estate' | 'other';
+export type IndustryType = 'fashion' | 'saas' | 'tourism' | 'real_estate' | 'events' | 'other';
 
 export interface DiagnosticOption {
   id: string;
@@ -19,7 +19,9 @@ export interface DiagnosticQuestion {
 export interface RoadmapPhase {
   phaseName: string;
   duration: string;
-  items: string[];
+  items: string[]; // Legacy support
+  deliverables?: string[]; // Enhanced schema
+  kpis?: string[]; // Enhanced schema
 }
 
 export interface AIState {
@@ -55,7 +57,7 @@ export interface DashboardState {
 
 export interface BusinessAnalysis {
   detected_industry: IndustryType;
-  industry_confidence: number;
+  industry_confidence: number; // 0-100
   business_model: string;
   maturity_score: number;
   industry_signals: string[];
@@ -70,6 +72,15 @@ export interface UploadedDocument {
   size: number;
   base64?: string; // Stored for analysis
   content?: string; // Text content if applicable
+}
+
+export interface IndustryPack {
+  industry: IndustryType;
+  systemNames: Record<string, string>; // Maps generic ID to industry specific name
+  roiFormulas: Record<string, string>; // Text template for ROI calculation
+  diagnosticTemplates: Record<string, string>; // Template strings for questions
+  kpis: string[];
+  riskFactors: string[];
 }
 
 export interface AppState {
