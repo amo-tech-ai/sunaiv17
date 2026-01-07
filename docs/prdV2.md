@@ -1,7 +1,7 @@
 
-# Sun AI Agency — Product Requirements Document (v2.0)
+# Sun AI Agency — Product Requirements Document (v2.1)
 
-**Version:** 2.0 (The Agentic Era)
+**Version:** 2.1 (Deep Specification)
 **Status:** Approved for Engineering
 **Focus:** Full-Stack AI Consultancy Platform with Gemini 3 Integration
 
@@ -11,222 +11,247 @@
 
 Sun AI Agency is an industry-first **AI Consultancy Platform**. It automates the work of a high-end strategy consultant, using a multi-agent architecture to research, diagnose, plan, and execute AI transformations for businesses.
 
-Unlike generic chatbots, Sun AI uses a **"Context-First" architecture**. It leverages **Gemini 3 Pro** (Reasoning) and **Gemini 3 Flash** (Speed) alongside advanced tools like **Google Search Grounding**, **Deep Research**, and **Code Execution** to deliver verified, mathematically accurate, and strategically sound roadmaps.
-
-**Core Value Prop:** "The wisdom of a senior consultant, the speed of software."
-
----
-
-## 2. Phased Rollout Strategy
-
-### Phase 1: The Intelligent Wizard (MVP)
-*   **Goal:** User Acquisition & Strategy Generation.
-*   **Scope:** Screens 1-5 (Frontend Only).
-*   **Key Tech:** Gemini 3 Flash (Search/URL Context), Gemini 3 Pro (Thinking), Structured Outputs.
-*   **Persistence:** LocalStorage.
-
-### Phase 2: The Execution Dashboard (Beta)
-*   **Goal:** Implementation & Retention.
-*   **Scope:** Dashboard, Auth, Database.
-*   **Key Tech:** Supabase (Auth/DB), Orchestrator Agent, Function Calling, Google Maps Grounding.
-*   **Persistence:** Supabase PostgreSQL.
-
-### Phase 3: The Autonomous Firm (Scale)
-*   **Goal:** High-Value Automation.
-*   **Scope:** RAG (Docs), Voice Mode, Visualizations.
-*   **Key Tech:** Interactions API (Low-latency), Nano Banana (Image Gen), Deep Research, Code Execution.
+**Core Philosophy:** "Context-First Architecture."
+Every step builds upon the verified truths of the previous step. We do not ask the user for information we can find ourselves. We do not recommend systems without understanding the specific industry bottleneck.
 
 ---
 
-## 3. AI Architecture: The "Sun Agentic System"
+## 2. The AI Engine: Gemini 3 Integration Strategy
 
-The platform is driven by 10 specialized agents. Each agent utilizes specific Gemini 3 capabilities.
+We utilize the specific strengths of the Gemini 3 model family to create a "Consultant-in-a-Box".
 
-| Agent | Role | Model | Primary Tools |
-| :--- | :--- | :--- | :--- |
-| **🕵️ Analyst** | Research & Discovery | `gemini-3-flash` | **Google Search**, **URL Context**, **Deep Research** |
-| **🔬 Extractor** | Data Structuring | `gemini-3-flash` | **Structured Outputs** (JSON Schema) |
-| **⚖️ Optimizer** | Solution Mapping | `gemini-3-flash` | **Text Gen**, System Prompting |
-| **💯 Scorer** | Risk Audit | `gemini-3-flash` | **Code Execution** (Math), Structured Outputs |
-| **📅 Planner** | Strategy & Timeline | `gemini-3-pro` | **Gemini Thinking**, **Structured Outputs** |
-| **🎼 Orchestrator**| Task Management | `gemini-3-flash` | **Function Calling** |
-| **💬 Assistant** | Live Support | `gemini-3-flash` | **Interactions API** (Voice/Chat) |
-| **🎨 Visualizer** | Future State Demo | `gemini-3-pro` | **Image Generation** (Nano Banana) |
-| **📚 Retriever** | Knowledge Base | `gemini-3-flash` | **RAG** (Vector Search) |
-| **🛡️ Controller** | Safety & QA | `gemini-3-flash` | Content Safety Settings |
-
----
-
-## 4. User Journeys & Screen Specifications
-
-### 4.1 Phase 1: The Core Wizard
-
-#### Screen 1: Business Context (The Truth Baseline)
-*   **User Action:** Enters URL and Company Name.
-*   **Agent:** **Analyst**.
-*   **AI Logic:**
-    1.  **URL Context Tool**: Crawls the landing page to extract H1, Meta Description, and Offer.
-    2.  **Google Search Grounding**: Verifies the business exists and finds recent news.
-    3.  **Classification**: Auto-detects Industry.
-*   **UI/UX:** 3-Panel Layout. Right panel streams "Reading website... Verifying market position..."
-
-#### Screen 2: Industry Diagnostics (The Deep Dive)
-*   **User Action:** Views Industry context, answers dynamic questions.
-*   **Agent:** **Extractor**.
-*   **AI Logic:**
-    1.  **Structured Output**: Generates a JSON form strictly matching the detected Industry.
-    2.  **Google Maps Grounding** (If Real Estate/Tourism): "I see you are based in [City]. Local competition is high."
-*   **UI/UX:** Dynamic Form generation.
-
-#### Screen 3: System Selection (The Prescription)
-*   **User Action:** Selects AI Systems (Lead Gen, CRM, etc.).
-*   **Agent:** **Optimizer** + **Visualizer**.
-*   **AI Logic:**
-    1.  **Re-Ranking**: Sorts systems based on Step 2 pain points.
-    2.  **Nano Banana (Image Gen)**: Generates a *preview* of what the dashboard will look like for *this specific client* (e.g., "Generate a CRM dashboard for a Fashion Brand").
-*   **UI/UX:** System Cards + Generated Image Preview in Right Panel.
-
-#### Screen 4: Readiness Assessment (The Audit)
-*   **User Action:** Completes checklist (Data, Team, Budget).
-*   **Agent:** **Scorer**.
-*   **AI Logic:**
-    1.  **Code Execution**: Uses Python to calculate a weighted score based on complex heuristics (not just LLM guessing). ensures mathematical accuracy.
-    2.  **Risk Analysis**: Identifies critical gaps.
-*   **UI/UX:** Circular Score Visualization + Risk/Win List.
-
-#### Screen 5: The Master Plan (The Strategy)
-*   **User Action:** Watches the plan generation.
-*   **Agent:** **Planner**.
-*   **AI Logic:**
-    1.  **Gemini Thinking**: "Thinking Budget" set to 2048 tokens. Analyzes dependencies (e.g., "Cannot start Ads before CRM is ready").
-    2.  **Structured Output**: Returns a strict JSON Gantt structure.
-*   **UI/UX:** Streaming "Thinking" visualization (Right Panel) -> Vertical Timeline (Center).
-
----
-
-### 4.2 Phase 2: The Dashboard
-
-#### Screen 6: Overview (Command Center)
-*   **Agent:** **Analyst**.
-*   **Feature:** **Deep Research**.
-*   **Logic:** Periodically performs deep searches on the client's competitors and updates a "Market Pulse" widget.
-
-#### Screen 7: Interactive Roadmap
-*   **Agent:** **Planner**.
-*   **Feature:** **Function Calling**.
-*   **Logic:** When user drags a task, UI calls `update_timeline()`. The Planner re-thinks dependencies and returns a valid new schedule.
-
-#### Screen 8: Task Orchestration
-*   **Agent:** **Orchestrator**.
-*   **Feature:** **Function Calling** + **Text Gen**.
-*   **Logic:** "Do It For Me" buttons.
-    *   *Task:* "Draft Email." -> Agent generates text.
-    *   *Task:* "Calculate ROI." -> Agent uses Code Execution.
-
----
-
-### 4.3 Phase 3: Advanced Features
-
-#### Feature: "Sun Voice" (Dashboard Assistant)
-*   **Location:** Global Floating Action Button.
-*   **Tech:** **Interactions API**.
-*   **Logic:** Low-latency, multimodal voice interaction. User can talk to their project: "How are we doing on the Lead Gen setup?"
-
-#### Feature: "The Vault" (RAG Knowledge Base)
-*   **Location:** New "Documents" Tab.
-*   **Tech:** **Retriever Agent** (Embeddings).
-*   **Logic:** User uploads PDFs (SOPs, Brand Guidelines). Agents cite these docs when generating content.
-
----
-
-## 5. Workflows & Automations (Mermaid)
-
-### 5.1 The "Deep Research" Loop (Screen 1 & Dashboard)
-```mermaid
-graph TD
-    User[User Input] --> Analyst[🕵️ Analyst Agent]
-    Analyst -->|Step 1| URL[URL Context Tool]
-    Analyst -->|Step 2| Search[Google Search]
-    Search -->|Results| Deep{Deep Research?}
-    Deep -- Yes --> Loop[Iterative Query Loop]
-    Loop --> Synthesis[Synthesize Report]
-    Deep -- No --> Quick[Quick Summary]
-    Synthesis --> UI[Right Panel Stream]
-```
-
-### 5.2 The "Thinking" Planner (Screen 5)
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Planner as 📅 Planner (Gemini 3 Pro)
-    
-    User->>UI: Request Plan
-    UI->>Planner: Context + Thinking Budget
-    loop Thinking Process
-        Planner->>Planner: Analyze Dependencies
-        Planner->>Planner: Sequence Phases
-        Planner->>Planner: Allocate Resources
-    end
-    Planner-->>UI: Structured JSON (Roadmap)
-    UI->>User: Render Gantt Chart
-```
-
-### 5.3 The "Orchestrator" Action Loop (Dashboard)
-```mermaid
-graph LR
-    Task[Task: Draft Outreach] --> Click[User Clicks 'Auto-Draft']
-    Click --> Orch[🎼 Orchestrator]
-    Orch -->|Decide| Tool{Select Tool}
-    Tool -->|Simple| Gen[Text Generation]
-    Tool -->|Complex| Func[Function Call: Email API]
-    Gen --> Review[User Review]
-    Func --> Review
-```
-
----
-
-## 6. Technical Stack Requirements
-
-### Frontend
-*   **Framework:** React 19 (Vite)
-*   **Language:** TypeScript
-*   **State:** React Context + Supabase Realtime
-*   **Styling:** Tailwind CSS
-
-### Backend & AI Infrastructure
-*   **Database:** Supabase (PostgreSQL)
-*   **Auth:** Supabase Auth
-*   **Edge Functions:** Deno (hosting the Agents)
-*   **AI Client:** `@google/genai` SDK
-*   **Vector Store:** `pgvector` (for RAG)
-
-### Data Schema (Key Entities)
-*   `Profiles`: Users
-*   `Projects`: The implementation container
-*   `Roadmaps`: JSON structure of Screen 5
-*   `Tasks`: Individual work items
-*   `Context`: Vector embeddings of business info
-
----
-
-## 7. Success Metrics & Validation
-
-| Feature | Success Metric | Verification Method |
+| Feature | Model | Implementation & Purpose |
 | :--- | :--- | :--- |
-| **Business Verification** | >95% Accuracy | Compare Analyst output vs Manual Search. |
-| **Roadmap Logic** | 0 Logical Conflicts | Planner output checked for date overlaps. |
-| **Readiness Score** | mathematically verifiable | Code Execution output matches Excel formula. |
-| **Latency** | < 2s for Flash, < 15s for Thinking | Performance monitoring. |
+| **Google Search Grounding** | `gemini-3-flash` | **Verification (Step 1):** Verifies the business exists, finds competitors, and detects the specific business model (e.g., "DTC Fashion" vs "B2B SaaS"). |
+| **URL Context Tool** | `gemini-3-flash` | **Extraction (Step 1):** Crawls the user's landing page to extract brand voice, pricing tiers, and existing tech stack clues (e.g., "They use Shopify"). |
+| **Structured Outputs** | `gemini-3-flash` | **UI Rendering (Steps 2-5):** Forces the LLM to return strict JSON that adheres to our React Component schemas (Forms, Cards, Charts). |
+| **Gemini Thinking** | `gemini-3-pro` | **Reasoning (Step 5):** Uses `thinkingConfig` (2048 tokens) to solve complex dependency logic. *Example: "If they lack a CRM (Gap), we must install that (Phase 1) before turning on Lead Gen (Phase 2)."* |
+| **Code Execution** | `gemini-3-flash` | **Scoring (Step 4):** Uses Python to calculate weighted readiness scores and financial projections. Prevents "LLM Math" hallucinations. |
+| **Function Calling** | `gemini-3-flash` | **Action (Dashboard):** Allows the Orchestrator agent to trigger external tools (Email API, Database updates, Research jobs). |
 
 ---
 
-## 8. Launch Checklist (Short)
+## 3. The Agent Roster
 
-1.  ✅ **Core Wizard:** Screens 1-5 implemented.
-2.  ⬜ **AI Migration:** Move Client-side API calls to Edge Functions (Security).
-3.  ⬜ **Thinking Integration:** Enable `thinking_config` for Planner.
-4.  ⬜ **Visualizer:** Add Nano Banana image gen to Screen 3.
-5.  ⬜ **Auth:** Enable Supabase Login.
-6.  ⬜ **Dashboard:** Connect Task Board to Orchestrator.
+The platform is driven by specialized agents living in Supabase Edge Functions.
 
+| Agent | Role | Model | Primary Tools | Used In |
+| :--- | :--- | :--- | :--- | :--- |
+| **🕵️ Analyst** | Research | `Flash` | Search, URL Context | Step 1, Dashboard Overview |
+| **🔬 Extractor** | Consultant | `Flash` | Structured Output | Step 2 (Diagnostics) |
+| **⚖️ Optimizer** | Architect | `Flash` | JSON Schema | Step 3 (Systems) |
+| **💯 Scorer** | Auditor | `Flash` | **Code Execution** | Step 4 (Readiness) |
+| **📅 Planner** | Strategist | **Pro** | **Thinking Mode** | Step 5 (Roadmap) |
+| **🎼 Orchestrator**| PM | `Flash` | Function Calling | Dashboard Tasks |
+| **💬 Assistant** | Support | `Flash` | RAG, Chat | Client Brief |
+| **🎨 Visualizer** | Designer | `Banana` | Image Gen | Step 3 (Previews) |
+
+---
+
+## 4. Phase 1: The Intelligent Wizard (Detailed Spec)
+
+### Step 1: Business Context (The Truth Baseline)
+*   **Goal:** Prove to the user we know them better than they know themselves.
+*   **Input:** URL + Company Name.
+*   **Process:**
+    1.  **Analyst Agent** performs Google Search to verify existence.
+    2.  Uses URL Context to read the landing page.
+    3.  Determines `IndustryType` (Enum) and `MaturityScore` (1-5).
+*   **Output:** Streaming "Intelligence Notes" in Right Panel + JSON configuration for Step 2.
+
+### Step 2: Industry Diagnostics (The Deep Dive)
+*   **Goal:** Surface specific pain points using industry jargon.
+*   **Input:** `IndustryType` (from Step 1).
+*   **Process:**
+    1.  **Extractor Agent** loads the "Industry Pack" (e.g., Fashion).
+    2.  Generates 4 dynamic questions via Structured Output.
+    3.  *Example (Fashion):* "How do you handle seasonal drops?"
+    4.  *Example (Real Estate):* "What is your lead-to-tour velocity?"
+*   **Output:** Dynamic Form Schema.
+
+### Step 3: System Selection (The Prescription)
+*   **Goal:** Map pain points to specific AI Modules.
+*   **Input:** User Answers from Step 2.
+*   **Process:**
+    1.  **Optimizer Agent** ranks our catalog of AI Systems.
+    2.  Generates a custom "Revenue Impact" string for each card.
+    3.  *Visualizer Agent (Optional):* Generates a preview image of what that system looks like for their brand.
+*   **Output:** Ranked List of Systems.
+
+### Step 4: Readiness Assessment (The Audit)
+*   **Goal:** Honest feasibility check.
+*   **Input:** Checklist (Data, Team, Budget).
+*   **Process:**
+    1.  **Scorer Agent** receives boolean inputs.
+    2.  Uses **Code Execution** to run a weighted scoring algorithm.
+    3.  Identifies "Critical Gaps" (e.g., No CRM = Score penalty -30).
+*   **Output:** Score (0-100), Risks[], Wins[].
+
+### Step 5: The Master Plan (The Strategy)
+*   **Goal:** The "Aha!" moment. A concrete 90-day plan.
+*   **Input:** All previous state.
+*   **Process:**
+    1.  **Planner Agent (Gemini 3 Pro)** activates **Thinking Mode**.
+    2.  **Reasoning Chain:**
+        *   *Analyze Gaps:* "They have no data structure."
+        *   *Sequence:* "Phase 1 must be Data Foundation."
+        *   *Dependency:* "Cannot deploy Lead Gen (System) until Data (Gap) is fixed."
+    3.  Generates strict JSON for the Gantt Chart UI.
+*   **Output:** 3-Phase Roadmap (JSON).
+
+---
+
+## 5. Phase 2: Dashboards & Execution
+
+### A. Client Dashboard (The "View")
+Focused on transparency, approval, and assets.
+
+1.  **Brief & Documents Tab**
+    *   **Feature:** RAG-powered Doc Analysis.
+    *   **User Action:** Uploads "Brand Guidelines.pdf".
+    *   **Assistant Agent:** Reads PDF, extracts color codes/tone, and auto-updates the System Prompts for the project.
+2.  **Timeline Tab**
+    *   **Feature:** Interactive Gantt.
+    *   **Display:** Read-only view of the roadmap generated in Step 5.
+3.  **Billing Tab**
+    *   **Feature:** Stripe Integration.
+    *   **Agent:** **Analytics Agent** explains the invoice ("This month included extra token usage for deep research").
+
+### B. Agency Dashboard (The "Control Center")
+Focused on management, deployment, and optimization.
+
+1.  **CRM Tab**
+    *   **Feature:** Lead Management.
+    *   **Agent:** **Analyst** scans new leads from the Wizard and assigns a "Close Probability" score.
+2.  **Project Planning Tab**
+    *   **Feature:** Master Gantt.
+    *   **Agent:** **Planner** re-optimizes schedules across all clients if a team member goes on leave.
+3.  **Tasks Tab (Orchestration)**
+    *   **Feature:** AI-Assisted Execution.
+    *   **Orchestrator Agent:** "Do It" Buttons.
+        *   *Task:* "Draft Cold Email Sequence." -> **Agent:** Generates text based on Client Brief.
+        *   *Task:* "Configure CRM." -> **Agent:** Generates Python script for setup.
+
+---
+
+## 6. Industry Packs: User Journeys
+
+### A. Fashion E-commerce (The "Visual" Journey)
+*   **Context:** Brand "LuxeWear".
+*   **Step 2 Diagnostic:** Asked about "Returns Rate" and "UGC Sourcing".
+*   **Step 3 Recommendation:** "Fit Intelligence Agent" (reduces returns) + "Content Supply Chain" (automates UGC).
+*   **Step 5 Plan:** Phase 1 = Data Tagging. Phase 2 = Fit Widget Deployment.
+*   **Dashboard Action:** **Visualizer Agent** generates mockups of the new product page with the Fit Widget.
+
+### B. Real Estate (The "Speed" Journey)
+*   **Context:** Agency "City Properties".
+*   **Step 2 Diagnostic:** Asked about "Speed to Lead" and "Weekend Showings".
+*   **Step 3 Recommendation:** "WhatsApp Concierge" (Instant reply) + "Tour Scheduler".
+*   **Step 5 Plan:** Phase 1 = CRM Integration. Phase 2 = Bot Training.
+*   **Dashboard Action:** **Orchestrator Agent** drafts the script for the WhatsApp bot based on their listings.
+
+---
+
+## 7. Technical Architecture & Schema
+
+### Database Schema (Supabase PostgreSQL)
+
+```sql
+-- 1. Organizations (Agency vs Client Tenants)
+create table organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  type text check (type in ('agency', 'client'))
+);
+
+-- 2. Projects (The Wizard State Container)
+create table projects (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references organizations(id),
+  name text,
+  website_url text,
+  industry text, -- 'fashion', 'real_estate', etc.
+  
+  -- The "Brain" of the project
+  wizard_state jsonb, -- Stores answers from Steps 1-4
+  roadmap_state jsonb, -- Stores the Step 5 plan
+  
+  status text default 'onboarding' -- onboarding, active, paused
+);
+
+-- 3. Tasks (Execution Items from Roadmap)
+create table tasks (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references projects(id),
+  title text,
+  status text check (status in ('todo', 'in_progress', 'review', 'done')),
+  
+  -- AI Metadata
+  is_ai_generated boolean default true,
+  ai_assistant_prompt text, -- The prompt to run if user clicks "Do It"
+  
+  due_date timestamptz
+);
+
+-- 4. Documents (RAG Knowledge Base)
+create table documents (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references projects(id),
+  name text,
+  content text, -- Extracted text
+  embedding vector(768) -- Gemini Embedding
+);
+```
+
+### Edge Function Logic Flow (Step 5 Example)
+
+```typescript
+// supabase/functions/planner/index.ts
+import { GoogleGenAI } from "npm:@google/genai";
+
+Deno.serve(async (req) => {
+  const { wizardState } = await req.json();
+  
+  // 1. Initialize Pro Model
+  const ai = new GoogleGenAI({ apiKey: Deno.env.get("GOOGLE_API_KEY") });
+  
+  // 2. Define Schema
+  const roadmapSchema = { ... }; // Complex JSON schema
+
+  // 3. Call Gemini with Thinking
+  const result = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Act as a Senior Strategist. Create a roadmap for a ${wizardState.industry} company...`,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: roadmapSchema,
+      thinkingConfig: { thinkingBudget: 2048 } // CRITICAL for logic
+    }
+  });
+
+  // 4. Save to DB
+  await supabase.from('projects').update({ roadmap_state: result.text });
+
+  return new Response(result.text);
+});
+```
+
+---
+
+## 8. Success Metrics
+
+1.  **Wizard Completion Rate:** >60% (High trust due to Step 1 verification).
+2.  **Plan Acceptance:** >80% of users proceed to Dashboard after seeing the Step 5 Roadmap.
+3.  **Agent Accuracy:**
+    *   Step 1 Industry Detection: >95%.
+    *   Step 5 Dependency Logic: 100% valid DAG (Directed Acyclic Graph).
+
+---
+
+## 9. Launch Checklist (Technical)
+
+*   [ ] **Supabase:** Init project, Apply Migrations, Set RLS.
+*   [ ] **Edge Functions:** Deploy `analyst`, `extractor`, `optimizer`, `scorer`, `planner`.
+*   [ ] **Secrets:** Set `GOOGLE_API_KEY` in Supabase Vault.
+*   [ ] **Frontend:** Replace local `ai.ts` calls with `supabase.functions.invoke()`.
+*   [ ] **Auth:** Implement Magic Link login for Dashboard access.
