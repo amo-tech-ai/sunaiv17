@@ -122,7 +122,8 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
     } else {
       if (selectedSystems.length >= 3) {
         const shakeCard = document.getElementById(`card-${sysId}`);
-        shakeCard?.classList.add('animate-shake'); 
+        shakeCard?.classList.add('animate-shake');
+        setTimeout(() => shakeCard?.classList.remove('animate-shake'), 500);
         return;
       }
       newSelection = [...selectedSystems, sysId];
@@ -135,15 +136,20 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
 
   return (
     <div className="animate-fade-in space-y-8">
-      <div className="flex justify-between items-end">
+      {/* Header - Stacks on mobile */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="font-serif text-4xl text-sun-primary mb-2">Recommended Strategy</h1>
-          <p className="text-sun-secondary font-sans">
+          <h1 className="font-serif text-3xl md:text-4xl text-sun-primary mb-2">Recommended Strategy</h1>
+          <p className="text-sun-secondary font-sans text-sm md:text-base">
             Based on your diagnostics, we've ranked these systems for {data.businessName}.
           </p>
         </div>
-        <div className="text-right">
-           <span className={`text-sm font-bold tracking-widest ${selectedSystems.length === 3 ? 'text-sun-accent' : 'text-sun-muted'}`}>
+        <div className="text-left md:text-right">
+           <span className={`text-sm font-bold tracking-widest px-3 py-1.5 rounded border ${
+             selectedSystems.length === 3 
+               ? 'text-sun-accent border-sun-accent/30 bg-sun-accent/5' 
+               : 'text-sun-muted border-sun-border bg-sun-bg'
+           }`}>
              {selectedSystems.length}/3 SELECTED
            </span>
         </div>
@@ -174,13 +180,14 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
                 key={sys.id}
                 id={`card-${sys.id}`}
                 onClick={() => !isDisabled && handleSelection(sys.id)}
+                // Added touch-manipulation and active states for better mobile feel
                 className={`
-                  p-6 border rounded-sm transition-all duration-300 cursor-pointer group relative flex flex-col justify-between min-h-[220px]
+                  p-5 md:p-6 border rounded-sm transition-all duration-300 cursor-pointer group relative flex flex-col justify-between min-h-[220px] touch-manipulation
                   ${isSelected 
-                    ? 'border-sun-primary bg-white shadow-md scale-[1.01]' 
+                    ? 'border-sun-primary bg-white shadow-md scale-[1.01] active:scale-[0.99]' 
                     : isDisabled 
                       ? 'opacity-50 border-sun-border bg-sun-bg grayscale cursor-not-allowed' 
-                      : 'border-sun-border bg-white/50 hover:border-sun-accent/50 hover:shadow-sm'
+                      : 'border-sun-border bg-white/50 hover:border-sun-accent/50 hover:shadow-sm active:bg-sun-bg'
                   }
                   ${isRecommended && !isSelected && !isDisabled ? 'ring-1 ring-sun-accent/30 bg-sun-accent/5' : ''}
                 `}
@@ -195,7 +202,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
                 {/* Header */}
                 <div>
                   <div className="flex justify-between items-start mb-3 mt-1">
-                    <h3 className={`font-serif text-xl leading-tight ${isSelected ? 'text-sun-primary' : 'text-sun-secondary'}`}>
+                    <h3 className={`font-serif text-lg md:text-xl leading-tight ${isSelected ? 'text-sun-primary' : 'text-sun-secondary'}`}>
                       {sys.title}
                     </h3>
                     <div className={`w-6 h-6 border rounded-full flex items-center justify-center transition-colors shrink-0 ml-2 ${

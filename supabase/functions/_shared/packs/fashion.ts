@@ -22,71 +22,91 @@ export const FASHION_PACK: IndustryPack = {
   riskFactors: ['High Returns', 'Creative Fatigue', 'Inventory Deadstock'],
   diagnostics: [
     {
-      id: 'north_star',
-      title: 'The North Star',
-      description: 'Select your absolute priority for the next quarter.',
+      id: 'block_a_constraint',
+      title: 'Primary Growth Constraint',
+      description: 'What is the biggest thing holding your business back right now?',
       questions: [{
-        id: 'primary_goal',
-        text: 'What is your absolute priority for the next quarter?',
-        ai_hint: 'This defines the "Theme" of your roadmap.',
+        id: 'fashion_primary_constraint',
+        text: 'What is the biggest thing holding your business back right now?',
+        ai_hint: 'Identifying the root cause allows us to prioritize the right system architecture.',
         type: 'single',
         options: [
-          { label: "Scale revenue aggressively", mapped_system_id: "conversion_booster", pain_point_tag: "Growth", priority_weight: "Critical" },
-          { label: "Protect margins (reduce returns/costs)", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Margins", priority_weight: "Critical" },
-          { label: "Launch new collections faster", mapped_system_id: "lead_gen", pain_point_tag: "Speed", priority_weight: "High" },
-          { label: "Automate customer operations", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Ops", priority_weight: "High" },
-          { label: "Build brand authority", mapped_system_id: "content_studio", pain_point_tag: "Brand", priority_weight: "Medium" }
+          { label: "Revenue Growth is stalling", mapped_system_id: "conversion_booster", pain_point_tag: "Growth", priority_weight: "Critical", ai_explanation: "When growth stalls, we need to look at conversion efficiency first." },
+          { label: "High Return Rates are killing margins", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Margins", priority_weight: "Critical", ai_explanation: "Returns are the silent killer in fashion. Reducing them directly boosts net profit." },
+          { label: "Operations are too manual/slow", mapped_system_id: "crm_autopilot", pain_point_tag: "Ops", priority_weight: "High", ai_explanation: "Operational drag prevents you from focusing on strategy and creative." },
+          { label: "Marketing costs (CAC) are too high", mapped_system_id: "content_studio", pain_point_tag: "CAC", priority_weight: "High", ai_explanation: "High CAC usually means creative fatigue. You need more assets, faster." },
+          { label: "Hard to scale without hiring", mapped_system_id: "lead_gen", pain_point_tag: "Scale", priority_weight: "Medium", ai_explanation: "Automation is the only way to scale output without scaling headcount linearly." }
         ]
       }]
     },
     {
-      id: 'revenue_friction',
-      title: 'Revenue Friction',
-      description: 'Where are you losing money right now?',
+      id: 'block_b_revenue',
+      title: 'Revenue & Sales Friction',
+      description: 'Where are you losing money or sales today?',
       questions: [{
-        id: 'revenue_leaks',
-        text: 'Where are you losing money right now?',
-        ai_hint: 'Pinpointing leaks often yields higher ROI than seeking new traffic.',
+        id: 'fashion_revenue_friction',
+        text: 'Where are you losing money or sales today?',
+        ai_hint: 'Plug the leaks in your bucket before pouring in more water (traffic).',
         type: 'multi',
         options: [
-          { label: "High traffic, but low add-to-cart rate", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "High", ai_explanation: "Traffic without conversion is wasted ad spend. We need to optimize the PDP." },
-          { label: "Customers abandon checkout at the last step", mapped_system_id: "crm_autopilot", pain_point_tag: "Abandonment", priority_weight: "High", ai_explanation: "Recovering abandoned carts is the lowest hanging fruit in ecommerce." },
-          { label: "Return rates are eating into our profits", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Returns", priority_weight: "Critical", ai_explanation: "Returns in fashion are often a data problem. We need to solve sizing confusion pre-purchase." },
-          { label: "Ad costs (CAC) are rising too high", mapped_system_id: "content_studio", pain_point_tag: "CAC", priority_weight: "Medium", ai_explanation: "Combating ad fatigue requires a high-velocity creative testing engine." },
-          { label: "VIPs and repeat customers aren't buying enough", mapped_system_id: "crm_autopilot", pain_point_tag: "Retention", priority_weight: "Medium", ai_explanation: "Increasing LTV is the key to sustainable growth." }
+          { label: "Visitors browse but don't buy", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "High", ai_explanation: "Low conversion often indicates friction in the buying journey or lack of trust signals." },
+          { label: "Customers abandon carts at checkout", mapped_system_id: "crm_autopilot", pain_point_tag: "Abandonment", priority_weight: "High", ai_explanation: "Recovering abandoned carts is the lowest hanging fruit for immediate revenue." },
+          { label: "Sales rely too heavily on paid ads", mapped_system_id: "content_studio", pain_point_tag: "Dependency", priority_weight: "Critical", ai_explanation: "Paid dependency is risky. We need to build organic/owned channels." },
+          { label: "Past customers don't return to buy again", mapped_system_id: "crm_autopilot", pain_point_tag: "Retention", priority_weight: "High", ai_explanation: "Increasing LTV is easier than acquiring new customers. Retention is key." },
+          { label: "Promotions work once, then stop", mapped_system_id: "lead_gen", pain_point_tag: "Fatigue", priority_weight: "Medium" }
         ]
       }]
     },
     {
-      id: 'time_blockers',
-      title: 'Time Blockers',
-      description: 'What creates the most manual work for your team?',
+      id: 'block_c_time',
+      title: 'Time & Automation Drain',
+      description: 'What is consuming your team’s time?',
       questions: [{
-        id: 'manual_work',
-        text: 'What creates the most manual work for your team?',
-        ai_hint: 'Operational drag prevents you from working on strategy.',
+        id: 'fashion_time_drain',
+        text: 'What is consuming your team’s time?',
+        ai_hint: 'Your team should be focused on high-value creative work, not admin.',
         type: 'multi',
         options: [
-          { label: "Answering 'Where is my order?' & sizing questions", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support", priority_weight: "High", ai_explanation: "Your support team shouldn't be answering basic sizing queries. Automating this frees up 20+ hours a week." },
-          { label: "Creating content for Instagram/TikTok", mapped_system_id: "content_studio", pain_point_tag: "Content", priority_weight: "High", ai_explanation: "Automating asset production allows you to post 3x more often with less effort." },
-          { label: "Updating product catalogs & descriptions", mapped_system_id: "content_studio", pain_point_tag: "Admin", priority_weight: "Medium", ai_explanation: "AI can rewrite descriptions for SEO instantly." },
-          { label: "Managing inventory & dead stock", mapped_system_id: "conversion_booster", pain_point_tag: "Inventory", priority_weight: "Medium" }
+          { label: "Answering repetitive sizing/shipping questions", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support", priority_weight: "High", ai_explanation: "Support automation can free up 20+ hours a week immediately." },
+          { label: "Manually updating product catalogs", mapped_system_id: "content_studio", pain_point_tag: "Admin", priority_weight: "Medium" },
+          { label: "Creating content consistently for social", mapped_system_id: "content_studio", pain_point_tag: "Content", priority_weight: "Critical", ai_explanation: "Feeding the content beast is exhausting. AI can automate asset production." },
+          { label: "Handling returns and exchanges manually", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Returns", priority_weight: "High" },
+          { label: "Reporting & performance tracking", mapped_system_id: "crm_autopilot", pain_point_tag: "Reporting", priority_weight: "Low" }
         ]
       }]
     },
     {
-      id: 'scale_readiness',
+      id: 'block_d_marketing',
+      title: 'Marketing Bottlenecks',
+      description: 'What’s hardest about growing consistently?',
+      questions: [{
+        id: 'fashion_marketing_bottleneck',
+        text: 'What’s hardest about growing consistently?',
+        ai_hint: 'Sustainable growth requires a predictable marketing engine.',
+        type: 'multi',
+        options: [
+          { label: "Generating enough qualified traffic", mapped_system_id: "lead_gen", pain_point_tag: "Traffic", priority_weight: "High", ai_explanation: "Traffic is fuel. We need a reliable way to bring new eyes to the brand." },
+          { label: "Turning attention into revenue", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "High" },
+          { label: "Maintaining brand consistency at scale", mapped_system_id: "content_studio", pain_point_tag: "Brand", priority_weight: "Medium" },
+          { label: "Scaling campaigns without losing ROI", mapped_system_id: "lead_gen", pain_point_tag: "Scaling", priority_weight: "Critical" },
+          { label: "Measuring what actually works", mapped_system_id: "crm_autopilot", pain_point_tag: "Attribution", priority_weight: "Medium" }
+        ]
+      }]
+    },
+    {
+      id: 'block_e_readiness',
       title: 'Scale Readiness',
-      description: 'How fast do you want to implement these changes?',
+      description: 'How ready are you to automate and scale?',
       questions: [{
-        id: 'velocity',
-        text: 'How fast do you want to implement these changes?',
-        ai_hint: 'This helps us calibrate the intensity of the roadmap.',
+        id: 'fashion_scale_readiness',
+        text: 'How ready are you to automate and scale?',
+        ai_hint: 'This helps us calibrate the pace of the roadmap.',
         type: 'single',
         options: [
-          { label: "Aggressive: Fix it yesterday.", mapped_system_id: "lead_gen", pain_point_tag: "Fast", priority_weight: "Critical" },
-          { label: "Measured: One system at a time.", mapped_system_id: "crm_autopilot", pain_point_tag: "Steady", priority_weight: "Medium" },
-          { label: "Exploratory: Just looking for options.", mapped_system_id: "content_studio", pain_point_tag: "Slow", priority_weight: "Low" }
+          { label: "Ready to implement now", mapped_system_id: "lead_gen", pain_point_tag: "Ready", priority_weight: "Critical" },
+          { label: "Interested but need guidance", mapped_system_id: "crm_autopilot", pain_point_tag: "Guidance", priority_weight: "Medium" },
+          { label: "Exploring options", mapped_system_id: "content_studio", pain_point_tag: "Exploring", priority_weight: "Low" },
+          { label: "Not ready yet", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Not Ready", priority_weight: "Low" }
         ]
       }]
     }

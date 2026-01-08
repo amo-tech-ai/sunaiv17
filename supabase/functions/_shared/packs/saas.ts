@@ -22,71 +22,91 @@ export const SAAS_PACK: IndustryPack = {
   riskFactors: ['High Churn', 'Low Adoption', 'Support Overload'],
   diagnostics: [
     {
-      id: 'north_star',
-      title: 'The North Star',
-      description: 'What is the primary lever for growth?',
+      id: 'block_a_constraint',
+      title: 'Primary Growth Constraint',
+      description: 'What is the biggest thing holding your business back right now?',
       questions: [{
-        id: 'primary_goal',
-        text: 'What is the primary lever for growth?',
-        ai_hint: 'SaaS growth levers are distinct: Acquisition vs Retention vs Expansion.',
+        id: 'saas_primary_constraint',
+        text: 'What is the biggest thing holding your business back right now?',
+        ai_hint: 'SaaS growth levers are distinct: Acquisition, Retention, or Efficiency.',
         type: 'single',
         options: [
-          { label: "Acquire more new logos", mapped_system_id: "lead_gen", pain_point_tag: "Acquisition", priority_weight: "High" },
-          { label: "Reduce churn / Increase retention", mapped_system_id: "crm_autopilot", pain_point_tag: "Retention", priority_weight: "Critical" },
-          { label: "Expand Average Revenue Per User (ARPU)", mapped_system_id: "crm_autopilot", pain_point_tag: "Expansion", priority_weight: "Medium" },
-          { label: "Improve sales team efficiency", mapped_system_id: "content_studio", pain_point_tag: "Efficiency", priority_weight: "High" },
-          { label: "Automate onboarding", mapped_system_id: "conversion_booster", pain_point_tag: "Onboarding", priority_weight: "Medium" }
+          { label: "Acquiring new customers (Logos)", mapped_system_id: "lead_gen", pain_point_tag: "Acquisition", priority_weight: "High", ai_explanation: "Acquisition problems usually point to top-of-funnel or qualification issues." },
+          { label: "Retaining existing customers (Churn)", mapped_system_id: "crm_autopilot", pain_point_tag: "Churn", priority_weight: "Critical", ai_explanation: "Churn is the silent killer in SaaS. Fixing this has the highest long-term ROI." },
+          { label: "Converting trials to paid users", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "Critical", ai_explanation: "Activation is key. If they don't see value in the trial, they won't pay." },
+          { label: "Sales team efficiency & manual work", mapped_system_id: "content_studio", pain_point_tag: "Efficiency", priority_weight: "Medium" },
+          { label: "Scaling support without hiring", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support", priority_weight: "Medium" }
         ]
       }]
     },
     {
-      id: 'revenue_friction',
-      title: 'Revenue Friction',
-      description: 'Where is the leak in the bucket?',
+      id: 'block_b_revenue',
+      title: 'Revenue & Sales Friction',
+      description: 'Where are you losing money or sales today?',
       questions: [{
-        id: 'revenue_leaks',
-        text: 'Where is the leak in the bucket?',
-        ai_hint: 'Plugging the leak is cheaper than filling the bucket.',
+        id: 'saas_revenue_friction',
+        text: 'Where are you losing money or sales today?',
+        ai_hint: 'Plugging leaks is cheaper than filling the bucket.',
         type: 'multi',
         options: [
-          { label: "Demo requests don't show up (Ghosting)", mapped_system_id: "lead_gen", pain_point_tag: "Ghosting", priority_weight: "High", ai_explanation: "Booking a meeting is only half the battle. Automated reminders reduce no-show rates by 40%." },
-          { label: "Qualified leads slip through the cracks", mapped_system_id: "crm_autopilot", pain_point_tag: "Process", priority_weight: "High" },
-          { label: "Free trial users don't convert to paid", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "Critical", ai_explanation: "Users need guidance. Automated triggers based on usage behavior drive conversion." },
-          { label: "Churn is high in the first 90 days", mapped_system_id: "crm_autopilot", pain_point_tag: "Churn", priority_weight: "Critical", ai_explanation: "Churn is the silent killer in SaaS. Identifying at-risk users early is key." },
-          { label: "Upsell opportunities are missed", mapped_system_id: "crm_autopilot", pain_point_tag: "Upsell", priority_weight: "Medium" }
+          { label: "Demo requests ghost/don't show up", mapped_system_id: "lead_gen", pain_point_tag: "NoShows", priority_weight: "High", ai_explanation: "No-shows waste expensive rep time. Automated reminders can reduce this by 40%." },
+          { label: "Free trial users don't active/convert", mapped_system_id: "conversion_booster", pain_point_tag: "Activation", priority_weight: "Critical", ai_explanation: "Users need guidance. In-app nudges or automated outreach can drive activation." },
+          { label: "High churn in the first 90 days", mapped_system_id: "crm_autopilot", pain_point_tag: "Onboarding", priority_weight: "Critical" },
+          { label: "Missing upsell/expansion opportunities", mapped_system_id: "crm_autopilot", pain_point_tag: "Expansion", priority_weight: "Medium" },
+          { label: "Long sales cycles", mapped_system_id: "content_studio", pain_point_tag: "Velocity", priority_weight: "Medium" }
         ]
       }]
     },
     {
-      id: 'time_blockers',
-      title: 'Time Blockers',
-      description: 'Where is your team stuck?',
+      id: 'block_c_time',
+      title: 'Time & Automation Drain',
+      description: 'What is consuming your team’s time?',
       questions: [{
-        id: 'manual_work',
-        text: 'Where is your team stuck?',
-        ai_hint: 'Highly paid talent shouldn\'t do low-value admin.',
+        id: 'saas_time_drain',
+        text: 'What is consuming your team’s time?',
+        ai_hint: 'Your team should be building and selling, not doing admin.',
         type: 'multi',
         options: [
-          { label: "Manually qualifying inbound leads", mapped_system_id: "lead_gen", pain_point_tag: "Qualifying", priority_weight: "High", ai_explanation: "Let AI score and route leads so sales only talks to closable deals." },
-          { label: "Writing cold outreach emails", mapped_system_id: "content_studio", pain_point_tag: "Outreach", priority_weight: "Medium" },
-          { label: "Repetitive customer support tickets", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support", priority_weight: "Medium", ai_explanation: "Deflect Tier-1 tickets with an intelligent KB bot." },
-          { label: "Manual onboarding/training sessions", mapped_system_id: "conversion_booster", pain_point_tag: "Onboarding", priority_weight: "Medium" }
+          { label: "Manually qualifying inbound leads", mapped_system_id: "lead_gen", pain_point_tag: "Qualification", priority_weight: "High", ai_explanation: "Let AI score and route leads so sales only talks to closable deals." },
+          { label: "Answering repetitive support tickets", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support", priority_weight: "Medium", ai_explanation: "Deflect Tier-1 tickets with an intelligent KB bot." },
+          { label: "Creating sales assets & personalized outreach", mapped_system_id: "content_studio", pain_point_tag: "Outreach", priority_weight: "Medium" },
+          { label: "Manual onboarding/training sessions", mapped_system_id: "conversion_booster", pain_point_tag: "Onboarding", priority_weight: "Medium" },
+          { label: "Chasing payments/renewals", mapped_system_id: "crm_autopilot", pain_point_tag: "Finance", priority_weight: "Low" }
         ]
       }]
     },
     {
-      id: 'scale_readiness',
+      id: 'block_d_marketing',
+      title: 'Marketing Bottlenecks',
+      description: 'What’s hardest about growing consistently?',
+      questions: [{
+        id: 'saas_marketing_bottleneck',
+        text: 'What’s hardest about growing consistently?',
+        ai_hint: 'Predictable growth needs a predictable engine.',
+        type: 'multi',
+        options: [
+          { label: "Generating qualified leads (MQLs)", mapped_system_id: "lead_gen", pain_point_tag: "MQLs", priority_weight: "High" },
+          { label: "Creating thought leadership content", mapped_system_id: "content_studio", pain_point_tag: "Content", priority_weight: "Medium" },
+          { label: "Nurturing cold leads", mapped_system_id: "crm_autopilot", pain_point_tag: "Nurture", priority_weight: "High" },
+          { label: "Differentiating from competitors", mapped_system_id: "content_studio", pain_point_tag: "Positioning", priority_weight: "Medium" },
+          { label: "Attributing marketing ROI", mapped_system_id: "conversion_booster", pain_point_tag: "Attribution", priority_weight: "Low" }
+        ]
+      }]
+    },
+    {
+      id: 'block_e_readiness',
       title: 'Scale Readiness',
-      description: 'How fast do you want to implement these changes?',
+      description: 'How ready are you to automate and scale?',
       questions: [{
-        id: 'velocity',
-        text: 'How fast do you want to implement these changes?',
-        ai_hint: 'This helps us calibrate the intensity of the roadmap.',
+        id: 'saas_scale_readiness',
+        text: 'How ready are you to automate and scale?',
+        ai_hint: 'This helps us calibrate the pace of the roadmap.',
         type: 'single',
         options: [
-          { label: "Aggressive: Fix it yesterday.", mapped_system_id: "lead_gen", pain_point_tag: "Fast", priority_weight: "Critical" },
-          { label: "Measured: One system at a time.", mapped_system_id: "crm_autopilot", pain_point_tag: "Steady", priority_weight: "Medium" },
-          { label: "Exploratory: Just looking for options.", mapped_system_id: "content_studio", pain_point_tag: "Slow", priority_weight: "Low" }
+          { label: "Ready to implement now", mapped_system_id: "lead_gen", pain_point_tag: "Ready", priority_weight: "Critical" },
+          { label: "Interested but need guidance", mapped_system_id: "crm_autopilot", pain_point_tag: "Guidance", priority_weight: "Medium" },
+          { label: "Exploring options", mapped_system_id: "content_studio", pain_point_tag: "Exploring", priority_weight: "Low" },
+          { label: "Not ready yet", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Not Ready", priority_weight: "Low" }
         ]
       }]
     }

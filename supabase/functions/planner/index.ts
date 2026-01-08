@@ -48,6 +48,7 @@ serve(async (req) => {
         1. Analyze dependencies: If they have a 'Data Gap' (from readiness), Phase 1 MUST be 'Foundation'.
         2. Sequence the selected systems logically.
         3. Define specific deliverables and KPIs for each phase.
+        4. **Integration Rule**: If 'whatsapp_assistant' and 'crm_autopilot' are selected, include a specific task: "Configure WhatsApp-to-CRM Lead Sync".
       `,
       config: {
         thinkingConfig: { thinkingBudget: 4096 }, // Deep strategy

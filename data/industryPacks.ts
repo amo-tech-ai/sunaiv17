@@ -134,7 +134,7 @@ const REAL_ESTATE_PACK: IndustryPack = {
     'lead_gen': 'Pre-qualifies buyers to save agent time.',
     'content_studio': 'Automates listing marketing assets.',
     'conversion_booster': 'Increases tour booking rate from web traffic.',
-    'crm_autopilot': 'Revives cold leads from 6+ months ago.',
+    'crm_autopilot': 'Auto-syncs WhatsApp leads to CRM & revives cold leads from 6+ months ago.',
     'whatsapp_assistant': 'Responds to leads in <2 mins (Speed to Lead).'
   },
   diagnosticTemplates: {
@@ -171,12 +171,112 @@ const REAL_ESTATE_PACK: IndustryPack = {
   ])
 };
 
-export const INDUSTRY_PACKS: Record<IndustryType, IndustryPack> = {
+const TOURISM_PACK: IndustryPack = {
+  industry: 'tourism',
+  systemNames: {
+    'lead_gen': 'Direct Booking Pipeline',
+    'content_studio': 'Travel Content Studio',
+    'conversion_booster': 'Itinerary Conversion Engine',
+    'crm_autopilot': 'Review & Referral Flywheel',
+    'whatsapp_assistant': '24/7 Guest Concierge'
+  },
+  roiFormulas: {
+    'lead_gen': 'Increases direct bookings, saving 20-30% on OTA commissions.',
+    'content_studio': 'Generates viral reels/TikToks to drive organic traffic.',
+    'conversion_booster': 'Increases conversion on itinerary pages and upsells add-ons.',
+    'crm_autopilot': 'Automates review collection (TripAdvisor/Google) and repeat bookings.',
+    'whatsapp_assistant': 'Responds to international inquiries instantly while you sleep.'
+  },
+  diagnosticTemplates: {
+    'sales': 'What is blocking your direct booking growth?',
+    'marketing': 'How effective is your current review strategy?',
+    'speed': 'How much time do you spend answering repetitive inquiries?',
+    'priority': 'What is your main focus for the upcoming season?'
+  },
+  kpis: ['Direct Booking %', 'Review Count', 'RevPAR', 'Inquiry Response Time'],
+  riskFactors: ['OTA Dependency', 'Seasonality', 'Staff Burnout', 'Low Review Volume'],
+  fallbackQuestions: createSection('Tourism', [
+    {
+      id: 'tourism_margins',
+      text: "What is eating into your profit margins?",
+      ai_hint: "OTA commissions are necessary but expensive. Shifting 10% to direct can double net profit.",
+      type: 'single',
+      options: [
+        { label: "OTA Commissions (Viator/GetYourGuide)", mapped_system_id: "lead_gen", pain_point_tag: "Commissions" },
+        { label: "Missed Inquiries (Time Zones)", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Lost Leads" },
+        { label: "Low Direct Conversion", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion" }
+      ]
+    },
+    {
+      id: 'tourism_ops',
+      text: "What operational task takes too long?",
+      ai_hint: "Your team should focus on guests, not admin.",
+      type: 'multi',
+      options: [
+        { label: "Answering WhatsApp Questions", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Admin" },
+        { label: "Managing Reviews", mapped_system_id: "crm_autopilot", pain_point_tag: "Reputation" },
+        { label: "Creating Social Content", mapped_system_id: "content_studio", pain_point_tag: "Marketing" }
+      ]
+    }
+  ])
+};
+
+const EVENTS_PACK: IndustryPack = {
+  industry: 'events',
+  systemNames: {
+    'lead_gen': 'Sponsor Outreach Copilot',
+    'content_studio': 'Event Content Supply Chain',
+    'conversion_booster': 'Ticket Funnel Optimizer',
+    'crm_autopilot': 'Attendee Retention System',
+    'whatsapp_assistant': 'Event Ops Concierge'
+  },
+  roiFormulas: {
+    'lead_gen': 'Fills Expo Hall 30% faster than manual outreach.',
+    'content_studio': 'Generates all promotional assets for the event lifecycle.',
+    'conversion_booster': 'Increases ticket page conversion by optimizing checkout flow.',
+    'crm_autopilot': 'Boosts repeat attendance for annual events.',
+    'whatsapp_assistant': 'Reduces support tickets by answering FAQ instantly.'
+  },
+  diagnosticTemplates: {
+    'sales': 'What is preventing you from selling out faster?',
+    'marketing': 'How effective is your sponsor acquisition pipeline?',
+    'speed': 'Where is the biggest operational bottleneck?',
+    'priority': 'What is the critical success factor for your next event?'
+  },
+  kpis: ['Ticket Velocity', 'Sponsor Revenue', 'Attendee NPS', 'Show-up Rate'],
+  riskFactors: ['Late Ticket Sales', 'Vendor Chaos', 'Low Engagement'],
+  fallbackQuestions: createSection('Events', [
+    {
+      id: 'events_revenue',
+      text: "What is your biggest revenue challenge?",
+      ai_hint: "Cash flow in events is lumpy. Smoothing it out requires better pipelines.",
+      type: 'single',
+      options: [
+        { label: "Unpredictable Ticket Sales", mapped_system_id: "conversion_booster", pain_point_tag: "Ticket Velocity" },
+        { label: "Slow Sponsor Sales", mapped_system_id: "lead_gen", pain_point_tag: "Sponsors" },
+        { label: "Low Attendee Retention", mapped_system_id: "crm_autopilot", pain_point_tag: "Retention" }
+      ]
+    },
+    {
+      id: 'events_ops',
+      text: "Where does your team burn the most hours?",
+      ai_hint: "Event week is chaotic. Preparation shouldn't be.",
+      type: 'multi',
+      options: [
+        { label: "Vendor Coordination", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Logistics" },
+        { label: "Attendee Support/FAQs", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support" },
+        { label: "Marketing Content Creation", mapped_system_id: "content_studio", pain_point_tag: "Content" }
+      ]
+    }
+  ])
+};
+
+export const INDUSTRY_PACKS: Record<string, IndustryPack> = {
   'fashion': FASHION_PACK,
   'real_estate': REAL_ESTATE_PACK,
-  'tourism': { ...GENERIC_PACK, industry: 'tourism', fallbackQuestions: GENERIC_PACK.fallbackQuestions }, // TODO: Add Tourism specifics
+  'tourism': TOURISM_PACK,
+  'events': EVENTS_PACK,
   'saas': { ...GENERIC_PACK, industry: 'saas' }, 
-  'events': { ...GENERIC_PACK, industry: 'events' },
   'other': GENERIC_PACK
 };
 

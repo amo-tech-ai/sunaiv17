@@ -69,6 +69,7 @@ serve(async (req) => {
         3. **Analyze Dependencies**:
            - If recommending 'lead_gen' (traffic), check if they need 'crm_autopilot' (retention) to catch the value.
            - Highlight specific stack integrations in 'synergy_notes'.
+           - **Upgrade**: If 'whatsapp_assistant' and 'crm_autopilot' are both candidates, explicitly mention "Automatic Lead Sync" in the synergy notes.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },
