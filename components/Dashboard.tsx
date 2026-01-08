@@ -2,9 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, CheckSquare, Calendar, Settings, Database, LogOut, Loader2 } from 'lucide-react';
 import { Button } from './Button';
-import { AppState, SYSTEMS, Task } from '../types';
+import { AppState, Task } from '../types';
 import { Overview } from './dashboard/Overview';
 import { TaskBoard } from './dashboard/TaskBoard';
+import { RoadmapView } from './dashboard/RoadmapView';
+import { SystemsView } from './dashboard/SystemsView';
+import { SettingsView } from './dashboard/SettingsView';
 import { orchestrator } from '../services/gemini/orchestrator';
 
 interface DashboardProps {
@@ -64,65 +67,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
         return <TaskBoard tasks={state.dashboardState.tasks} onUpdateTaskStatus={handleUpdateTaskStatus} />;
 
       case 'Roadmap':
-        return (
-           <div className="bg-white border border-sun-border p-8 rounded-sm animate-fade-in">
-              <h2 className="font-serif text-2xl mb-6">Execution Roadmap</h2>
-              {state.aiState.roadmap.length > 0 ? (
-                <div className="space-y-8">
-                  {state.aiState.roadmap.map((phase, i) => (
-                    <div key={i} className="border-l-2 border-sun-accent pl-6 pb-6 relative">
-                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sun-bg border-2 border-sun-accent" />
-                      <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="text-lg font-bold text-sun-primary">{phase.phaseName}</h3>
-                        <span className="text-xs uppercase tracking-widest text-sun-muted">{phase.duration}</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 mt-4">
-                        {phase.items.map((item, idx) => (
-                          <div key={idx} className="bg-sun-right p-3 text-sm text-sun-secondary rounded-sm border border-sun-border/50">
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-sun-muted">No roadmap generated yet.</div>
-              )}
-           </div>
-        );
+        return <RoadmapView roadmap={state.aiState.roadmap} />;
 
       case 'Systems':
-        return (
-          <div className="bg-white border border-sun-border p-8 rounded-sm animate-fade-in">
-             <h2 className="font-serif text-2xl mb-6">Active Systems</h2>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {state.data.selectedSystems.map(sysId => {
-                   const sys = SYSTEMS.find(s => s.id === sysId);
-                   const impact = state.aiState.recommendations.impacts[sysId];
-                   return (
-                     <div key={sysId} className="border border-sun-border p-6 rounded-sm">
-                        <div className="flex justify-between items-start mb-4">
-                           <h3 className="font-bold text-lg">{sys?.title}</h3>
-                           <span className="bg-green-100 text-green-800 text-[10px] uppercase font-bold px-2 py-1 rounded-full">Active</span>
-                        </div>
-                        <p className="text-sm text-sun-secondary mb-4">{sys?.description}</p>
-                        <div className="text-xs bg-sun-right p-3 rounded-sm text-sun-tertiary">
-                           <strong>ROI Target:</strong> {impact || sys?.revenueImpact}
-                        </div>
-                     </div>
-                   );
-                })}
-             </div>
-          </div>
-        );
+        return <SystemsView selectedSystems={state.data.selectedSystems} impacts={state.aiState.recommendations.impacts} />;
 
       case 'Settings':
-        return (
-          <div className="bg-white border border-sun-border p-8 rounded-sm animate-fade-in text-center py-24 text-sun-muted">
-            Settings module coming in Phase 3.
-          </div>
-        );
+        return <SettingsView data={state.data} />;
 
       default:
         return null;
@@ -132,14 +83,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
   return (
     <div className="min-h-screen bg-sun-bg flex flex-col font-sans">
       {/* Header */}
-      <header className="border-b border-sun-border bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-sun-border bg-white/50 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-serif text-xl font-bold tracking-tight text-sun-primary">Sun AI Agency</div>
+          <div className="font-serif text-xl font-bold tracking-tight text-sun-primary flex items-center gap-3">
+            <span>Sun AI Agency</span>
+            <span className="hidden md:inline-block h-4 w-px bg-sun-border"></span>
+            <span className="hidden md:inline-block text-xs font-sans font-normal text-sun-tertiary tracking-widest uppercase">
+              Dashboard
+            </span>
+          </div>
           <div className="flex items-center gap-4">
-             <Button variant="ghost" onClick={onReset} className="text-xs flex items-center gap-2">
-                <LogOut size={14} /> Reset Wizard
+             <Button variant="ghost" onClick={onReset} className="text-xs flex items-center gap-2 h-8">
+                <LogOut size={14} /> Exit
              </Button>
-            <div className="h-8 w-8 rounded-full bg-sun-accent/10 flex items-center justify-center text-sun-accent text-xs font-bold">
+            <div className="h-8 w-8 rounded-full bg-sun-primary text-white flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-white">
               {state.data.businessName.substring(0, 2).toUpperCase() || 'AI'}
             </div>
           </div>
@@ -150,15 +107,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
         
         {/* Navigation Tabs */}
-        <div className="flex border-b border-sun-border mb-8 overflow-x-auto no-scrollbar">
+        <div className="flex border-b border-sun-border mb-8 overflow-x-auto no-scrollbar sticky top-16 bg-sun-bg/95 backdrop-blur-sm z-10 pt-2">
           {tabs.map((tab) => (
             <button
               key={tab.name}
               onClick={() => setActiveTab(tab.name)}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 relative -bottom-[2px] ${
                 activeTab === tab.name
-                  ? 'text-sun-primary border-b-2 border-sun-accent'
-                  : 'text-sun-muted hover:text-sun-primary'
+                  ? 'text-sun-primary border-sun-accent'
+                  : 'text-sun-muted border-transparent hover:text-sun-primary hover:border-sun-border'
               }`}
             >
               {tab.icon}
