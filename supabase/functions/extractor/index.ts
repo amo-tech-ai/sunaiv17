@@ -43,7 +43,7 @@ serve(async (req) => {
                           label: { type: Type.STRING },
                           mapped_system_id: { 
                             type: Type.STRING,
-                            // Must match industryPacks.ts system keys
+                            // Strict Enum mapping to ensure frontend compatibility
                             enum: ['lead_gen', 'content_studio', 'conversion_booster', 'crm_autopilot', 'whatsapp_assistant']
                           },
                           pain_point_tag: { type: Type.STRING }
@@ -66,30 +66,31 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `
-        You are a Senior Industry Consultant for the ${pack.industry} industry.
+        You are a Senior Strategy Consultant specializing in the ${pack.industry} industry.
         
-        Context:
-        - Tech Stack: ${selectedServices?.join(', ') || 'None'}
-        - Document Insights: ${docInsights || 'No documents provided'}
-        - Industry Definitions (System Names/KPIs): ${JSON.stringify(pack)}
+        **User Context:**
+        - **Tech Stack:** ${selectedServices?.length > 0 ? selectedServices.join(', ') : 'No specific tools selected'}
+        - **Business Insights (from Docs):** ${docInsights || 'None provided'}
+        - **Industry Systems:** ${JSON.stringify(pack.systemNames)}
 
-        Task:
-        Generate a dynamic diagnostic form with 3 distinct sections:
-        1. 'revenue' (Focus on Growth, Sales, Marketing)
-        2. 'operations' (Focus on Efficiency, Speed, Admin)
-        3. 'readiness' (Focus on Implementation Timeline & Strategy)
+        **Goal:**
+        Generate a dynamic diagnostic survey to identify their specific growth bottlenecks. 
+        The questions must feel bespoke to their stack and industry.
 
-        Logic Constraints:
-        1. **Context-Aware:** If 'docInsights' mentions a specific pain (e.g. "inventory chaos"), generate a question addressing it in 'operations'.
-        2. **Tech-Aware:** If 'selectedServices' includes a tool (e.g. "WhatsApp"), ask about optimizing it (e.g. "How fast do you reply on WhatsApp?").
-        3. **Readiness Check:** The 'readiness' section must ask about their timeline (e.g. "When are you looking to launch?").
-        4. **System Mapping:** EVERY option must map to a valid 'mapped_system_id' from our catalog: [lead_gen, content_studio, conversion_booster, crm_autopilot, whatsapp_assistant].
-           - Examples:
-             - "I want more leads" -> 'lead_gen'
-             - "I want to automate posts" -> 'content_studio'
-             - "I want instant replies" -> 'whatsapp_assistant'
-             - "I want to increase LTV" -> 'crm_autopilot'
-             - "I want to improve conversion" -> 'conversion_booster'
+        **Reasoning Requirements (Thinking Mode):**
+        1. **Analyze Context:** Look at the 'Tech Stack'. If they use 'WhatsApp', you MUST ask about response time or message volume. If they use 'Shopify', ask about conversion or returns.
+        2. **Analyze Docs:** If 'Business Insights' mentions specific pains (e.g. "low engagement"), frame a question around that.
+        3. **Map Solutions:** Every answer option must logically lead to recommending one of our AI Systems (mapped_system_id).
+
+        **Output Requirements:**
+        Generate 3 Sections:
+        1. **Revenue & Growth:** Identify sales bottlenecks.
+        2. **Operations & Speed:** Identify time sinks and efficiency gaps.
+        3. **Readiness:** Assess their timeline and willingness to automate.
+
+        **Constraint:**
+        - Ensure 'mapped_system_id' is ALWAYS one of: ['lead_gen', 'content_studio', 'conversion_booster', 'crm_autopilot', 'whatsapp_assistant'].
+        - 'pain_point_tag' should be short (e.g. "High Churn", "Slow Comms").
       `,
       config: {
         thinkingConfig: { thinkingBudget: 2048 },

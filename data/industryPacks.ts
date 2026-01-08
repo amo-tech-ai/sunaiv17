@@ -1,5 +1,25 @@
 
-import { IndustryPack, IndustryType } from "../types";
+import { IndustryType, DiagnosticSection } from "../types";
+
+// Helper to create standard structure
+const createSection = (industry: string, questions: any[]): DiagnosticSection[] => [
+  {
+    id: 'core_diagnosis',
+    title: `${industry.charAt(0).toUpperCase() + industry.slice(1)} Growth Diagnostics`,
+    description: "Identify your primary bottlenecks to unlock system recommendations.",
+    questions: questions
+  }
+];
+
+export interface IndustryPack {
+  industry: IndustryType | string;
+  systemNames: Record<string, string>;
+  roiFormulas: Record<string, string>;
+  diagnosticTemplates: Record<string, string>;
+  kpis: string[];
+  riskFactors: string[];
+  fallbackQuestions: DiagnosticSection[];
+}
 
 const GENERIC_PACK: IndustryPack = {
   industry: 'other',
@@ -24,7 +44,31 @@ const GENERIC_PACK: IndustryPack = {
     'priority': 'What is the single most important goal for this quarter?'
   },
   kpis: ['Revenue Growth', 'Efficiency Score', 'CAC', 'LTV'],
-  riskFactors: ['Data Silos', 'Manual Processes', 'Lack of Ownership']
+  riskFactors: ['Data Silos', 'Manual Processes', 'Lack of Ownership'],
+  fallbackQuestions: createSection('General', [
+    {
+      id: 'revenue_blocker',
+      text: "What is your primary revenue bottleneck?",
+      ai_hint: "Identifying the choke point allows us to deploy the right accelerator.",
+      type: 'single',
+      options: [
+        { label: "Not enough leads", mapped_system_id: "lead_gen", pain_point_tag: "Low Volume" },
+        { label: "Low conversion rate", mapped_system_id: "conversion_booster", pain_point_tag: "Low Conversion" },
+        { label: "High customer churn", mapped_system_id: "crm_autopilot", pain_point_tag: "High Churn" }
+      ]
+    },
+    {
+      id: 'time_sink',
+      text: "Where do you spend the most manual time?",
+      ai_hint: "Automation should focus on repetitive, high-volume tasks first.",
+      type: 'multi',
+      options: [
+        { label: "Answering FAQs/Support", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support Drag" },
+        { label: "Creating Content", mapped_system_id: "content_studio", pain_point_tag: "Content Burnout" },
+        { label: "Managing Data/Admin", mapped_system_id: "crm_autopilot", pain_point_tag: "Admin Drag" }
+      ]
+    }
+  ])
 };
 
 const FASHION_PACK: IndustryPack = {
@@ -50,7 +94,31 @@ const FASHION_PACK: IndustryPack = {
     'priority': 'What is your main focus for the next collection?'
   },
   kpis: ['Return Rate', 'AOV', 'Repeat Purchase Rate', 'CAC'],
-  riskFactors: ['High Returns', 'Creative Fatigue', 'Inventory Deadstock']
+  riskFactors: ['High Returns', 'Creative Fatigue', 'Inventory Deadstock'],
+  fallbackQuestions: createSection('Fashion', [
+    {
+      id: 'fashion_returns',
+      text: "What is impacting your margins the most?",
+      ai_hint: "Returns in fashion are the silent profit killer. Reducing them is often easier than finding new customers.",
+      type: 'single',
+      options: [
+        { label: "High Return Rates", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Returns" },
+        { label: "Low Add-to-Cart", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion" },
+        { label: "Creative Fatigue (Ad Costs)", mapped_system_id: "content_studio", pain_point_tag: "CAC" }
+      ]
+    },
+    {
+      id: 'fashion_ops',
+      text: "Where is your team blocked?",
+      ai_hint: "Fashion operations often break during seasonal drops.",
+      type: 'multi',
+      options: [
+        { label: "Sourcing UGC Content", mapped_system_id: "content_studio", pain_point_tag: "Content" },
+        { label: "Answering Sizing Questions", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Support" },
+        { label: "Retargeting Past Buyers", mapped_system_id: "crm_autopilot", pain_point_tag: "LTV" }
+      ]
+    }
+  ])
 };
 
 const REAL_ESTATE_PACK: IndustryPack = {
@@ -76,39 +144,37 @@ const REAL_ESTATE_PACK: IndustryPack = {
     'priority': 'What would have the biggest impact on your GCI?'
   },
   kpis: ['Speed to Lead', 'Tour Conversion', 'GCI', 'Referral Rate'],
-  riskFactors: ['Slow Response Time', 'Unqualified Tours', 'Manual Follow-up']
-};
-
-const TOURISM_PACK: IndustryPack = {
-  industry: 'tourism',
-  systemNames: {
-    'lead_gen': 'WhatsApp Booking Concierge',
-    'content_studio': 'Review-to-Reputation Flywheel',
-    'conversion_booster': 'Itinerary Builder & Upsell Engine',
-    'crm_autopilot': 'Follow-Up & Referral Automations',
-    'whatsapp_assistant': 'Day-Of Ops Runbook Generator'
-  },
-  roiFormulas: {
-    'lead_gen': 'Expected 60% faster response time.',
-    'content_studio': 'Increases review volume by 30%.',
-    'conversion_booster': 'Increases booking value by 25% through upsells.',
-    'crm_autopilot': 'Boosts repeat booking rate.',
-    'whatsapp_assistant': 'Streamlines daily operations.'
-  },
-  diagnosticTemplates: {
-    'sales': 'What is blocking your booking conversion?',
-    'marketing': 'How effective is your current review collection?',
-    'speed': 'Which operational task consumes the most time?',
-    'priority': 'What is your biggest operational challenge?'
-  },
-  kpis: ['Response Time', 'Booking Value', 'Review Rating', 'Repeat Rate'],
-  riskFactors: ['Manual Booking Entry', 'Slow Response', 'Seasonality']
+  riskFactors: ['Slow Response Time', 'Unqualified Tours', 'Manual Follow-up'],
+  fallbackQuestions: createSection('Real Estate', [
+    {
+      id: 're_speed',
+      text: "What is your biggest lead leakage point?",
+      ai_hint: "Speed to lead is the #1 driver of conversion in real estate.",
+      type: 'single',
+      options: [
+        { label: "Slow Response on Weekends", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Speed" },
+        { label: "Unqualified Viewings", mapped_system_id: "lead_gen", pain_point_tag: "Quality" },
+        { label: "Ghosting after Viewing", mapped_system_id: "crm_autopilot", pain_point_tag: "Follow-up" }
+      ]
+    },
+    {
+      id: 're_admin',
+      text: "What prevents you from closing more deals?",
+      ai_hint: "Agents should spend time negotiating, not scheduling.",
+      type: 'multi',
+      options: [
+        { label: "Scheduling Friction", mapped_system_id: "conversion_booster", pain_point_tag: "Admin" },
+        { label: "Writing Listing Descriptions", mapped_system_id: "content_studio", pain_point_tag: "Marketing" },
+        { label: "Database Management", mapped_system_id: "crm_autopilot", pain_point_tag: "Data" }
+      ]
+    }
+  ])
 };
 
 export const INDUSTRY_PACKS: Record<IndustryType, IndustryPack> = {
   'fashion': FASHION_PACK,
   'real_estate': REAL_ESTATE_PACK,
-  'tourism': TOURISM_PACK,
+  'tourism': { ...GENERIC_PACK, industry: 'tourism', fallbackQuestions: GENERIC_PACK.fallbackQuestions }, // TODO: Add Tourism specifics
   'saas': { ...GENERIC_PACK, industry: 'saas' }, 
   'events': { ...GENERIC_PACK, industry: 'events' },
   'other': GENERIC_PACK

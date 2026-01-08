@@ -1,8 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { Loader2, ArrowRight, Lightbulb, Check, Circle, Square, Info } from 'lucide-react';
+import { Loader2, Info, RefreshCw, Check, Circle, Square } from 'lucide-react';
 import { AppState, DiagnosticSection, DiagnosticOption } from '../../types';
 import { extractor } from '../../services/gemini/extractor';
+import { Button } from '../Button';
 
 interface Step2DiagnosticsProps {
   industry: AppState['data']['industry'];
@@ -26,31 +27,43 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
   setStream
 }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const fetchQuestions = async () => {
+    setLoading(true);
+    setError(false);
+    
+    // Initial stream message to build trust
+    setStream(`**Consultant is Online**\n\nI am analyzing your **${industry.replace('_', ' ')}** business context.\n\nReviewing your tech stack: ${selectedServices.join(', ') || 'Standard Setup'}...`);
+    
+    // Simulate thinking delay for effect if it's too fast, or just let natural API latency handle it
+    setTimeout(() => {
+        if(loading) setStream(`**Deep Dive**\n\nFormulating diagnostic questions based on your document insights...\n\nMapping potential bottlenecks to AI solutions...`);
+    }, 1500);
+
+    try {
+      const result = await extractor.generateQuestions(industry, selectedServices, documentInsights);
+      
+      if (result && result.length > 0) {
+        setAiQuestions(result);
+        setStream(`**Diagnostics Ready**\n\nI've prepared a custom deep-dive.\n\nHover over any question, and I will explain *why* I'm asking it based on your profile.`);
+      } else {
+         throw new Error("No sections generated");
+      }
+    } catch (e) {
+      console.error(e);
+      setError(true);
+      setStream("I encountered an issue generating custom diagnostics. You can try reloading or use our offline diagnostic pack.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Only fetch if questions haven't been generated yet for this industry context
-    if (!aiQuestions || aiQuestions.length === 0) {
-      const fetchQuestions = async () => {
-        setLoading(true);
-        setStream(`Consultant is analyzing your tech stack (${selectedServices.join(', ') || 'Standard'})...\n\nSearching for industry-specific bottlenecks in ${industry}...`);
-        
-        try {
-          const result = await extractor.generateQuestions(industry, selectedServices, documentInsights);
-          
-          if (result && result.length > 0) {
-            setAiQuestions(result);
-            setStream(`**Diagnostics Generated**\n\nI've structured a deep-dive based on your ${industry.replace('_', ' ')} context.\n\nHover over any question to understand why it's critical for your roadmap.`);
-          } else {
-             // Fallback if AI fails to generate valid sections
-             throw new Error("No sections generated");
-          }
-        } catch (e) {
-          console.error(e);
-          setStream("I encountered an issue generating custom diagnostics. Please try refreshing or proceed manually.");
-        } finally {
-          setLoading(false);
-        }
-      };
+    // Check if aiQuestions is array and has length, casting properly
+    const qs = aiQuestions as unknown as DiagnosticSection[];
+    if (!qs || qs.length === 0) {
       fetchQuestions();
     }
   }, [industry]);
@@ -83,16 +96,16 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-6 animate-fade-in py-20">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 animate-fade-in">
         <div className="relative">
           <div className="absolute inset-0 bg-sun-accent/20 rounded-full animate-ping"></div>
-          <div className="bg-white p-4 rounded-full border border-sun-border shadow-sm relative z-10">
-            <Loader2 size={32} className="animate-spin text-sun-accent" />
+          <div className="bg-white p-6 rounded-full border border-sun-border shadow-sm relative z-10">
+            <Loader2 size={40} className="animate-spin text-sun-accent" />
           </div>
         </div>
-        <div className="text-center space-y-2">
-          <h3 className="font-serif text-xl text-sun-primary">Analyzing Business Context...</h3>
-          <p className="text-sm text-sun-secondary max-w-md mx-auto">
+        <div className="text-center space-y-3 max-w-md">
+          <h3 className="font-serif text-2xl text-sun-primary">Analyzing Business Context</h3>
+          <p className="text-sun-secondary leading-relaxed">
             The Extractor Agent is reviewing your services and documents to formulate relevant diagnostic questions.
           </p>
         </div>
@@ -100,13 +113,22 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
     );
   }
 
-  // Cast aiQuestions to correct type if needed, though props should handle it
+  // Cast aiQuestions to correct type
   const sections = aiQuestions as unknown as DiagnosticSection[];
 
-  if (!sections || sections.length === 0) {
+  if (error || !sections || sections.length === 0) {
     return (
-      <div className="text-center py-20 animate-fade-in">
-        <p className="text-sun-secondary">Unable to load diagnostic questions. Please try refreshing.</p>
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] animate-fade-in space-y-6 text-center">
+        <div className="bg-red-50 p-4 rounded-full">
+           <RefreshCw className="text-sun-tertiary" size={32} />
+        </div>
+        <div className="max-w-md">
+          <h3 className="text-lg font-serif text-sun-primary mb-2">Connection Issue</h3>
+          <p className="text-sun-secondary mb-6">Unable to load AI-generated questions. Please try again to load the industry standard diagnostics.</p>
+          <Button onClick={fetchQuestions}>
+            Retry / Load Offline Pack
+          </Button>
+        </div>
       </div>
     );
   }
@@ -138,15 +160,16 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
                   key={q.id} 
                   className="group relative transition-all duration-300 scroll-mt-24"
                   onMouseEnter={() => setStream(`**Context: ${q.text}**\n\n${q.ai_hint}`)}
+                  onClick={() => setStream(`**Context: ${q.text}**\n\n${q.ai_hint}`)}
                 >
                   <div className="flex items-baseline justify-between mb-4">
                     <label className="text-lg font-serif font-medium text-sun-primary group-hover:text-sun-accent transition-colors cursor-help w-full">
                       {q.text}
-                      <span className="ml-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity text-sun-accent">
-                         <Info size={14} />
+                      <span className="ml-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity text-sun-accent align-middle">
+                         <Info size={16} />
                       </span>
                     </label>
-                    <span className="text-xs font-bold uppercase tracking-wider text-sun-tertiary shrink-0 ml-4">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sun-tertiary shrink-0 ml-4 border border-sun-border px-2 py-1 rounded-sm">
                         {q.type === 'multi' ? 'Multi-Select' : 'Single Select'}
                     </span>
                   </div>
