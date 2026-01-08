@@ -1,4 +1,3 @@
-
 import { supabase } from "../supabase";
 import { AppState } from "../../types";
 
@@ -7,7 +6,7 @@ export const scorer = {
     readiness: AppState['data']['readiness'],
     industry: string,
     selectedSystems: string[]
-  ): Promise<{ score: number, risks: string[], wins: string[], summary: string }> {
+  ): Promise<{ score: number, headline: string, risks: string[], wins: string[], summary: string }> {
     try {
       const { data, error } = await supabase.functions.invoke('scorer', {
         body: {
@@ -25,6 +24,7 @@ export const scorer = {
       const fallbackScore = Object.values(readiness).filter(Boolean).length * 25;
       return {
         score: fallbackScore,
+        headline: "Readiness Assessment (Offline)",
         risks: ["Consultant unavailable. Check your data readiness manually."],
         wins: ["Review the checklist above."],
         summary: "We couldn't connect to the specialized audit agent, but your raw score is calculated above."

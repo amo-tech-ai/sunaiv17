@@ -14,7 +14,7 @@ interface WizardFlowProps {
   isAnalyzing: boolean;
   updateData: (section: keyof AppState['data'], value: any) => void;
   updateNestedData: (section: 'priorities' | 'readiness', key: string, value: any) => void;
-  setAiQuestions: (qs: AppState['aiState']['questions']) => void;
+  setAiQuestions: (qs: any) => void;
   setRecommendations: (recs: AppState['aiState']['recommendations']) => void;
   setAnalysis: (analysis: AppState['aiState']['readinessAnalysis']) => void;
   setRoadmap: (roadmap: AppState['aiState']['roadmap']) => void;
@@ -52,9 +52,9 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
           industry={data.industry}
           selectedServices={data.selectedServices}
           documentInsights={aiState.documentInsights}
-          priorities={data.priorities}
+          diagnosticAnswers={data.diagnosticAnswers}
           aiQuestions={aiState.questions}
-          updateNestedData={updateNestedData}
+          updateData={updateData}
           setAiQuestions={setAiQuestions}
           setStream={setStream}
         />

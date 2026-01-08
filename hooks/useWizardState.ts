@@ -14,6 +14,10 @@ export const useWizardState = () => {
         if (!parsed.dashboardState) {
           parsed.dashboardState = INITIAL_STATE.dashboardState;
         }
+        // Migration for diagnosticAnswers
+        if (!parsed.data.diagnosticAnswers) {
+          parsed.data.diagnosticAnswers = {};
+        }
         return parsed;
       }
     } catch (e) {
@@ -55,7 +59,7 @@ export const useWizardState = () => {
   };
 
   // State Setters
-  const setAiQuestions = (qs: AppState['aiState']['questions']) => {
+  const setAiQuestions = (qs: any) => { // Using any loosely here to accommodate the type change during refactor if needed, but AppState is strict
     setState(prev => ({ ...prev, aiState: { ...prev.aiState, questions: qs } }));
   };
   

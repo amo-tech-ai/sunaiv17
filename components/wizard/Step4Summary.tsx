@@ -1,6 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, Server, Target, Zap, AlertTriangle, Layers, ArrowRight } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
+import { ShieldCheck, Layers, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import { AppState, SYSTEMS } from '../../types';
 import { supabase } from '../../services/supabase';
 
@@ -10,6 +20,19 @@ interface Step4SummaryProps {
   setAnalysis: (analysis: AppState['aiState']['readinessAnalysis']) => void;
   setStream: (text: string) => void;
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-sun-border rounded-sm shadow-md text-xs">
+        <p className="font-bold text-sun-primary mb-1">{label}</p>
+        <p className="text-sun-tertiary">Current: {payload[0].value}</p>
+        <p className="text-sun-accent font-medium">Projected: {payload[1].value}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const Step4Summary: React.FC<Step4SummaryProps> = ({ 
   state, 
@@ -22,22 +45,18 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
   const { data, aiState } = state;
 
   useEffect(() => {
-    // Only run if we haven't generated a summary yet (score is 0) or explicit refresh needed
-    // checking score > 0 ensures we don't re-run on simple re-renders
     if (aiState.readinessAnalysis.score === 0 && !hasRun) {
       const fetchSummary = async () => {
         setLoading(true);
         setHasRun(true);
         
-        // Simulated "Processing" sequence for UX - deterministically shows progress
-        setStream("Aggregating wizard inputs...\n\nVerifying industry context...");
+        setStream("Aggregating Step 1 Research Analysis...\n\nCalculating Sales & Marketing projections...");
         await new Promise(r => setTimeout(r, 800));
-        setStream("Calculating readiness score based on tech stack...");
-        await new Promise(r => setTimeout(r, 800));
-        setStream("Drafting executive strategy brief...");
+        setStream("Thinking...\n\nExecuting impact models via Python...");
+        await new Promise(r => setTimeout(r, 1200));
+        setStream("Thinking...\n\nDrafting Executive Strategy Brief...");
 
         try {
-          // Call the new Edge Function
           const { data: result, error } = await supabase.functions.invoke('summary', {
             body: { wizardState: state }
           });
@@ -47,21 +66,24 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
           if (result) {
             setAnalysis({
               score: result.score,
+              headline: result.headline || "Strategic Assessment",
               risks: result.risks || [],
-              wins: result.wins || [], // Mapped from 'strengths'
-              summary: result.summary // Mapped from 'narrative'
+              wins: result.wins || [],
+              summary: result.summary,
+              impactScores: result.impactScores
             });
-            setStream(`**Analysis Complete**\n\n${result.summary}`);
+            setStream(`**${result.headline || "Analysis Complete"}**\n\n${result.summary}`);
           }
         } catch (e) {
           console.error("Summary error", e);
           setStream("I encountered an issue generating the full brief, but your core data is saved.");
-          // Fallback so user isn't stuck
           setAnalysis({
             score: 50,
+            headline: "Strategic Assessment",
             risks: ["Automatic analysis failed"],
             wins: ["Manual review required"],
-            summary: "Please proceed to the roadmap."
+            summary: "Please proceed to the roadmap.",
+            impactScores: []
           });
         } finally {
           setLoading(false);
@@ -69,26 +91,23 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
       };
       fetchSummary();
     }
-  }, []); // Run once on mount
+  }, []);
 
-  // Selected System Objects
   const selectedSystemDetails = SYSTEMS.filter(s => data.selectedSystems.includes(s.id));
-
-  // Determine Score Color
   const score = aiState.readinessAnalysis.score;
   const scoreColor = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444';
   const scoreLabel = score >= 80 ? 'Ready to Scale' : score >= 60 ? 'Strong Foundation' : 'Foundation Needed';
+  const impactScores = aiState.readinessAnalysis.impactScores;
 
   return (
     <div className="animate-fade-in h-full flex flex-col">
-      {/* Header - Only visible on mobile/tablet where panels might collapse */}
       <div className="md:hidden mb-6">
-        <h1 className="font-serif text-3xl text-sun-primary">Executive Summary</h1>
+        <h1 className="font-serif text-3xl text-sun-primary">Executive Brief</h1>
       </div>
 
       <div className="flex flex-col gap-8 h-full overflow-y-auto no-scrollbar pb-20">
         
-        {/* SECTION 1: Strategic Brief (The "Hook") */}
+        {/* SECTION 1: Strategic Brief (Narrative) */}
         <div className="bg-white border border-sun-border p-8 rounded-sm shadow-sm relative overflow-hidden shrink-0">
            <div className="absolute top-0 left-0 w-1 h-full bg-sun-accent"></div>
            
@@ -101,7 +120,7 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
            ) : (
              <>
                <h2 className="font-serif text-2xl md:text-3xl text-sun-primary mb-4">
-                 {aiState.readinessAnalysis.summary ? "Strategic Assessment" : "Generating Strategy..."}
+                 {aiState.readinessAnalysis.headline || "Strategic Assessment"}
                </h2>
                <div className="font-sans text-sun-secondary leading-relaxed whitespace-pre-line text-lg">
                  {aiState.readinessAnalysis.summary || "Your strategy brief is being written..."}
@@ -110,11 +129,64 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
            )}
         </div>
 
-        {/* SECTION 2: The Data (Score + Stack) */}
+        {/* SECTION 2: Impact Scorecard (Visual Chart) */}
+        {!loading && impactScores && impactScores.length > 0 && (
+          <div className="bg-sun-right border border-sun-border p-6 rounded-sm shrink-0">
+             <div className="flex items-center gap-2 mb-6">
+               <div className="p-1.5 bg-white rounded border border-sun-border text-sun-accent">
+                 <TrendingUp size={16} />
+               </div>
+               <span className="text-xs font-bold uppercase tracking-widest text-sun-muted">Projected Impact Scorecard</span>
+             </div>
+             
+             <div className="h-64 w-full">
+               <ResponsiveContainer width="100%" height="100%">
+                 <BarChart
+                   data={impactScores}
+                   layout="vertical"
+                   margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                   barGap={2}
+                 >
+                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#EFE9E4" />
+                   <XAxis type="number" domain={[0, 100]} hide />
+                   <YAxis 
+                     type="category" 
+                     dataKey="category" 
+                     width={100} 
+                     tick={{fontSize: 11, fill: '#666'}} 
+                     axisLine={false}
+                     tickLine={false}
+                   />
+                   <Tooltip content={<CustomTooltip />} />
+                   <Bar dataKey="before" name="Current" fill="#D1C7BD" barSize={12} radius={[0, 4, 4, 0]} />
+                   <Bar dataKey="after" name="Projected" fill="#F59E0B" barSize={12} radius={[0, 4, 4, 0]}>
+                      {
+                        impactScores.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill="#F59E0B" />
+                        ))
+                      }
+                   </Bar>
+                 </BarChart>
+               </ResponsiveContainer>
+             </div>
+             
+             {/* Textual Impact Highlights */}
+             <div className="grid grid-cols-3 gap-4 mt-4 border-t border-sun-border/50 pt-4">
+                {impactScores.map((metric, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-xl font-bold text-sun-primary">{metric.changeLabel}</div>
+                    <div className="text-[10px] text-sun-muted uppercase tracking-wider">{metric.category}</div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {/* SECTION 3: Readiness & Stack */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start shrink-0">
           
           {/* Readiness Dial */}
-          <div className="flex flex-col items-center justify-center p-8 bg-sun-right border border-sun-border rounded-sm h-full">
+          <div className="flex flex-col items-center justify-center p-8 bg-white border border-sun-border rounded-sm h-full shadow-sm relative">
              <div className="relative w-40 h-40 flex items-center justify-center mb-6">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle cx="80" cy="80" r="70" fill="none" stroke="#EFE9E4" strokeWidth="8" />
@@ -138,7 +210,7 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
              <div className="text-center">
                <div className="text-sm font-bold uppercase tracking-widest text-sun-primary mb-1">{scoreLabel}</div>
                <div className="text-xs text-sun-secondary max-w-[200px] mx-auto">
-                 Calculated based on your {data.industry} maturity and tech stack.
+                 Readiness to deploy based on verified infrastructure.
                </div>
              </div>
           </div>
@@ -146,7 +218,7 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
           {/* Solution Stack */}
           <div className="space-y-4">
              <div className="text-xs font-bold uppercase tracking-widest text-sun-muted flex items-center gap-2 mb-2">
-               <Layers size={14} /> Selected Solution Stack
+               <Layers size={14} /> Selected Stack
              </div>
              {selectedSystemDetails.map(sys => (
                <div key={sys.id} className="bg-white border border-sun-border p-4 rounded-sm flex items-start gap-4 shadow-sm">
@@ -159,29 +231,9 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
                   </div>
                </div>
              ))}
-             {selectedSystemDetails.length === 0 && (
-               <div className="text-sm text-sun-tertiary italic p-4 border border-dashed border-sun-border rounded-sm">
-                 No systems selected. Go back to Step 3.
-               </div>
-             )}
           </div>
 
         </div>
-
-        {/* SECTION 3: Key Strengths (from AI) */}
-        {!loading && aiState.readinessAnalysis.wins.length > 0 && (
-          <div className="border-t border-sun-border pt-8 shrink-0">
-             <div className="text-xs font-bold uppercase tracking-widest text-sun-muted mb-6">Key Strengths Identified</div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {aiState.readinessAnalysis.wins.map((win, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-                    <p className="text-sm text-sun-secondary">{win}</p>
-                  </div>
-                ))}
-             </div>
-          </div>
-        )}
 
       </div>
     </div>

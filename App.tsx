@@ -80,7 +80,6 @@ export default function App() {
       }
       
       // 3. Trigger Classification with new Robust Logic
-      // Pass selected services AND document insights to help refine the model and maturity scoring
       const analysisResult = await analyst.classifyBusiness(
         state.data.businessName, 
         state.data.website, 
@@ -108,6 +107,35 @@ export default function App() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Determine if the "Continue" button should be disabled based on current step requirements
+  const isNextDisabled = () => {
+    if (state.step === 1) {
+      return !state.data.businessName || state.data.businessName.length < 2;
+    }
+    
+    if (state.step === 2) {
+      const sections = state.aiState.questions;
+      // If AI hasn't loaded questions yet, block progress
+      if (!sections || sections.length === 0) return true;
+      
+      // STRICT: Check if EVERY question across all sections has at least one answer
+      const allQuestionsAnswered = sections.every(section => {
+        return section.questions.every(q => {
+          const answers = state.data.diagnosticAnswers[q.id];
+          return answers && answers.length > 0;
+        });
+      });
+      
+      return !allQuestionsAnswered;
+    }
+
+    if (state.step === 3) {
+      return state.data.selectedSystems.length === 0;
+    }
+
+    return false;
   };
 
   // --- Render Dashboard if Complete ---
@@ -173,7 +201,7 @@ export default function App() {
           <Button 
             onClick={nextStep} 
             className="group"
-            disabled={state.step === 3 && state.data.selectedSystems.length === 0}
+            disabled={isNextDisabled()}
           >
             {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

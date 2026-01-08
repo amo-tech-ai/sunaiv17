@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
@@ -17,11 +16,12 @@ serve(async (req) => {
       type: Type.OBJECT,
       properties: {
         score: { type: Type.INTEGER, description: "The calculated readiness score (0-100)" },
+        headline: { type: Type.STRING, description: "Short strategic assessment title e.g. 'High Risk', 'Ready to Scale'" },
         risks: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific implementation risks based on gaps." },
         wins: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Immediate low-hanging fruit based on current strengths." },
         summary: { type: Type.STRING, description: "A strategic summary of their readiness state." }
       },
-      required: ["score", "risks", "wins", "summary"]
+      required: ["score", "headline", "risks", "wins", "summary"]
     };
 
     const response = await ai.models.generateContent({
@@ -49,7 +49,7 @@ serve(async (req) => {
            - Adjust weights slightly based on industry (e.g., Data is higher for SaaS/Fintech).
            - Return the final integer score (0-100).
 
-        3. **Output:** Generate the JSON response with the calculated score, 2 specific risks, 2 quick wins, and a summary.
+        3. **Output:** Generate the JSON response with the calculated score, a short headline, 2 specific risks, 2 quick wins, and a summary.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 2048 },

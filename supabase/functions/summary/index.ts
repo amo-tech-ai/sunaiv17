@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getIndustryPack } from "../_shared/industryPacks.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -11,81 +12,92 @@ serve(async (req) => {
     const { wizardState } = await req.json();
     const data = wizardState.data;
     const ai = createGeminiClient();
+    const pack = getIndustryPack(data.industry);
 
-    // 1. Deterministic Scoring Logic
+    // 1. Deterministic Scoring Logic (Base Calculation)
     let score = 0;
-    
-    // Base: Maturity Score (1-5) * 15. Max 75.
     const maturity = data.analysis?.maturity_score || 1;
     score += maturity * 15;
-
-    // Bonus: Clarity of Vision (Step 2)
-    // If they selected specific priorities, they are more ready.
-    if (data.priorities?.mainPriority) {
-      score += 10;
-    }
-
-    // Bonus: Existing Tech Stack (Step 1)
-    // Up to 10 points for having existing services (2 points each)
+    if (data.priorities?.mainPriority) score += 10;
     const serviceCount = data.selectedServices?.length || 0;
     score += Math.min(serviceCount * 2, 10);
-
-    // Adjustment: Implementation Complexity (Step 3)
-    // Slight penalty for more complex stacks to manage expectations
     const systemCount = data.selectedSystems?.length || 0;
     score -= (systemCount * 5);
-
-    // Clamp score between 15 and 95 (never 0, never 100)
     score = Math.max(15, Math.min(score, 95));
 
-    // 2. AI Narrative Generation
+    // 2. Advanced Strategic Analysis (Gemini 3 Pro)
+    // Using Code Execution to calculate realistic impact metrics
     const schema: Schema = {
       type: Type.OBJECT,
       properties: {
-        headline: { type: Type.STRING, description: "A punchy, 3-5 word strategic title." },
-        narrative: { type: Type.STRING, description: "2 paragraphs explaining the strategy." },
-        strengths: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3 key strengths identified." },
-        risks: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2 potential implementation risks." }
+        headline: { type: Type.STRING, description: "A punchy, 3-5 word strategic title focusing on growth." },
+        executive_brief: { type: Type.STRING, description: "2 paragraphs. Incorporate the Step 1 Research findings (Business Model, Maturity) and explain how the selected systems specifically improve Sales & Marketing." },
+        
+        impact_metrics: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              category: { type: Type.STRING, description: "e.g. Sales Velocity, Marketing Reach" },
+              before: { type: Type.NUMBER, description: "Baseline score (0-100)" },
+              after: { type: Type.NUMBER, description: "Projected score (0-100)" },
+              unit: { type: Type.STRING, enum: ['%', 'x', 'hrs'] },
+              changeLabel: { type: Type.STRING, description: "e.g. +40%" },
+              description: { type: Type.STRING, description: "Short explanation of the lift" }
+            },
+            required: ["category", "before", "after", "unit", "changeLabel", "description"]
+          }
+        },
+
+        key_strategies: { 
+          type: Type.ARRAY, 
+          items: { type: Type.STRING }, 
+          description: "3 strategic bullet points blending their tech stack with the solution." 
+        },
+        risks: { type: Type.ARRAY, items: { type: Type.STRING } }
       },
-      required: ["headline", "narrative", "strengths", "risks"]
+      required: ["headline", "executive_brief", "impact_metrics", "key_strategies", "risks"]
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: `
-        You are a Senior Strategic Partner for the ${data.industry} industry.
+        You are a Senior Strategic Consultant for the ${data.industry} industry.
         
-        Client Context:
+        CLIENT BRIEF:
         - Business: ${data.businessName}
+        - Verified Model (Step 1): ${data.analysis?.business_model || 'Unknown'}
+        - Research Observations: ${data.analysis?.observations?.join('; ') || 'None'}
         - Current Tech: ${data.selectedServices?.join(', ') || 'None'}
-        - Core Pain Point: ${data.priorities?.mainPriority || 'Growth'}
+        - Core Pain Points: ${data.priorities?.moneyFocus}, ${data.priorities?.marketingFocus}
         - Selected Systems: ${data.selectedSystems?.join(', ')}
-        - Calculated Readiness Score: ${score}/100
-
-        Task:
-        1. Generate a "Strategic Narrative" (2 paragraphs).
-           - Paragraph 1: Acknowledge their specific pain point and industry context. Validate why this is a common bottleneck.
-           - Paragraph 2: Explain how the selected AI systems specifically address this. Focus on the outcome (e.g., "Recovering lost leads", "Automating inventory").
-        2. Identify 3 "Key Strengths" based on their current tech stack or clarity of vision.
-        3. Identify 2 "Implementation Risks" (e.g., Data integration, Change management).
-
-        Tone: Professional, encouraging, expert. Use ${data.industry} terminology.
+        
+        TASK:
+        1. **Strategic Narrative:** Write an Executive Brief. It MUST reference the "Verified Model" or "Research Observations" found in Step 1 to show we understand their business. Connect this to their selected systems.
+        
+        2. **Impact Calculation (Code Execution):**
+           - Use Python to calculate "Before" vs "After" scores for 3 categories: "Sales Efficiency", "Marketing Reach", and "Operational Speed".
+           - Baseline (Before) = (Digital Maturity Score / 5) * 100.
+           - Uplift (After) = Add 15 points for each selected system relevant to that category.
+           - Cap at 95.
+           - Return the JSON structure with these calculated values.
       `,
       config: {
+        thinkingConfig: { thinkingBudget: 2048 },
+        tools: [{ codeExecution: {} }],
         responseMimeType: "application/json",
         responseSchema: schema
       }
     });
 
-    // Parse the response text to JSON
     const aiData = JSON.parse(response.text);
 
-    // 3. Return Combined Result
     return new Response(JSON.stringify({
-      score, // Deterministic score calculated in code
+      score,
       headline: aiData.headline,
-      summary: aiData.narrative, // Mapped to 'summary' for frontend compatibility
-      wins: aiData.strengths,    // Mapped to 'wins'
+      summary: aiData.executive_brief,
+      impactScores: aiData.impact_metrics,
+      wins: aiData.key_strategies,
       risks: aiData.risks
     }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

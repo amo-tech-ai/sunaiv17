@@ -2,30 +2,46 @@
 export type IndustryType = 'fashion' | 'saas' | 'tourism' | 'real_estate' | 'events' | 'other';
 
 export interface DiagnosticOption {
-  id: string;
   label: string;
-  mapped_system_id: string; // The system this problem suggests
+  mapped_system_id: string;
   pain_point_tag: string;
 }
 
 export interface DiagnosticQuestion {
   id: string;
-  category: 'sales' | 'marketing' | 'speed' | 'priority'; // Maps to AppState priorities keys
-  title: string; // Replaces label
-  context_reasoning: string; // Context for the Right Panel
+  text: string;
+  ai_hint: string;
+  type: 'single' | 'multi';
   options: DiagnosticOption[];
+}
+
+export interface DiagnosticSection {
+  id: string;
+  title: string;
+  description: string;
+  questions: DiagnosticQuestion[];
 }
 
 export interface RoadmapPhase {
   phaseName: string;
   duration: string;
-  items: string[]; // Legacy support
-  deliverables?: string[]; // Enhanced schema
-  kpis?: string[]; // Enhanced schema
+  items: string[];
+  deliverables?: string[];
+  kpis?: string[];
+}
+
+export interface ImpactMetric {
+  category: string; // e.g. "Sales Velocity", "Marketing Reach"
+  before: number;
+  after: number;
+  unit: string; // "%", "hrs", "x"
+  changeLabel: string; // "+40%"
+  description: string;
 }
 
 export interface AIState {
-  questions: DiagnosticQuestion[];
+  // Updated to support sections hierarchy
+  questions: DiagnosticSection[]; 
   recommendations: {
     systemIds: string[];
     impacts: Record<string, string>;
@@ -33,12 +49,14 @@ export interface AIState {
   };
   readinessAnalysis: {
     score: number;
+    headline: string;
     risks: string[];
     wins: string[];
     summary: string;
+    impactScores?: ImpactMetric[];
   };
   roadmap: RoadmapPhase[];
-  documentInsights?: string; // Insights from uploaded documents
+  documentInsights?: string;
 }
 
 export interface Task {
@@ -58,7 +76,7 @@ export interface DashboardState {
 
 export interface BusinessAnalysis {
   detected_industry: IndustryType;
-  industry_confidence: number; // 0-100
+  industry_confidence: number;
   business_model: string;
   maturity_score: number;
   industry_signals: string[];
@@ -71,15 +89,15 @@ export interface UploadedDocument {
   name: string;
   type: string;
   size: number;
-  base64?: string; // Stored for analysis
-  content?: string; // Text content if applicable
+  base64?: string;
+  content?: string;
 }
 
 export interface IndustryPack {
-  industry: IndustryType;
-  systemNames: Record<string, string>; // Maps generic ID to industry specific name
-  roiFormulas: Record<string, string>; // Text template for ROI calculation
-  diagnosticTemplates: Record<string, string>; // Template strings for questions
+  industry: IndustryType | string;
+  systemNames: Record<string, string>;
+  roiFormulas: Record<string, string>;
+  diagnosticTemplates: Record<string, string>;
   kpis: string[];
   riskFactors: string[];
 }
@@ -90,20 +108,23 @@ export interface AppState {
   aiState: AIState;
   dashboardState: DashboardState;
   data: {
-    fullName: string; // User's name
+    fullName: string;
     businessName: string;
     website: string;
     description: string;
     industry: IndustryType;
-    selectedServices: string[]; // Services currently used or planned
-    uploadedDocuments: UploadedDocument[]; // New: Documents
-    analysis?: BusinessAnalysis; // New field for deep analysis
+    selectedServices: string[];
+    uploadedDocuments: UploadedDocument[];
+    analysis?: BusinessAnalysis;
+    // Deprecated specific keys, moving to generic diagnosticAnswers map
     priorities: {
       moneyFocus: string;
       marketingFocus: string;
       responseSpeed: string;
       mainPriority: string;
     };
+    // New flexible storage for dynamic form answers: QuestionID -> Array of selected Option Labels
+    diagnosticAnswers: Record<string, string[]>;
     selectedSystems: string[];
     readiness: {
       dataReady: boolean;
@@ -120,7 +141,7 @@ export const INITIAL_STATE: AppState = {
   aiState: {
     questions: [],
     recommendations: { systemIds: [], impacts: {} },
-    readinessAnalysis: { score: 0, risks: [], wins: [], summary: "" },
+    readinessAnalysis: { score: 0, headline: "", risks: [], wins: [], summary: "" },
     roadmap: [],
     documentInsights: ""
   },
@@ -142,6 +163,7 @@ export const INITIAL_STATE: AppState = {
       responseSpeed: '',
       mainPriority: '',
     },
+    diagnosticAnswers: {},
     selectedSystems: [],
     readiness: {
       dataReady: false,

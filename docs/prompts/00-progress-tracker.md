@@ -1,92 +1,69 @@
 
 # Sun AI Agency — Verified Progress Tracker
 
-**Last Updated:** Current Date
-
-**Overall Phase:**
-- [x] Phase 1 (Wizard Logic & UI) - **COMPLETE**
-- [x] Phase 2 (Server Migration & Edge Functions) - **COMPLETE**
-- [ ] Phase 3 (Advanced Dashboards & DB Persistence) - **IN PROGRESS**
-
-**Global Completion:** **85%** (Wizard & Agents Complete; Dashboard MVP Ready)
+**Last Audit:** Current Date
+**Auditor:** System Architect
 
 ---
 
-## 1. Core Architecture & Gemini 3 Features
+## 1. Executive Status Summary
 
-| Feature | What It Does (1 line) | Status | Proof / Verification |
-| :--- | :--- | :---: | :--- |
-| **Google Search Grounding** | Verifies business existence/facts | 🟢 Ready | `supabase/functions/analyst/index.ts` |
-| **Structured Outputs** | Enforces strict JSON schemas | 🟢 Ready | Used in all Edge Functions |
-| **Thinking Mode** | Deep reasoning for logic/strategy | 🟢 Ready | `planner`, `extractor`, `optimizer` |
-| **Code Execution** | Accurate mathematical scoring | 🟢 Ready | `scorer` |
-| **Industry Packs** | Vertical-specific prompts/data | 🟢 Ready | `_shared/industryPacks.ts` |
-| **Context-Aware ROI** | Rewrites value props based on user stack | 🟢 Ready | `optimizer` (Added recently) |
-| **Dependency Analysis** | Checks system synergies (e.g. Lead Gen + CRM) | 🟢 Ready | `optimizer` (Added recently) |
-| **Streaming** | Real-time text generation | 🟡 Mixed | Client-side Step 1; Edge streaming pending SSE. |
-| **Function Calling** | Triggering external actions | 🟡 Ready | Configured in `orchestrator`. |
+| Metric | Status | Notes |
+| :--- | :--- | :--- |
+| **Overall Completion** | **90%** | Wizard & Intelligence Layer are complete. Dashboard is MVP. |
+| **Current Phase** | **Phase 3** | Database Persistence & Production Hardening. |
+| **Ship Readiness** | **Risky** | Frontend is polished, but Data relies on LocalStorage (Data Loss Risk). |
 
 ---
 
-## 2. AI Agents Matrix (Edge Functions)
+## 2. Screen-by-Screen Status
 
-| Agent | Responsibility (1 line) | Model | Status | Proof |
-| :--- | :--- | :---: | :---: | :--- |
-| **🕵️ Analyst** | Research & Verification | Flash | 🟢 Ready | `supabase/functions/analyst/index.ts` |
-| **🔬 Extractor** | Diagnostic Question Gen | Pro | 🟢 Ready | `supabase/functions/extractor/index.ts` |
-| **⚖️ Optimizer** | System Recommendation | Pro | 🟢 Ready | `supabase/functions/optimizer/index.ts` |
-| **💯 Scorer** | Readiness/Risk Audit | Flash | 🟢 Ready | `supabase/functions/scorer/index.ts` |
-| **📅 Planner** | Strategic Roadmap Gen | Pro | 🟢 Ready | `supabase/functions/planner/index.ts` |
-| **🎼 Orchestrator** | Task Breakdown | Flash | 🟢 Ready | `supabase/functions/orchestrator/index.ts` |
-| **💬 Assistant** | Brief & Doc Analysis | Flash | 🟢 Ready | `supabase/functions/assistant/index.ts` |
-| **📊 Monitor** | Timeline Risk Watch | Flash | 🟢 Ready | `supabase/functions/monitor/index.ts` |
-| **📈 Analytics** | BI & Insights | Flash | 🟢 Ready | `supabase/functions/analytics/index.ts` |
-
----
-
-## 3. Wizard Screens Verification (100% Complete)
-
-| Wizard Step | Expected Output | Status | Verification |
-| :--- | :--- | :---: | :--- |
-| **Step 1: Context** | Industry & Maturity | 🟢 Ready | `Step1Context.tsx` + `analyst.ts` |
-| **Step 2: Diagnostics** | Dynamic Form | 🟢 Ready | `Step2Diagnostics.tsx` + `extractor.ts` |
-| **Step 3: Systems** | Ranked Recs + ROI | 🟢 Ready | `Step3Systems.tsx` + `optimizer.ts` |
-| **Step 4: Readiness** | Score & Gaps | 🟢 Ready | `Step4Readiness.tsx` + `scorer.ts` |
-| **Step 5: Roadmap** | 3-Phase Plan | 🟢 Ready | `Step5Plan.tsx` + `planner.ts` |
+| Screen | UI | Logic | AI Integration | Data Flow | Status | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Business Context** | Yes | Yes | Yes (Analyst) | Yes | **COMPLETE** | Uses Google Search Grounding & URL Context. |
+| **2. Diagnostics** | Yes | Yes | Yes (Extractor) | Yes | **COMPLETE** | Uses Gemini Pro + Thinking for dynamic questions. |
+| **3. System Selection** | Yes | Yes | Yes (Optimizer) | Yes | **COMPLETE** | Context-aware ranking & ROI rewriting implemented. |
+| **4. Executive Brief** | Yes | Yes | Yes (Summary) | Yes | **COMPLETE** | Replaced "Readiness Check". Uses Code Exec for impact math. |
+| **5. Strategic Plan** | Yes | Yes | Yes (Planner) | Yes | **COMPLETE** | Uses Gemini Pro + Thinking (4k) for sequencing. |
+| **Dashboard Overview** | Yes | Yes | Yes (Analyst) | Partial | **MVP** | Static data binding. Needs DB sync. |
+| **Dashboard Tasks** | Yes | Yes | Yes (Orchestrator)| Partial | **MVP** | Kanban works. Tasks generated via AI. |
+| **Dashboard Roadmap** | Partial| Partial| No | No | **MISSING** | Currently a static list. Needs interactive Gantt. |
 
 ---
 
-## 4. Dashboard Implementation Status
+## 3. AI & Agent Readiness
 
-| Screen | Purpose | Status | Notes |
-| :--- | :--- | :---: | :--- |
-| **Overview** | KPI Command Center | 🟢 Ready | `components/dashboard/Overview.tsx` |
-| **Tasks** | Kanban Execution | 🟢 Ready | `components/dashboard/TaskBoard.tsx` |
-| **Roadmap** | Strategic Timeline | 🟡 MVP | Static List View (Interactive Gantt pending) |
-| **Systems** | Active Agent Monitor | 🟡 MVP | Static Card View |
-| **Brief Tab** | Client Req Management | 🔴 Pending | Defined in docs, UI not yet created |
-| **Billing Tab** | Invoices & History | 🔴 Pending | Defined in docs, UI not yet created |
-| **CRM Tab** | Agency Client Mgmt | 🔴 Pending | Defined in docs, UI not yet created |
-
----
-
-## 5. Recent Additions & Enhancements
-
-1.  **Services Multi-Select (Step 1):** Added ability for users to define their tech stack (Shopify, WhatsApp, etc.).
-2.  **Industry Packs:** Created `data/industryPacks.ts` to inject deep vertical knowledge (Fashion, Real Estate, Tourism).
-3.  **Optimizer Logic Upgrade:**
-    *   Now accepts `selectedServices` to personalize ROI text.
-    *   Identifies **Synergies** (e.g., "WhatsApp Assistant" works better with "Lead Gen").
-4.  **Schema Hardening:** Strict typing added to all Edge Functions to prevent hallucinations.
+| Agent | Purpose | Model | Status | Tooling |
+| :--- | :--- | :--- | :--- | :--- |
+| **Analyst** | Verification & Research | Flash | **Implemented** | Google Search, Streaming. |
+| **Extractor** | Diagnostic Generation | Pro | **Implemented** | Thinking Mode, Structured Output. |
+| **Optimizer** | System Ranking | Pro | **Implemented** | Industry Packs, Context Ranking. |
+| **Summary** | Strategy Narrative | Pro | **Implemented** | Code Execution (Python), Thinking. |
+| **Planner** | Roadmap Logic | Pro | **Implemented** | Thinking Mode (4096 tokens). |
+| **Orchestrator**| Task Breakdown | Flash | **Implemented** | Function Calling schema. |
+| **Monitor** | Timeline Risk | Flash | **Implemented** | Prediction logic. |
+| **Assistant** | RAG/Brief Analysis | Flash | **Implemented** | Document context analysis. |
 
 ---
 
-## 6. Next Steps (Phase 3)
+## 4. Critical Gaps (Blocking Production)
 
-**P0: Database Persistence**
-- [ ] Connect Frontend `useWizardState` to Supabase DB (`projects` table).
-- [ ] Implement Auth Gate (Sign Up/Login).
+1.  **Database Persistence:** The frontend `useWizardState` hook currently saves to `localStorage`. If a user clears cache or switches devices, data is lost. It must sync with Supabase `projects` table.
+2.  **Authentication:** There is no Sign-Up/Login gate. The Dashboard is accessible only via local state continuity.
+3.  **Dashboard Interactivity:** The Dashboard views (especially Roadmap) are read-only visualizations of the Wizard output. They do not yet support "Live" project management (creating new tasks, moving dates).
 
-**P1: Advanced Dashboard Views**
-- [ ] Implement `ClientDashboard.tsx` with Brief/Billing tabs.
-- [ ] Implement `AgencyDashboard.tsx` with CRM tab.
+---
+
+## 5. Safe Next Actions
+
+### Priority 0 (Must Do - Infrastructure)
+*   **Database Sync:** Update `hooks/useWizardState.ts` to push `AppState` to Supabase `projects` table on every step completion.
+*   **Auth Gate:** Implement a simple Auth flow (Magic Link) before accessing the Dashboard.
+
+### Priority 1 (Should Do - Dashboard)
+*   **Live Task Management:** Connect the Dashboard Kanban board to the `tasks` table in Supabase for persistent updates.
+*   **Interactive Roadmap:** Build the Gantt Chart component for the Dashboard Roadmap tab.
+
+### Priority 2 (Nice to Have - Polish)
+*   **PDF Export:** Generate a PDF version of the Screen 4 Executive Brief.
+*   **Email Integration:** Send the 30-Day Plan to the user via email upon completion.
