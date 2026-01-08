@@ -5,6 +5,8 @@ export interface DiagnosticOption {
   label: string;
   mapped_system_id: string;
   pain_point_tag: string;
+  ai_explanation?: string; // New: For Right Panel consultant logic
+  priority_weight?: 'Critical' | 'High' | 'Medium' | 'Low'; // New: For ranking logic
 }
 
 export interface DiagnosticQuestion {
@@ -100,6 +102,8 @@ export interface IndustryPack {
   diagnosticTemplates: Record<string, string>;
   kpis: string[];
   riskFactors: string[];
+  // New: Full structured diagnostic packs
+  diagnostics?: DiagnosticSection[];
 }
 
 export interface AppState {

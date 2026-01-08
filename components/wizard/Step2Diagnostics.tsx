@@ -36,24 +36,23 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
     // Initial stream message to build trust
     setStream(`**Consultant is Online**\n\nI am analyzing your **${industry.replace('_', ' ')}** business context.\n\nReviewing your tech stack: ${selectedServices.join(', ') || 'Standard Setup'}...`);
     
-    // Simulate thinking delay for effect if it's too fast, or just let natural API latency handle it
     setTimeout(() => {
-        if(loading) setStream(`**Deep Dive**\n\nFormulating diagnostic questions based on your document insights...\n\nMapping potential bottlenecks to AI solutions...`);
-    }, 1500);
+        if(loading) setStream(`**Deep Dive**\n\nIdentifying high-signal diagnostic questions based on your industry profile...`);
+    }, 1200);
 
     try {
       const result = await extractor.generateQuestions(industry, selectedServices, documentInsights);
       
       if (result && result.length > 0) {
         setAiQuestions(result);
-        setStream(`**Diagnostics Ready**\n\nI've prepared a custom deep-dive.\n\nHover over any question, and I will explain *why* I'm asking it based on your profile.`);
+        setStream(`**Diagnostics Ready**\n\nI've prepared a custom deep-dive.\n\nSelect your primary constraints to unlock the system architecture phase.`);
       } else {
          throw new Error("No sections generated");
       }
     } catch (e) {
       console.error(e);
       setError(true);
-      setStream("I encountered an issue generating custom diagnostics. You can try reloading or use our offline diagnostic pack.");
+      setStream("I encountered an issue generating custom diagnostics. Please try reloading.");
     } finally {
       setLoading(false);
     }
@@ -61,30 +60,42 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   useEffect(() => {
     // Only fetch if questions haven't been generated yet for this industry context
-    // Check if aiQuestions is array and has length, casting properly
     const qs = aiQuestions as unknown as DiagnosticSection[];
     if (!qs || qs.length === 0) {
       fetchQuestions();
     }
   }, [industry]);
 
-  const handleSelection = (questionId: string, optionLabel: string, type: 'single' | 'multi') => {
+  const handleSelection = (questionId: string, option: DiagnosticOption, type: 'single' | 'multi') => {
     const currentAnswers = diagnosticAnswers[questionId] || [];
     let newAnswers: string[];
 
     if (type === 'single') {
       // Toggle off if clicking same option, otherwise set new
-      if (currentAnswers.includes(optionLabel)) {
+      if (currentAnswers.includes(option.label)) {
         newAnswers = [];
+        setStream(`**Diagnostics Ready**\n\nHover over options to see strategic context.`);
       } else {
-        newAnswers = [optionLabel];
+        newAnswers = [option.label];
+        // Stream the AI explanation for this choice
+        if (option.ai_explanation) {
+            setStream(`**Strategic Insight**\n\n${option.ai_explanation}`);
+        }
       }
     } else {
       // Multi-select toggle
-      if (currentAnswers.includes(optionLabel)) {
-        newAnswers = currentAnswers.filter(a => a !== optionLabel);
+      if (currentAnswers.includes(option.label)) {
+        newAnswers = currentAnswers.filter(a => a !== option.label);
       } else {
-        newAnswers = [...currentAnswers, optionLabel];
+        // Enforce max 3 selections for multi-select to keep focus
+        if (currentAnswers.length >= 3) {
+            setStream(`**Focus Required**\n\nPlease prioritize your top 3 bottlenecks. Diluted focus leads to diluted results.`);
+            return;
+        }
+        newAnswers = [...currentAnswers, option.label];
+        if (option.ai_explanation) {
+            setStream(`**Strategic Insight**\n\n${option.ai_explanation}`);
+        }
       }
     }
 
@@ -92,6 +103,15 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
       ...diagnosticAnswers,
       [questionId]: newAnswers
     });
+  };
+
+  const handleHover = (option: DiagnosticOption) => {
+      // Only show hint on hover if not selected (selection priority)
+      // Or maybe just show it. Let's keep it simple: hover shows hint if exists.
+      if (option.ai_explanation) {
+          // Debounce could be good here, but for now direct set
+          // setStream(`**Context**\n\n${option.ai_explanation}`);
+      }
   };
 
   if (loading) {
@@ -106,7 +126,7 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
         <div className="text-center space-y-3 max-w-md">
           <h3 className="font-serif text-2xl text-sun-primary">Analyzing Business Context</h3>
           <p className="text-sun-secondary leading-relaxed">
-            The Extractor Agent is reviewing your services and documents to formulate relevant diagnostic questions.
+            Configuring diagnostic layer for {industry.replace('_', ' ')}...
           </p>
         </div>
       </div>
@@ -124,9 +144,9 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
         </div>
         <div className="max-w-md">
           <h3 className="text-lg font-serif text-sun-primary mb-2">Connection Issue</h3>
-          <p className="text-sun-secondary mb-6">Unable to load AI-generated questions. Please try again to load the industry standard diagnostics.</p>
+          <p className="text-sun-secondary mb-6">Unable to load diagnostic questions.</p>
           <Button onClick={fetchQuestions}>
-            Retry / Load Offline Pack
+            Retry
           </Button>
         </div>
       </div>
@@ -135,70 +155,86 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   return (
     <div className="animate-fade-in space-y-12 pb-20">
+      
+      {/* Header */}
       <div>
-        <h1 className="font-serif text-4xl text-sun-primary mb-3">Industry Diagnostics</h1>
+        <h1 className="font-serif text-4xl text-sun-primary mb-3">Diagnostic Phase</h1>
         <p className="text-sun-secondary font-sans max-w-xl leading-relaxed">
-          Based on your profile, we've identified these potential focus areas. 
-          Your answers help us configure the <span className="font-semibold text-sun-primary capitalize">{industry.replace('_', ' ')}</span> engine.
+          Select your primary constraints. This data directly shapes the system architecture in the next step.
         </p>
       </div>
 
-      <div className="space-y-16">
-        {sections.map((section) => (
-          <div key={section.id} className="animate-fade-in">
-            <div className="mb-8 border-b border-sun-border pb-4">
-              <h2 className="text-sm font-bold tracking-widest text-sun-muted uppercase flex items-center gap-2">
+      <div className="space-y-12">
+        {sections.map((section, idx) => (
+          <div key={section.id} className="animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+            
+            {/* Section Header */}
+            <div className="mb-6 flex items-baseline gap-4 border-b border-sun-border pb-2">
+              <h2 className="text-sm font-bold tracking-widest text-sun-primary uppercase flex items-center gap-2">
                 <span className="w-2 h-2 bg-sun-accent rounded-full"></span>
                 {section.title}
               </h2>
-              <p className="text-sm text-sun-secondary mt-2 max-w-2xl">{section.description}</p>
+              <span className="text-xs text-sun-muted font-normal">{section.description}</span>
             </div>
 
-            <div className="space-y-12">
+            <div className="space-y-8">
               {section.questions.map((q) => (
-                <div 
-                  key={q.id} 
-                  className="group relative transition-all duration-300 scroll-mt-24"
-                  onMouseEnter={() => setStream(`**Context: ${q.text}**\n\n${q.ai_hint}`)}
-                  onClick={() => setStream(`**Context: ${q.text}**\n\n${q.ai_hint}`)}
-                >
+                <div key={q.id}>
+                  
+                  {/* Question Text */}
                   <div className="flex items-baseline justify-between mb-4">
-                    <label className="text-lg font-serif font-medium text-sun-primary group-hover:text-sun-accent transition-colors cursor-help w-full">
+                    <label className="text-lg font-serif font-medium text-sun-primary">
                       {q.text}
-                      <span className="ml-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity text-sun-accent align-middle">
-                         <Info size={16} />
-                      </span>
                     </label>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-sun-tertiary shrink-0 ml-4 border border-sun-border px-2 py-1 rounded-sm">
-                        {q.type === 'multi' ? 'Multi-Select' : 'Single Select'}
-                    </span>
+                    {q.type === 'multi' && (
+                        <span className="text-[10px] uppercase tracking-wider text-sun-tertiary border border-sun-border px-2 py-1 rounded-sm bg-sun-bg/50">
+                            Select up to 3
+                        </span>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Options Grid */}
+                  <div className={`grid gap-4 ${section.id === 'north_star' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                     {q.options.map((opt: DiagnosticOption) => {
                       const isSelected = (diagnosticAnswers[q.id] || []).includes(opt.label);
+                      const isNorthStar = section.id === 'north_star';
+                      
                       return (
                         <button
                           key={opt.label}
-                          onClick={() => handleSelection(q.id, opt.label, q.type)}
+                          onClick={() => handleSelection(q.id, opt, q.type)}
+                          onMouseEnter={() => handleHover(opt)}
                           className={`
-                            relative p-5 text-left border rounded-sm transition-all duration-200 flex items-start gap-4 group/btn
+                            relative text-left border transition-all duration-200 flex items-start gap-4 group/btn
+                            ${isNorthStar ? 'p-6 rounded-sm' : 'p-4 rounded-sm'}
                             ${isSelected 
-                              ? 'border-sun-accent bg-sun-accent/5 shadow-sm' 
-                              : 'border-sun-border bg-white hover:border-sun-primary/30 hover:bg-sun-right/30'
+                              ? 'border-sun-primary bg-sun-primary text-white shadow-md' 
+                              : 'border-sun-border bg-white hover:border-sun-primary hover:shadow-sm text-sun-primary'
                             }
                           `}
                         >
-                          <div className={`mt-0.5 shrink-0 transition-colors ${isSelected ? 'text-sun-accent' : 'text-sun-border group-hover/btn:text-sun-tertiary'}`}>
+                          <div className={`mt-0.5 shrink-0 transition-colors ${isSelected ? 'text-sun-accent' : 'text-sun-tertiary group-hover/btn:text-sun-primary'}`}>
                              {q.type === 'single' ? (
-                                isSelected ? <div className="w-5 h-5 rounded-full border-2 border-sun-accent flex items-center justify-center"><div className="w-2.5 h-2.5 bg-sun-accent rounded-full" /></div> : <Circle size={20} />
+                                isSelected ? (
+                                    <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
+                                        <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                                    </div>
+                                ) : (
+                                    <Circle size={20} className="opacity-40" />
+                                )
                              ) : (
-                                isSelected ? <div className="w-5 h-5 rounded-sm bg-sun-accent border border-sun-accent flex items-center justify-center text-white"><Check size={14} /></div> : <Square size={20} />
+                                isSelected ? (
+                                    <div className="w-5 h-5 rounded-sm bg-white text-sun-primary flex items-center justify-center border border-white">
+                                        <Check size={14} />
+                                    </div>
+                                ) : (
+                                    <Square size={20} className="opacity-40" />
+                                )
                              )}
                           </div>
 
                           <div className="flex-1">
-                            <span className={`text-sm leading-snug transition-colors ${isSelected ? 'text-sun-primary font-medium' : 'text-sun-secondary group-hover/btn:text-sun-primary'}`}>
+                            <span className={`leading-snug transition-colors ${isNorthStar ? 'text-lg font-medium' : 'text-sm'} ${isSelected ? 'text-white' : 'text-sun-primary'}`}>
                                 {opt.label}
                             </span>
                           </div>
