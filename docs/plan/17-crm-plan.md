@@ -1,7 +1,7 @@
 
 # Sun AI Agency — CRM System Plan
 
-**Status:** Strategic Definition  
+**Status:** Implementation Complete
 **Target:** Internal Agency Team (Account Managers, Sales)  
 **Core Logic:** The "Active" CRM. It doesn't just store data; it proactively manages relationships using Gemini 3.
 
@@ -137,13 +137,13 @@ create table public.crm_interactions (
 
 | Phase | Task | Description | Status |
 | :--- | :--- | :--- | :--- |
-| **1. Core** | **Schema Migration** | Create `crm_contacts`, `crm_deals`, `crm_interactions`. | 🔴 Pending |
-| **1. Core** | **UI Skeleton** | Build 3-Panel Layout (`CRMLayout.tsx`). | 🔴 Pending |
-| **1. Core** | **List View** | Interactive Table with Sorting/Filtering. | 🔴 Pending |
-| **2. AI** | **Intelligence Edge Function** | Create `crm-intelligence` (Flash). | 🔴 Pending |
-| **2. AI** | **Right Panel UI** | Streaming Markdown Renderer for insights. | 🔴 Pending |
-| **3. Advanced** | **Grounding Integration** | Add Google Search tool to `crm-intelligence`. | 🔴 Pending |
-| **3. Advanced** | **Action Buttons** | "Draft Email", "Schedule Call" (Function Calling). | 🔴 Pending |
+| **1. Core** | **Schema Migration** | Create `crm_contacts`, `crm_deals`, `crm_interactions`. | ✅ Complete |
+| **1. Core** | **UI Skeleton** | Build 3-Panel Layout (`CRMLayout.tsx`). | ✅ Complete |
+| **1. Core** | **List View** | Interactive Table with Sorting/Filtering. | ✅ Complete |
+| **2. AI** | **Intelligence Edge Function** | Create `crm-intelligence` (Flash). | ✅ Complete |
+| **2. AI** | **Right Panel UI** | Streaming Markdown Renderer for insights. | ✅ Complete |
+| **3. Advanced** | **Grounding Integration** | Add Google Search tool to `crm-intelligence`. | ✅ Complete |
+| **3. Advanced** | **Action Buttons** | "Draft Email", "Schedule Call" (Function Calling). | ✅ Complete |
 
 ---
 

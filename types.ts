@@ -94,15 +94,44 @@ export interface UploadedDocument {
   content?: string;
 }
 
+export type PipelineStage = 'New' | 'Contacted' | 'Qualified' | 'Proposal' | 'Won' | 'Lost';
+
 export interface CRMContact {
   id: string;
   name: string;
   company: string;
   role: string;
   status: 'lead' | 'active' | 'churned' | 'prospect';
+  pipeline_stage: PipelineStage;
   last_active_at: string;
   email: string;
   user_id?: string;
+  value?: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  client: string;
+  status: 'Planning' | 'Active' | 'On Hold' | 'Completed';
+  phase: 'Foundation' | 'Implementation' | 'Optimization';
+  progress: number;
+  startDate: string;
+  value: number;
+  tasks: Task[];
+}
+
+export interface AnalyticsData {
+  revenue: { date: string; value: number }[];
+  clients: { month: string; active: number; new: number }[];
+  team: { name: string; capacity: number; performance: number }[];
+  summary: {
+    totalRevenue: number;
+    activeClients: number;
+    teamCapacity: number;
+    revenueGrowth: number;
+  };
+  insights: string[];
 }
 
 export interface AppState {

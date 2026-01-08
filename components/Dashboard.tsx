@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, CheckSquare, Calendar, Settings, Database, LogOut, Loader2, Users } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, Settings, Database, LogOut, Loader2, Users, PieChart, Briefcase } from 'lucide-react';
 import { Button } from './Button';
 import { AppState, Task } from '../types';
 import { Overview } from './dashboard/Overview';
@@ -9,6 +9,8 @@ import { RoadmapView } from './dashboard/RoadmapView';
 import { SystemsView } from './dashboard/SystemsView';
 import { SettingsView } from './dashboard/SettingsView';
 import { CRMLayout } from './dashboard/CRM/CRMLayout';
+import { ProjectPlanningLayout } from './dashboard/Projects/ProjectPlanningLayout';
+import { AnalyticsLayout } from './dashboard/Analytics/AnalyticsLayout';
 import { orchestrator } from '../services/gemini/orchestrator';
 
 interface DashboardProps {
@@ -44,6 +46,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
   const tabs = [
     { name: 'Overview', icon: <LayoutDashboard size={16} /> },
     { name: 'CRM', icon: <Users size={16} /> },
+    { name: 'Projects', icon: <Briefcase size={16} /> },
+    { name: 'Analytics', icon: <PieChart size={16} /> },
     { name: 'Roadmap', icon: <Calendar size={16} /> },
     { name: 'Tasks', icon: <CheckSquare size={16} /> },
     { name: 'Systems', icon: <Database size={16} /> },
@@ -67,6 +71,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
         
       case 'CRM':
         return <CRMLayout />;
+
+      case 'Projects':
+        return <ProjectPlanningLayout />;
+
+      case 'Analytics':
+        return <AnalyticsLayout />;
 
       case 'Tasks':
         return <TaskBoard tasks={state.dashboardState.tasks} onUpdateTaskStatus={handleUpdateTaskStatus} />;
