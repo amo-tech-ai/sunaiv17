@@ -5,8 +5,8 @@ export interface DiagnosticOption {
   label: string;
   mapped_system_id: string;
   pain_point_tag: string;
-  ai_explanation?: string; // New: For Right Panel consultant logic
-  priority_weight?: 'Critical' | 'High' | 'Medium' | 'Low'; // New: For ranking logic
+  ai_explanation?: string; 
+  priority_weight?: 'Critical' | 'High' | 'Medium' | 'Low'; 
 }
 
 export interface DiagnosticQuestion {
@@ -33,16 +33,15 @@ export interface RoadmapPhase {
 }
 
 export interface ImpactMetric {
-  category: string; // e.g. "Sales Velocity", "Marketing Reach"
+  category: string; 
   before: number;
   after: number;
-  unit: string; // "%", "hrs", "x"
-  changeLabel: string; // "+40%"
+  unit: string; 
+  changeLabel: string; 
   description: string;
 }
 
 export interface AIState {
-  // Updated to support sections hierarchy
   questions: DiagnosticSection[]; 
   recommendations: {
     systemIds: string[];
@@ -95,15 +94,15 @@ export interface UploadedDocument {
   content?: string;
 }
 
-export interface IndustryPack {
-  industry: IndustryType | string;
-  systemNames: Record<string, string>;
-  roiFormulas: Record<string, string>;
-  diagnosticTemplates: Record<string, string>;
-  kpis: string[];
-  riskFactors: string[];
-  // New: Full structured diagnostic packs
-  diagnostics?: DiagnosticSection[];
+export interface CRMContact {
+  id: string;
+  name: string;
+  company: string;
+  role: string;
+  status: 'lead' | 'active' | 'churned' | 'prospect';
+  last_active_at: string;
+  email: string;
+  user_id?: string;
 }
 
 export interface AppState {
@@ -120,14 +119,12 @@ export interface AppState {
     selectedServices: string[];
     uploadedDocuments: UploadedDocument[];
     analysis?: BusinessAnalysis;
-    // Deprecated specific keys, moving to generic diagnosticAnswers map
     priorities: {
       moneyFocus: string;
       marketingFocus: string;
       responseSpeed: string;
       mainPriority: string;
     };
-    // New flexible storage for dynamic form answers: QuestionID -> Array of selected Option Labels
     diagnosticAnswers: Record<string, string[]>;
     selectedSystems: string[];
     readiness: {
