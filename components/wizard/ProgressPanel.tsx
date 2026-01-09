@@ -7,26 +7,27 @@ interface ProgressPanelProps {
   step: number;
   industry: AppState['data']['industry'];
   selectedServices?: string[];
-  priorities?: AppState['data']['priorities']; // New optional prop
+  priorities?: AppState['data']['priorities'];
 }
 
 export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [], priorities }) => {
-  const progress = [10, 30, 55, 75, 100][step - 1];
+  // 5-step progress calculation
+  const progress = [20, 40, 60, 80, 100][step - 1];
 
   const titles = [
     "Getting to know your business",
     "Industry Deep Dive",
     "System Selection",
-    "Readiness Check",
-    "Your 30-Day Plan"
+    "Executive Brief",
+    "Strategic Roadmap"
   ];
 
   const descriptions = [
     "We start by understanding who you are to tailor the AI models specifically to your market context.",
     `Locked context: ${industry.charAt(0).toUpperCase() + industry.slice(1).replace('_', ' ')}.`,
     "Focusing on systems over tools ensures long-term revenue growth rather than short-term efficiency.",
-    "Checking your infrastructure prevents bottlenecks during the implementation phase.",
-    "A concrete roadmap to ensure we hit the ground running from Day 1."
+    "Validating your infrastructure readiness and calculating strategic impact scores.",
+    "Synthesizing all inputs into a cohesive 90-day execution plan."
   ];
 
   return (

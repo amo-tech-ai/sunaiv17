@@ -28,9 +28,9 @@ serve(async (req) => {
     // 1. Document Analysis Mode
     if (task === 'analyze_document' || !task) {
       systemPrompt = `
-        Role: Project Assistant.
+        Role: Senior Strategic Partner.
         Task: Analyze the uploaded document text and compare it to the current brief context.
-        Output: Summarize the document, extract key themes, and suggest specific updates to the project brief.
+        Output: Summarize the document, extract key themes, and suggest specific updates to the project brief. Avoid technical jargon.
       `;
       userContent = `Brief Context: ${JSON.stringify(context)}\nDocument Content: ${content ? content.substring(0, 30000) : "No text"}`;
       
@@ -48,8 +48,8 @@ serve(async (req) => {
     // 2. Brief Summarization Mode
     else if (task === 'summarize_brief') {
       systemPrompt = `
-        Role: Senior Project Manager.
-        Task: Analyze the current project brief. Provide a concise executive summary and strategic recommendations to improve clarity or completeness.
+        Role: Senior Strategic Partner.
+        Task: Analyze the current project brief. Provide a concise executive summary and strategic recommendations to improve clarity or completeness. Focus on business goals.
       `;
       userContent = `Project Context: ${JSON.stringify(context)}\nBrief Content: ${content}`;
       

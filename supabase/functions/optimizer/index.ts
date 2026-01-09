@@ -73,7 +73,9 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `
-        You are a Solution Architect for the ${pack.industry} industry.
+        You are a Senior Strategic Partner for the ${pack.industry} industry.
+        Recommend systems based on their **business impact** (Revenue/Time). Explain *why* a system fits in simple, executive terms.
+        
         User Context:
         - Primary Goal: ${priorities.mainPriority || 'Growth'}
         - Pain Points: ${priorities.moneyFocus}, ${priorities.marketingFocus}, ${priorities.responseSpeed}
@@ -81,7 +83,10 @@ serve(async (req) => {
         Available Systems: ${JSON.stringify(pack.systemNames)}
         ROI Formulas: ${JSON.stringify(pack.roiFormulas)}
 
-        Task: Rank top 2-3 systems. Rewrite ROI text to be specific.
+        Task: 
+        1. Rank top 2-3 systems that address the specific pain points.
+        2. Rewrite ROI text to be specific to this client. 
+           Example: "This stops you from losing leads at night" instead of "24/7 automated response agent".
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },

@@ -9,8 +9,7 @@ import { Step5Plan } from './Step5Plan';
 
 interface WizardFlowProps {
   step: number;
-  data: AppState['data'];
-  aiState: AppState['aiState'];
+  state: AppState;
   isAnalyzing: boolean;
   updateData: (section: keyof AppState['data'], value: any) => void;
   updateNestedData: (section: 'priorities' | 'readiness', key: string, value: any) => void;
@@ -24,8 +23,7 @@ interface WizardFlowProps {
 
 export const WizardFlow: React.FC<WizardFlowProps> = ({
   step,
-  data,
-  aiState,
+  state,
   isAnalyzing,
   updateData,
   updateNestedData,
@@ -36,6 +34,8 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
   setStream,
   onUrlBlur,
 }) => {
+  const { data, aiState } = state;
+
   switch (step) {
     case 1:
       return (
@@ -73,7 +73,7 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
     case 4:
       return (
         <Step4Summary 
-          state={{ step, completed: false, data, aiState, dashboardState: { tasks: [], initialized: false } }} 
+          state={state}
           updateData={updateData}
           setAnalysis={setAnalysis}
           setStream={setStream}
@@ -82,7 +82,7 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
     case 5:
       return (
         <Step5Plan 
-          state={{ step, completed: false, data, aiState, dashboardState: { tasks: [], initialized: false } }} 
+          state={state}
           setRoadmap={setRoadmap}
           setStream={setStream}
         />

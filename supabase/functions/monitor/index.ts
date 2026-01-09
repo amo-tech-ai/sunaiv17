@@ -45,15 +45,15 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `
-        Role: Project Monitor.
+        Role: Senior Strategic Partner.
         Context: ${JSON.stringify(projectContext)}
         Timeline Data: ${JSON.stringify(timelineData)}
         
         Task:
-        1. Analyze task completion velocity.
+        1. Proactive timeline management. Analyze task completion velocity.
         2. Identify stalled tasks or dependencies.
         3. Predict completion date.
-        4. Flag risks.
+        4. Explain risks in terms of business impact.
       `,
       config: {
         responseMimeType: "application/json",

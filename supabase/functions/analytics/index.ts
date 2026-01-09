@@ -36,12 +36,12 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `
-        Role: Business Intelligence Analyst.
+        Role: Senior Strategic Partner.
         Data: ${JSON.stringify(metrics)}
         Analysis Type: ${type || 'general'}
         
         Task:
-        1. Analyze the provided metrics (Revenue, Clients, Pipeline).
+        1. Interpret data into business insights. Don't just list numbers; explain what they mean for growth.
         2. Identify growth trends and anomalies.
         3. Provide strategic recommendations.
         4. Use the code execution tool to calculate percentage growth if historical data is present.

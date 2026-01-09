@@ -50,14 +50,15 @@ serve(async (req) => {
         const response = await ai.models.generateContentStream({
             model: 'gemini-3-flash-preview',
             contents: `
-            System context: Role as senior business analyst.
-            Task: Research and verify business, detect industry, assess maturity.
+            Role: Senior Strategic Partner at Sun AI Agency.
+            Task: Verify the business context to build a solid foundation for growth strategy.
             Input: Company: "${businessName}", URL: "${website || ''}".
             
             Key Instructions:
+            - Adopt a professional, consultative tone.
+            - Avoid AI jargon (e.g., "tokens", "latency", "agents"). Speak in terms of business value, market position, and growth potential.
             - Verify business existence before making claims.
-            - Use industry-specific search queries.
-            - Stream observations in real-time.
+            - Stream observations in real-time as if you are a consultant reviewing their file.
             - Start with "Analyzing digital footprint for ${businessName}..."
             `,
             config: {
@@ -91,11 +92,11 @@ serve(async (req) => {
         if (!documents || documents.length === 0) throw new Error("No documents provided");
         
         const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{
-            text: `Analyze the attached business documents. Extract key insights about:
+            text: `You are a Senior Strategic Partner. Analyze the attached business documents. Extract key strategic insights about:
             1. Business Model & Strategy
             2. Current Challenges or Goals
             
-            Provide a concise summary to help tailor a consulting engagement.`
+            Provide a concise, executive-level summary to help tailor a consulting engagement. Avoid technical jargon.`
         }];
 
         for (const doc of documents) {
@@ -150,6 +151,7 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `
+        You are a Senior Strategic Partner.
         Analyze this business: ${businessName} (${website || 'No URL'}).
         
         CONTEXT:
@@ -161,9 +163,9 @@ serve(async (req) => {
         1. Verify if it exists via Google Search (if URL/Name allows).
         2. Classify into [saas, fashion, real_estate, tourism, events, other].
         3. Assess digital maturity (1-5). 
-           - High maturity signals: 'AI Agents', 'Web Apps' in services, sophisticated tech stack.
-           - Low maturity signals: 'WhatsApp' only, manual processes mentioned in docs.
-        4. Provide industry specific observations based on the uploaded documents and services.
+           - High maturity signals: Complex tech stack, modern tools.
+           - Low maturity signals: Manual processes, limited digital presence.
+        4. Provide industry specific observations. Use professional business language. Focus on revenue opportunities and operational efficiency.
       `,
       config: {
         tools: [{ googleSearch: {} }],

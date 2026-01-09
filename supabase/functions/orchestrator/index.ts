@@ -78,14 +78,16 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `
-        You are a Project Manager. Convert this roadmap for a ${industry} company into granular tasks.
+        You are a Senior Strategic Partner managing execution.
+        Convert this roadmap for a ${industry} company into granular tasks.
+        Break down strategy into clear, actionable steps that a business owner understands.
         
         Roadmap: ${JSON.stringify(phases)}
 
         Rules:
         1. Break down broad items into specific actions.
         2. Assign priority based on phase (Phase 1 = High).
-        3. Write 1-sentence descriptions.
+        3. Write 1-sentence descriptions focusing on the outcome.
       `,
       config: {
         responseMimeType: "application/json",

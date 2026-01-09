@@ -45,7 +45,7 @@ export default function App() {
   }, [user, authLoading]);
 
   const nextStep = () => {
-    if (state.step < 5) {
+    if (state.step < 5) { // Restored to 5 steps
       setIsTransitioning(true);
       setTimeout(() => {
         setState(prev => ({ ...prev, step: prev.step + 1 }));
@@ -126,6 +126,8 @@ export default function App() {
       return !allQuestionsAnswered;
     }
     if (state.step === 3) return state.data.selectedSystems.length === 0;
+    if (state.step === 4) return state.aiState.readinessAnalysis.score === 0; // Wait for analysis
+    if (state.step === 5) return state.aiState.roadmap.length === 0; // Wait for plan
     return false;
   };
 
@@ -162,14 +164,14 @@ export default function App() {
               data={state.data}
               intelligenceStream={intelligenceStream}
               documentInsights={state.aiState.documentInsights}
+              readinessAnalysis={state.aiState.readinessAnalysis}
             />
           }
         >
           <div className="flex-1 p-8 md:p-16 md:pt-24 max-w-3xl mx-auto w-full">
             <WizardFlow 
               step={state.step}
-              data={state.data}
-              aiState={state.aiState}
+              state={state}
               isAnalyzing={isAnalyzing}
               updateData={updateData}
               updateNestedData={updateNestedData}

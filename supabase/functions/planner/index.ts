@@ -18,9 +18,6 @@ serve(async (req) => {
 
   try {
     const json = await req.json();
-    
-    // We allow a flexible schema here to support the new 'scenario' property
-    // which might not be in the strict validation schema yet.
     const { wizardState } = json; 
     
     // Initialize Supabase
@@ -30,16 +27,28 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     let userId = null;
+    let orgId = null;
+
     if (authHeader) {
         const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
         userId = user?.id;
+        
+        // Fetch Org ID if possible, otherwise rely on RLS logic or default
+        if (userId) {
+             const { data: members } = await supabase
+                .from('team_members')
+                .select('org_id')
+                .eq('user_id', userId)
+                .limit(1)
+                .single();
+            orgId = members?.org_id;
+        }
     }
 
     const ai = createGeminiClient();
     const pack = getIndustryPack(wizardState.data.industry);
-    
-    // Check for Scenario Mode
     const isScenario = !!wizardState.scenario;
+    
     const scenarioContext = isScenario 
         ? `SCENARIO SIMULATION: The user wants to '${wizardState.scenario.type}' with '${wizardState.scenario.intensity}' intensity. 
            Adjust the roadmap accordingly (e.g., if 'accelerate', reduce durations but increase risk).`
@@ -70,7 +79,10 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `
-        Create a Strategic Roadmap for a ${pack.industry} company.
+        You are a Senior Strategic Partner.
+        Design a clear 90-day execution plan for a ${pack.industry} company.
+        Use business goals (e.g., 'Launch Foundation') rather than technical tasks. Ensure the tone is confident and directive.
+        
         ${scenarioContext}
         
         Inputs:
@@ -91,11 +103,54 @@ serve(async (req) => {
 
     const roadmapData = JSON.parse(response.text);
 
-    // If real user, save the roadmap
+    // PERSISTENCE: Save Roadmap to Database
     if (userId && !isScenario) {
-        // ... (Existing persistence logic for standard roadmap generation)
-        // For scenario simulations, we usually just return the data to the UI to preview
-        // before the user commits to "Saving" it.
+        // 1. Get Project ID
+        const { data: projects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('status', 'draft')
+            .limit(1);
+        
+        const projectId = projects?.[0]?.id;
+
+        if (projectId) {
+            // 2. Create Roadmap Record
+            const { data: roadmap, error: mapError } = await supabase
+                .from('roadmaps')
+                .insert({
+                    project_id: projectId,
+                    org_id: orgId, // Can be null
+                    title: `Strategic Plan - ${new Date().toLocaleDateString()}`,
+                    is_active: true
+                })
+                .select()
+                .single();
+
+            if (mapError) console.error("Roadmap insert error:", mapError);
+
+            if (roadmap && roadmapData.phases) {
+                // 3. Create Phases
+                const phasesPayload = roadmapData.phases.map((phase: any, index: number) => ({
+                    roadmap_id: roadmap.id,
+                    org_id: orgId,
+                    name: phase.phaseName,
+                    duration_label: phase.duration,
+                    order_index: index,
+                    status: index === 0 ? 'active' : 'locked',
+                    tasks: phase.items, // Storing as JSONB arrays
+                    goals: phase.deliverables,
+                    kpis: phase.kpis
+                }));
+
+                const { error: phaseError } = await supabase
+                    .from('roadmap_phases')
+                    .insert(phasesPayload);
+                
+                if (phaseError) console.error("Phase insert error:", phaseError);
+            }
+        }
     }
 
     return new Response(JSON.stringify(roadmapData), { 

@@ -73,7 +73,8 @@ serve(async (req) => {
     };
 
     const prompt = `
-      You are a Senior Account Manager AI. Analyze this client relationship.
+      You are a Senior Strategic Partner managing client relationships.
+      Focus on relationship health and business value.
       
       Client: ${clientDetails?.name} (${clientDetails?.role} at ${clientDetails?.company})
       Status: ${clientDetails?.status}

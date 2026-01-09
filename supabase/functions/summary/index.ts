@@ -4,6 +4,13 @@ import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -12,7 +19,19 @@ serve(async (req) => {
     const { wizardState } = await req.json();
     const data = wizardState.data;
     const ai = createGeminiClient();
-    const pack = getIndustryPack(data.industry);
+    
+    // Initialize Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get User from Auth Header (Optional but good for RLS context if we used it here directly)
+    const authHeader = req.headers.get('Authorization');
+    let userId = null;
+    if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        userId = user?.id;
+    }
 
     // 1. Deterministic Scoring Logic (Base Calculation)
     let score = 0;
@@ -26,7 +45,6 @@ serve(async (req) => {
     score = Math.max(15, Math.min(score, 95));
 
     // 2. Advanced Strategic Analysis (Gemini 3 Pro)
-    // Using Code Execution to calculate realistic impact metrics
     const schema: Schema = {
       type: Type.OBJECT,
       properties: {
@@ -84,18 +102,43 @@ serve(async (req) => {
     });
 
     const aiData = JSON.parse(response.text);
-
-    return new Response(JSON.stringify({
+    const finalResult = {
       score, // Calculated in code
       headline: aiData.headline,
-      summary: aiData.paragraph_1_diagnosis + "\n\n" + aiData.paragraph_2_strategy, // Legacy support
+      summary: aiData.paragraph_1_diagnosis + "\n\n" + aiData.paragraph_2_strategy,
       analysis: {
         p1: aiData.paragraph_1_diagnosis,
         p2: aiData.paragraph_2_strategy,
         signals: aiData.signals,
         how_ai_helps: aiData.how_ai_helps
       }
-    }), { 
+    };
+
+    // PERSISTENCE: Save to Context Snapshots
+    if (userId) {
+        // Find active draft project
+        const { data: projects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('status', 'draft')
+            .limit(1);
+        
+        const projectId = projects?.[0]?.id;
+
+        if (projectId) {
+            // Upsert snapshot
+            await supabase.from('context_snapshots').insert({
+                project_id: projectId,
+                snapshot_type: 'strategic_brief', // New type for Screen 4
+                snapshot_data: finalResult,
+                readiness_score: score,
+                is_active: true
+            });
+        }
+    }
+
+    return new Response(JSON.stringify(finalResult), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
 

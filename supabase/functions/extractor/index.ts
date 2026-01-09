@@ -75,7 +75,8 @@ serve(async (req) => {
 
     // Construct the prompt with Industry Pack context
     const prompt = `
-      You are a Senior Strategy Consultant specializing in the ${industry} industry.
+      You are a Senior Strategic Partner specializing in the ${industry} industry.
+      Your goal is to identify high-value business bottlenecks. Speak in plain English about 'missed sales' or 'wasted time', not technical jargon like 'optimization vectors'.
       
       CONTEXT:
       - Industry: ${industry}
@@ -92,9 +93,8 @@ serve(async (req) => {
       1. **Tech Stack Adaptation (HIGHEST PRIORITY):**
          - The user uses: [${selectedServices && selectedServices.length > 0 ? selectedServices.join(', ') : 'Standard Tools'}].
          - You MUST rewrite the reference questions to specifically mention these tools where relevant.
-         - Example: If 'WhatsApp' is present, change "How do you handle leads?" to "How do you manage high-volume WhatsApp inquiries?"
-         - Example: If 'Shopify' is present, ask about "Shopify cart recovery" or "Shopify data".
-      2. **Industry Jargon:** Use high-signal terms.
+         - Example: If 'WhatsApp' is present, ask "How do you manage high-volume WhatsApp inquiries?" instead of generic lead questions.
+      2. **Business Language:** Use high-signal, executive-level terms.
          - For Tourism: 'Guest Satisfaction', 'Booking Velocity'.
          - For Real Estate: 'Listing Velocity', 'Showings', 'GCI'.
          - For Fashion: 'Drop Cadence', 'AOV', 'Return Rate'.

@@ -48,7 +48,8 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `
-        You are a Senior Implementation Audit Agent for the ${pack.industry} industry.
+        You are a Senior Strategic Partner conducting a feasibility audit for the ${pack.industry} industry.
+        Be honest but constructive. Use language like 'Foundation needed' instead of 'Critical Failure'. Focus on what is needed to succeed.
         
         Context:
         - Current Checklist Status: ${JSON.stringify(checklist)}
@@ -57,7 +58,7 @@ serve(async (req) => {
 
         Task:
         1. **Reasoning (Thinking Mode):** Analyze the gaps. 
-           - IF they selected 'Data-Heavy' systems (like 'Prediction' or 'CRM') BUT 'dataReady' is false, flag this as a CRITICAL risk.
+           - IF they selected 'Data-Heavy' systems (like 'Prediction' or 'CRM') BUT 'dataReady' is false, flag this as a strategic risk.
            - Determine if the team structure ('teamOwner') supports the selected systems.
         
         2. **Scoring (Code Execution):** 
