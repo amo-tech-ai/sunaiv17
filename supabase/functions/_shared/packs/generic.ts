@@ -22,30 +22,30 @@ export const GENERIC_PACK: IndustryPack = {
   riskFactors: ['Data Silos', 'Manual Processes', 'Lack of Ownership'],
   diagnostics: [
     {
-      id: 'block_a_constraint',
-      title: 'Primary Growth Constraint',
-      description: 'What is the biggest thing holding your business back right now?',
+      id: 'block_a_focus',
+      title: 'Primary Focus',
+      description: 'What is the biggest priority for your business right now?',
       questions: [{
-        id: 'generic_primary_constraint',
-        text: 'What is the biggest thing holding your business back right now?',
+        id: 'primary_focus',
+        text: 'What is the biggest priority for your business right now?',
         ai_hint: 'Focusing on the main bottleneck will yield the highest ROI.',
         type: 'single',
         options: [
-          { label: "Revenue Growth is stalling", mapped_system_id: "lead_gen", pain_point_tag: "Growth", priority_weight: "Critical" },
-          { label: "Sales conversion is too low", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "Critical" },
-          { label: "Operations are too manual/slow", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Ops", priority_weight: "High" },
-          { label: "Marketing performance is inconsistent", mapped_system_id: "content_studio", pain_point_tag: "Marketing", priority_weight: "Medium" },
-          { label: "Hard to scale without hiring", mapped_system_id: "crm_autopilot", pain_point_tag: "Scale", priority_weight: "Medium" }
+          { label: "Increase sales & revenue", mapped_system_id: "lead_gen", pain_point_tag: "Growth", priority_weight: "Critical" },
+          { label: "Save time through automation", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Efficiency", priority_weight: "High" },
+          { label: "Improve marketing performance", mapped_system_id: "content_studio", pain_point_tag: "Marketing", priority_weight: "Medium" },
+          { label: "Improve sales follow-up", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "Critical" },
+          { label: "Prepare the business to scale", mapped_system_id: "crm_autopilot", pain_point_tag: "Scale", priority_weight: "Medium" }
         ]
       }]
     },
     {
-      id: 'block_b_revenue',
-      title: 'Revenue & Sales Friction',
-      description: 'Where are you losing money or sales today?',
+      id: 'block_b_pain',
+      title: 'Industry Pain Points',
+      description: 'Where do you feel stuck today?',
       questions: [{
-        id: 'generic_revenue_friction',
-        text: 'Where are you losing money or sales today?',
+        id: 'generic_pain_points',
+        text: 'Where do you feel stuck today?',
         ai_hint: 'Plugging leaks is cheaper than filling the bucket.',
         type: 'multi',
         options: [
@@ -59,11 +59,11 @@ export const GENERIC_PACK: IndustryPack = {
     },
     {
       id: 'block_c_time',
-      title: 'Time & Automation Drain',
-      description: 'What is consuming your team’s time?',
+      title: 'Time & Automation Blockers',
+      description: 'What is consuming time your team shouldn’t be spending?',
       questions: [{
-        id: 'generic_time_drain',
-        text: 'What is consuming your team’s time?',
+        id: 'time_blockers',
+        text: 'What is consuming time your team shouldn’t be spending?',
         ai_hint: 'Your team should be focused on high-value work, not admin.',
         type: 'multi',
         options: [
@@ -76,37 +76,19 @@ export const GENERIC_PACK: IndustryPack = {
       }]
     },
     {
-      id: 'block_d_marketing',
-      title: 'Marketing Bottlenecks',
-      description: 'What’s hardest about growing consistently?',
+      id: 'block_d_readiness',
+      title: 'Confidence & Readiness',
+      description: 'How comfortable are you with automating parts of your business?',
       questions: [{
-        id: 'generic_marketing_bottleneck',
-        text: 'What’s hardest about growing consistently?',
-        ai_hint: 'Consistent growth requires a predictable engine.',
-        type: 'multi',
-        options: [
-          { label: "Generating enough leads/traffic", mapped_system_id: "lead_gen", pain_point_tag: "Traffic", priority_weight: "High" },
-          { label: "Turning attention into revenue", mapped_system_id: "conversion_booster", pain_point_tag: "Conversion", priority_weight: "High" },
-          { label: "Maintaining brand consistency", mapped_system_id: "content_studio", pain_point_tag: "Brand", priority_weight: "Medium" },
-          { label: "Scaling campaigns", mapped_system_id: "lead_gen", pain_point_tag: "Scaling", priority_weight: "Medium" },
-          { label: "Measuring what works", mapped_system_id: "crm_autopilot", pain_point_tag: "ROI", priority_weight: "Low" }
-        ]
-      }]
-    },
-    {
-      id: 'block_e_readiness',
-      title: 'Scale Readiness',
-      description: 'How ready are you to automate and scale?',
-      questions: [{
-        id: 'generic_scale_readiness',
-        text: 'How ready are you to automate and scale?',
+        id: 'readiness_check',
+        text: 'How comfortable are you with automating parts of your business?',
         ai_hint: 'This helps us calibrate the pace of the roadmap.',
         type: 'single',
         options: [
-          { label: "Ready to implement now", mapped_system_id: "lead_gen", pain_point_tag: "Ready", priority_weight: "Critical" },
+          { label: "Ready to automate now", mapped_system_id: "lead_gen", pain_point_tag: "Ready", priority_weight: "Critical" },
           { label: "Interested but need guidance", mapped_system_id: "crm_autopilot", pain_point_tag: "Guidance", priority_weight: "Medium" },
           { label: "Exploring options", mapped_system_id: "content_studio", pain_point_tag: "Exploring", priority_weight: "Low" },
-          { label: "Not ready yet", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Not Ready", priority_weight: "Low" }
+          { label: "Just researching", mapped_system_id: "whatsapp_assistant", pain_point_tag: "Not Ready", priority_weight: "Low" }
         ]
       }]
     }

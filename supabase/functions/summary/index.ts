@@ -31,32 +31,27 @@ serve(async (req) => {
       type: Type.OBJECT,
       properties: {
         headline: { type: Type.STRING, description: "A punchy, 3-5 word strategic title focusing on growth." },
-        executive_brief: { type: Type.STRING, description: "2 paragraphs. Incorporate the Step 1 Research findings (Business Model, Maturity) and explain how the selected systems specifically improve Sales & Marketing." },
+        paragraph_1_diagnosis: { type: Type.STRING, description: "Paragraph 1: What we learned. Validate their situation." },
+        paragraph_2_strategy: { type: Type.STRING, description: "Paragraph 2: Why this approach works. Explain the system fit." },
         
-        impact_metrics: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              category: { type: Type.STRING, description: "e.g. Sales Velocity, Marketing Reach" },
-              before: { type: Type.NUMBER, description: "Baseline score (0-100)" },
-              after: { type: Type.NUMBER, description: "Projected score (0-100)" },
-              unit: { type: Type.STRING, enum: ['%', 'x', 'hrs'] },
-              changeLabel: { type: Type.STRING, description: "e.g. +40%" },
-              description: { type: Type.STRING, description: "Short explanation of the lift" }
-            },
-            required: ["category", "before", "after", "unit", "changeLabel", "description"]
-          }
+        signals: {
+          type: Type.OBJECT,
+          properties: {
+            ai_readiness: { type: Type.STRING, enum: ['Low', 'Medium', 'High'] },
+            marketing_leverage: { type: Type.STRING, enum: ['Low', 'Medium', 'High'] },
+            sales_automation: { type: Type.STRING, enum: ['Low', 'Medium', 'High'] },
+            operational_efficiency: { type: Type.STRING, enum: ['Low', 'Medium', 'High'] }
+          },
+          required: ["ai_readiness", "marketing_leverage", "sales_automation", "operational_efficiency"]
         },
 
-        key_strategies: { 
-          type: Type.ARRAY, 
-          items: { type: Type.STRING }, 
-          description: "3 strategic bullet points blending their tech stack with the solution." 
-        },
-        risks: { type: Type.ARRAY, items: { type: Type.STRING } }
+        how_ai_helps: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "5 plain language bullet points on how AI helps."
+        }
       },
-      required: ["headline", "executive_brief", "impact_metrics", "key_strategies", "risks"]
+      required: ["headline", "paragraph_1_diagnosis", "paragraph_2_strategy", "signals", "how_ai_helps"]
     };
 
     const response = await ai.models.generateContent({
@@ -73,18 +68,16 @@ serve(async (req) => {
         - Selected Systems: ${data.selectedSystems?.join(', ')}
         
         TASK:
-        1. **Strategic Narrative:** Write an Executive Brief. It MUST reference the "Verified Model" or "Research Observations" found in Step 1 to show we understand their business. Connect this to their selected systems.
+        Write an Executive Strategic Summary.
+        1. **Paragraph 1 (Diagnosis):** Based on their website, industry, and diagnostic answers, summarize their current state. Validate their potential but acknowledge manual limits.
+        2. **Paragraph 2 (Strategy):** Explain why the selected systems improve what already exists (traffic, leads) without adding complexity.
+        3. **Signals:** Rate their potential in 4 areas based on their Digital Maturity (${maturity}/5).
+        4. **How AI Helps:** 5 simple, non-technical bullet points.
         
-        2. **Impact Calculation (Code Execution):**
-           - Use Python to calculate "Before" vs "After" scores for 3 categories: "Sales Efficiency", "Marketing Reach", and "Operational Speed".
-           - Baseline (Before) = (Digital Maturity Score / 5) * 100.
-           - Uplift (After) = Add 15 points for each selected system relevant to that category.
-           - Cap at 95.
-           - Return the JSON structure with these calculated values.
+        TONE: Calm, Clear, Confident. No fake numbers. No hype.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 2048 },
-        tools: [{ codeExecution: {} }],
         responseMimeType: "application/json",
         responseSchema: schema
       }
@@ -93,12 +86,15 @@ serve(async (req) => {
     const aiData = JSON.parse(response.text);
 
     return new Response(JSON.stringify({
-      score,
+      score, // Calculated in code
       headline: aiData.headline,
-      summary: aiData.executive_brief,
-      impactScores: aiData.impact_metrics,
-      wins: aiData.key_strategies,
-      risks: aiData.risks
+      summary: aiData.paragraph_1_diagnosis + "\n\n" + aiData.paragraph_2_strategy, // Legacy support
+      analysis: {
+        p1: aiData.paragraph_1_diagnosis,
+        p2: aiData.paragraph_2_strategy,
+        signals: aiData.signals,
+        how_ai_helps: aiData.how_ai_helps
+      }
     }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
