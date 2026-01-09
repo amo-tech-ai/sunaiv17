@@ -10,11 +10,12 @@
 
 ## 1. EXECUTIVE SUMMARY
 
-The application has achieved a **high level of maturity (90-95%)**. The core value proposition—the AI Consultancy Wizard—is fully implemented with advanced Gemini 3 capabilities (Thinking, Search, Code Execution) and secure backend architecture. The Dashboard is functional and connected to live data, though some advanced visualization features (interactive Gantt) are simplified.
+The application has successfully migrated from a prototype to a **functional "Thick Client" architecture backed by Edge Functions**. The core Wizard flow (Steps 1-5) and Dashboard (CRM, Projects) are fully wired to Supabase Logic and Persistence.
 
-*   **Solid:** The entire Wizard flow (Steps 1-5), Edge Function architecture, AI Agent implementations, and Database persistence layer are production-grade.
-*   **Risky:** Complex dependency chains in Step 5 (Roadmap generation) rely on consistent JSON schema output from the LLM. While schema validation is in place, model variance can occasionally cause parsing issues.
-*   **Blocks:** None. The application is deployable.
+*   **Completion:** **85-90%** (Functional Feature Complete).
+*   **Solid:** The **AI Agent Layer** is robust, correctly utilizing `Gemini 3 Pro` for reasoning (Planning, Diagnosis) and `Flash` for speed (Research, CRM). The **Database Wiring** is complete for the Wizard and CRM flows.
+*   **Risky:** **Authentication is currently bypassed** (`ENABLE_DEV_AUTH_BYPASS = true` in `useAuth.ts`). This is the primary blocker for a secure public launch.
+*   **Blocks:** Production deployment requires disabling the Auth bypass and ensuring RLS policies are active in the live database.
 
 ---
 
@@ -22,11 +23,11 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Screen | Purpose | Core Features | Advanced Features | Status | % Complete | Evidence / Notes |
 | :--- | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Step 1: Context** | Truth Baseline | Form Input, Validation | Search Grounding, Streaming Intelligence, Auto-Classification | 🟢 | 100% | `Step1Context.tsx`, `functions/analyst` |
-| **Step 2: Diagnostics** | Deep Dive | Dynamic Form, Selection Logic | Industry Pack Injection, Thinking Mode, System Mapping | 🟢 | 100% | `Step2Diagnostics.tsx`, `functions/extractor` |
-| **Step 3: Systems** | Prescription | Card Grid, Selection Limits | Contextual Ranking, ROI Rewriting, DB Sync | 🟢 | 100% | `Step3Systems.tsx`, `functions/optimizer` |
-| **Step 4: Summary** | Assessment | Executive Brief UI, Radial Score | Weighted Scoring via Code Execution, Risk Analysis | 🟢 | 100% | `Step4Summary.tsx`, `functions/scorer`, `functions/summary` |
-| **Step 5: Roadmap** | Strategy | Timeline UI, Phase Breakdown | Deep Reasoning (4k tokens), DB Persistence (Roadmaps table) | 🟢 | 100% | `Step5Plan.tsx`, `functions/planner` |
+| **Step 1: Context** | Truth Baseline | Input, Validation, Persistence | Search Grounding, Auto-Classify | 🟢 | 100% | `Step1Context.tsx`, `functions/analyst` (Search tool used). |
+| **Step 2: Diagnostics** | Deep Dive | Dynamic Form, DB Sync | Industry Pack Injection, Gemini Thinking | 🟢 | 100% | `Step2Diagnostics.tsx`, `functions/extractor` (Pro model). |
+| **Step 3: Systems** | Prescription | Selection Logic, DB Sync | Contextual Ranking, ROI Rewriting | 🟢 | 100% | `Step3Systems.tsx`, `functions/optimizer` (Upserts `project_systems`). |
+| **Step 4: Summary** | Executive Brief | Strategy Display, Impact Math | Python Code Exec, Strategic Narrative | 🟢 | 100% | `Step4Summary.tsx` replaces old Readiness. `functions/summary` calls `scorer`. |
+| **Step 5: Roadmap** | Strategy | Timeline UI, DB Persistence | Deep Reasoning (4k tokens), Phase Logic | 🟢 | 100% | `Step5Plan.tsx`, `functions/planner` writes to `roadmaps` table. |
 
 ---
 
@@ -34,12 +35,12 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Feature / Workflow | What It Does | Status | % Complete | Works End-to-End? | Evidence / Gaps |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Wizard Logic** | State management across 5 steps | 🟢 | 100% | Yes | `useWizardState.ts` syncs with `wizard_sessions`. |
-| **Dashboard Handoff** | Transition from Wizard to App | 🟢 | 100% | Yes | Step 5 "Launch" routes to Dashboard; data persists. |
-| **Task Generation** | Converts Roadmap to Tasks | 🟢 | 100% | Yes | `orchestrator` function creates rows in `tasks` table. |
-| **CRM Intelligence** | Client health & next actions | 🟢 | 100% | Yes | `crm-intelligence` function analyzes interactions. |
-| **Real-time Updates** | Live UI updates on DB change | 🟢 | 100% | Yes | Hooks (`useCRM`, `useTasks`) use `supabase.channel`. |
-| **Authentication** | Access control | 🟢 | 100% | Yes | `AuthGuard`, `useAuth`, RLS policies assumed. |
+| **Wizard Logic** | State management & DB Sync | 🟢 | 100% | Yes | `useWizardState.ts` upserts to `wizard_sessions`. |
+| **Dashboard Handoff** | Transition to Dashboard | 🟢 | 100% | Yes | `App.tsx` gates Dashboard on `completed` state. |
+| **Task Orchestration** | Converts Roadmap to Tasks | 🟢 | 90% | Yes | `orchestrator` function writes to `tasks` table. |
+| **CRM Intelligence** | Relationship Analysis | 🟢 | 100% | Yes | `crm-intelligence` function streams analysis to UI. |
+| **Real-time Updates** | Live UI updates | 🟡 | 60% | Partial | `useCRM` & `useProjects` have subscriptions. `useWizardState` does not. |
+| **Authentication** | Access Control | 🔴 | 10% | **Bypassed** | `useAuth.ts` returns Mock User. Logic exists but is disabled. |
 
 ---
 
@@ -47,15 +48,15 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Agent Type | Role | Trigger | Status | % Complete | Verified Output? | Notes |
 | :--- | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Analyst** | Researcher | URL Input | 🟢 | 100% | Yes (Stream/JSON) | Uses `googleSearch` tool. |
-| **Extractor** | Consultant | Step 2 Load | 🟢 | 100% | Yes (Schema) | Maps answers to System IDs. |
-| **Optimizer** | Architect | Step 3 Load | 🟢 | 100% | Yes (Schema) | Rewrites ROI text. |
-| **Scorer** | Auditor | Step 4 Toggle | 🟢 | 100% | Yes (Math) | Uses `codeExecution` for scoring. |
-| **Planner** | Strategist | Step 5 Load | 🟢 | 100% | Yes (JSON) | Uses `gemini-3-pro` + Thinking. |
-| **Orchestrator** | PM | Dashboard Init | 🟢 | 100% | Yes (DB Rows) | Creates tasks from phases. |
-| **Monitor** | Watchdog | Timeline View | 🟢 | 100% | Yes (Insights) | Predicts completion dates. |
-| **Analytics** | BI Analyst | Analytics Tab | 🟢 | 100% | Yes (Insights) | Uses `codeExecution` for metrics. |
-| **Assistant** | Support | Chat / Docs | 🟢 | 100% | Yes (Chat) | RAG-ready structure. |
+| **Analyst** | Researcher | `onBlur` (Step 1) | 🟢 | 100% | Yes (Stream) | Uses `googleSearch`. Writes `context_snapshots`. |
+| **Extractor** | Consultant | Step 2 Mount | 🟢 | 100% | Yes (JSON) | Maps Industry Packs to dynamic questions. |
+| **Optimizer** | Architect | Step 3 Mount | 🟢 | 100% | Yes (JSON) | Writes recommendations to `project_systems`. |
+| **Scorer** | Auditor | (Internal via Summary) | 🟢 | 100% | Yes (Math) | Uses `codeExecution` for scoring logic. |
+| **Planner** | Strategist | Step 5 Mount | 🟢 | 100% | Yes (JSON) | Uses `thinkingConfig` (4096 tokens). |
+| **Orchestrator** | PM | Dashboard/Task Gen | 🟢 | 90% | Yes (DB) | Writes to `tasks` table. |
+| **Monitor** | Watchdog | Timeline View | 🟢 | 100% | Yes (Text) | Analyzing timeline data for risks. |
+| **Assistant** | Support | Chatbot / Brief | 🟢 | 100% | Yes (Chat) | `GlobalChatbot.tsx` connected to `assistant` function. |
+| **Controller** | Gatekeeper | N/A | 🔴 | 0% | No | Logic implies direct writes; no "Approval" agent layer. |
 
 ---
 
@@ -63,13 +64,13 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Gemini Feature | Business Use | Where Used | Status | % Complete | Verified? |
 | :--- | :--- | :--- | :---: | :---: | :---: |
-| **Gemini 3 Pro** | Deep Reasoning | `planner`, `summary`, `extractor` | 🟢 | 100% | Yes |
-| **Gemini 3 Flash** | Speed / UI Updates | `analyst`, `orchestrator`, `assistant` | 🟢 | 100% | Yes |
-| **Gemini Thinking** | Complex Logic Chains | `planner` (4k), `scorer`, `optimizer` | 🟢 | 100% | Yes |
-| **Google Search** | Fact Verification | `analyst` (Step 1), `crm-intelligence` | 🟢 | 100% | Yes |
-| **Code Execution** | Accurate Math | `scorer` (Readiness), `analytics` (BI) | 🟢 | 100% | Yes |
-| **Structured Output**| UI Rendering | All Agents (except Analyst stream) | 🟢 | 100% | Yes |
-| **Function Calling** | DB/External Actions | `orchestrator` (implied logic structure) | 🟡 | 80% | Logic exists in Edge Functions. |
+| **Gemini 3 Pro** | Deep Reasoning | `planner`, `summary`, `extractor` | 🟢 | 100% | Yes (`index.ts` files). |
+| **Gemini 3 Flash** | Speed / UI Updates | `analyst`, `orchestrator`, `assistant` | 🟢 | 100% | Yes. |
+| **Gemini Thinking** | Complex Logic Chains | `planner` (4k), `extractor` (2k) | 🟢 | 100% | Yes (`thinkingConfig` present). |
+| **Google Search** | Fact Verification | `analyst`, `crm-intelligence` | 🟢 | 100% | Yes (`tools: [{googleSearch}]`). |
+| **Code Execution** | Accurate Math | `scorer`, `analytics` | 🟢 | 100% | Yes (`tools: [{codeExecution}]`). |
+| **Structured Output**| UI Rendering | All Agents (except Streams) | 🟢 | 100% | Yes (`responseSchema` Zod/JSON). |
+| **Function Calling** | DB/External Actions | `orchestrator` | 🟡 | 50% | Logic is internal DB writes, not true tool-call loop. |
 
 ---
 
@@ -77,12 +78,12 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Journey Step | Expected Behavior | Status | Verified? | Issues Found |
 | :--- | :--- | :---: | :---: | :--- |
-| **1. Entry** | User enters URL, sees "Verifying..." | 🟢 | Yes | None. |
-| **2. Diagnosis** | Form adapts to Industry/Stack | 🟢 | Yes | None. |
-| **3. Selection** | "Recommended" badges appear | 🟢 | Yes | None. |
-| **4. Audit** | Score updates dynamically | 🟢 | Yes | Debouncing is critical here. |
-| **5. Plan** | "Thinking..." animation -> Timeline | 🟢 | Yes | Latency masking implemented. |
-| **6. Dashboard** | Data from Wizard is visible | 🟢 | Yes | Overview reads snapshot data. |
+| **1. Entry** | User enters URL, sees "Verifying..." | 🟢 | Yes | `Step1Context` triggers `analyst` stream. |
+| **2. Diagnosis** | Form adapts to Industry/Stack | 🟢 | Yes | `Step2Diagnostics` renders dynamic JSON. |
+| **3. Selection** | "Recommended" badges appear | 🟢 | Yes | `Step3Systems` merges AI recs with manual selection. |
+| **4. Strategy** | Score updates, narrative generates | 🟢 | Yes | `Step4Summary` shows AI-generated brief. |
+| **5. Plan** | "Thinking..." -> Timeline renders | 🟢 | Yes | `Step5Plan` handles long-running Planner request. |
+| **6. Dashboard** | Real data loads from DB | 🟢 | Yes | `Overview` uses `useOverview` hook querying DB. |
 
 ---
 
@@ -90,10 +91,10 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 | Automation | Trigger | Action | Status | Verified? | Gaps |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Auto-Save** | Wizard Input | Write to DB (Debounced) | 🟢 | Yes | `useWizardState` handles this. |
-| **Industry Pack** | Step 1 Result | Load specific questions | 🟢 | Yes | `extractor` loads from `_shared`. |
-| **Task Creation** | Roadmap Gen | Insert rows in `tasks` | 🟢 | Yes | `orchestrator` handles batch inserts. |
-| **Pipeline Logic** | Task Status | Update Project/Phase | 🟢 | Yes | Dashboard hooks handle updates. |
+| **Auto-Save** | Wizard Input | Debounced DB Write | 🟢 | Yes | `useWizardState` implements debounce logic. |
+| **CRM Intel** | Click Contact | Analyze History + News | 🟢 | Yes | `ClientIntelligence` calls Edge Function. |
+| **Logs** | AI Action | Write to `ai_run_logs` | 🟢 | Yes | Edge functions write logs on execution. |
+| **Task Gen** | Roadmap Creation | Bulk Insert Tasks | 🟢 | Yes | `orchestrator` function handles batch inserts. |
 
 ---
 
@@ -101,19 +102,19 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 #### UI / UX
 - [x] Clear progression (Wizard steps 1-5).
-- [x] Responsive behavior (3-Panel layout).
-- [x] Error states (ErrorBoundaries implemented).
+- [x] Responsive behavior (3-Panel layout adapts).
+- [x] Error states (`ErrorBoundary` implemented).
 - [x] Loading states (Skeletons/Spinners present).
 
 #### AI SAFETY & CONTROL
-- [x] AI does not auto-execute harmful actions.
-- [x] Outputs use JSON Schema validation (Zod).
-- [x] Fallbacks exist for AI failures (e.g., static Industry Packs).
+- [x] AI outputs use JSON Schema validation (Zod).
+- [x] Fallbacks exist for AI failures (Static Industry Packs).
+- [ ] Controller Agent / Human-in-the-loop approval missing.
 
 #### DATA & SECURITY
 - [x] API Keys hidden in Edge Functions.
-- [x] RLS policies assumed (Org/User isolation).
-- [x] No sensitive data in LocalStorage.
+- [x] RLS policies assumed (Migrations exist).
+- [ ] **Auth is Bypassed (`ENABLE_DEV_AUTH_BYPASS`).**
 
 #### RELIABILITY
 - [x] Retry logic with exponential backoff (`utils/retry.ts`).
@@ -123,19 +124,19 @@ The application has achieved a **high level of maturity (90-95%)**. The core val
 
 ## 9. SUCCESS CRITERIA (CLEAR & MEASURABLE)
 
-*   **Wizard Completion:** A user can go from URL entry to Dashboard without console errors. 🟢
-*   **Persistence:** A user can refresh the page on Step 3 and lose no data. 🟢
-*   **Intelligence:** The "Readiness Score" is calculated via Python, not LLM guessing. 🟢
-*   **Dashboard Hydration:** The Dashboard shows *real* data generated by the Wizard, not mocks. 🟢
+*   **Wizard Completion:** User completes Step 5 and data is in `wizard_sessions` table. 🟢
+*   **Persistence:** User refreshes browser on Step 3 and data remains. 🟢
+*   **Intelligence:** Readiness Score uses Python Math, not LLM guessing. 🟢
+*   **Dashboard Hydration:** Dashboard uses SQL queries, not Mocks. 🟢
 
 ---
 
 ## 10. WHAT IS STILL NEEDED FOR PRODUCTION
 
-1.  **Strict RLS Policies:** Ensure database migration scripts explicitly define Row Level Security policies for all new tables (`briefs`, `invoices`, etc.).
-2.  **Storage Buckets:** Verify Supabase Storage buckets (`agency-assets`, `client-docs`) are created and policies allow upload.
-3.  **Mail/Notification:** Integration with an email provider (Resend/SendGrid) for "Magic Link" auth and notifications is implied but code logic is basic.
+1.  **Enable Authentication:** Set `ENABLE_DEV_AUTH_BYPASS = false` in `hooks/useAuth.ts` and ensure the Supabase Auth UI (Magic Link) is accessible.
+2.  **Storage Integration:** The `Step1Context` file upload reads into Base64 for the AI but does NOT yet upload to a Supabase Storage Bucket for long-term retention.
+3.  **Deploy Functions:** Ensure `supabase functions deploy` has been run for all 9 agents.
 
 ---
 
-**Verdict:** The system is **Production Candidate** ready for final QA and deployment.
+**Verdict:** The system is **Technically Complete** but **Security Compromised** (by design for dev/demo). Flip the Auth switch to go Live.
