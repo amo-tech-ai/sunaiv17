@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './components/Button';
 import { Dashboard } from './components/Dashboard';
+import { LandingPage } from './components/LandingPage';
 import { analyst } from './services/gemini/analyst';
 import { useWizardState } from './hooks/useWizardState';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGuard } from './components/auth/AuthGuard';
+import { useAuth } from './hooks/useAuth';
 
 // Layout & Flow Components
 import { WizardLayout } from './components/layout/WizardLayout';
@@ -15,6 +17,7 @@ import { ProgressPanel } from './components/wizard/ProgressPanel';
 import { IntelligencePanel } from './components/wizard/IntelligencePanel';
 
 export default function App() {
+  const { user, loading: authLoading } = useAuth();
   const {
     state,
     setState,
@@ -30,16 +33,22 @@ export default function App() {
     INITIAL_STATE
   } = useWizardState();
 
-  // Local UI State for AI Stream
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [intelligenceStream, setIntelligenceStream] = useState<string>("");
+  const [showLanding, setShowLanding] = useState(true);
+
+  // If we have a user session on mount, skip landing
+  useEffect(() => {
+      if (user && !authLoading) {
+          setShowLanding(false);
+      }
+  }, [user, authLoading]);
 
   const nextStep = () => {
     if (state.step < 5) {
       setIsTransitioning(true);
       setTimeout(() => {
         setState(prev => ({ ...prev, step: prev.step + 1 }));
-        // Clear the AI stream so the next step starts fresh or falls back to static context
         setIntelligenceStream(""); 
         setIsTransitioning(false);
       }, 300);
@@ -50,7 +59,6 @@ export default function App() {
 
   const handleReset = () => {
     if (confirm("Are you sure you want to reset your progress?")) {
-      // In production, we might want to archive the session in DB instead of just clearing local state
       setState(INITIAL_STATE);
       window.scrollTo(0, 0);
     }
@@ -63,7 +71,6 @@ export default function App() {
     setIntelligenceStream(""); 
 
     try {
-      // 1. Trigger Document Analysis if docs exist
       let docInsights = "";
       if (state.data.uploadedDocuments && state.data.uploadedDocuments.length > 0) {
         docInsights = await analyst.analyzeDocuments(state.data.uploadedDocuments);
@@ -73,15 +80,11 @@ export default function App() {
         }));
       }
 
-      // 2. Trigger Stream Analysis
       const stream = analyst.analyzeBusinessStream(state.data.businessName, state.data.website);
-      let fullText = "";
       for await (const chunk of stream) {
-        fullText += chunk;
         setIntelligenceStream(prev => prev + chunk);
       }
       
-      // 3. Trigger Classification with new Robust Logic
       const analysisResult = await analyst.classifyBusiness(
         state.data.businessName, 
         state.data.website, 
@@ -90,16 +93,13 @@ export default function App() {
         docInsights
       );
       
-      // Store the full analysis object
       updateData('analysis', analysisResult);
 
       if (analysisResult.detected_industry) {
         updateData('industry', analysisResult.detected_industry);
-        // Reset dynamic questions if industry changes to ensure Step 2 regenerates
         setAiQuestions([]); 
       }
       
-      // Only auto-fill description if user hasn't typed one yet
       if (!state.data.description && analysisResult.business_model) {
         updateData('description', `Model: ${analysisResult.business_model}. ${analysisResult.observations?.[0] || ''}`);
       }
@@ -112,34 +112,28 @@ export default function App() {
     }
   };
 
-  // Determine if the "Continue" button should be disabled based on current step requirements
   const isNextDisabled = () => {
-    if (state.step === 1) {
-      return !state.data.businessName || state.data.businessName.length < 2;
-    }
-    
+    if (state.step === 1) return !state.data.businessName || state.data.businessName.length < 2;
     if (state.step === 2) {
       const sections = state.aiState.questions;
-      // If AI hasn't loaded questions yet, block progress
       if (!sections || sections.length === 0) return true;
-      
-      // STRICT: Check if EVERY question across all sections has at least one answer
-      const allQuestionsAnswered = sections.every(section => {
-        return section.questions.every(q => {
+      const allQuestionsAnswered = sections.every(section => 
+        section.questions.every(q => {
           const answers = state.data.diagnosticAnswers[q.id];
           return answers && answers.length > 0;
-        });
-      });
-      
+        })
+      );
       return !allQuestionsAnswered;
     }
-
-    if (state.step === 3) {
-      return state.data.selectedSystems.length === 0;
-    }
-
+    if (state.step === 3) return state.data.selectedSystems.length === 0;
     return false;
   };
+
+  if (authLoading) return null;
+
+  if (showLanding && !user) {
+      return <LandingPage onStart={() => setShowLanding(false)} />;
+  }
 
   return (
     <ErrorBoundary>
@@ -188,7 +182,6 @@ export default function App() {
             />
           </div>
           
-          {/* Sticky Footer for Navigation */}
           <div className="sticky bottom-0 w-full p-8 bg-sun-bg/95 backdrop-blur-sm border-t border-sun-border mt-auto">
             <div className="max-w-3xl mx-auto flex justify-end gap-4">
                 {state.step > 1 && (

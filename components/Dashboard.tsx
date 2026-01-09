@@ -11,6 +11,7 @@ import { SettingsView } from './dashboard/SettingsView';
 import { CRMLayout } from './dashboard/CRM/CRMLayout';
 import { ProjectPlanningLayout } from './dashboard/Projects/ProjectPlanningLayout';
 import { AnalyticsLayout } from './dashboard/Analytics/AnalyticsLayout';
+import { GlobalChatbot } from './GlobalChatbot';
 import { orchestrator } from '../services/gemini/orchestrator';
 
 interface DashboardProps {
@@ -142,6 +143,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onReset, updateDash
         {renderContent()}
 
       </main>
+      
+      {/* Global Chatbot Overlay */}
+      <GlobalChatbot />
     </div>
   );
 };

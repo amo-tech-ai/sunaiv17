@@ -42,7 +42,8 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
     
     const result = validateBusinessContext(payload);
     if (!result.success) {
-        const error = result.error.errors.find(e => e.path[0] === field);
+        // Safe access to errors using .issues (Zod v3 property) instead of .errors
+        const error = result.error.issues.find(e => e.path[0] === field);
         setValidationErrors(prev => ({
             ...prev,
             [field]: error ? error.message : ''

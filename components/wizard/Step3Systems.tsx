@@ -43,7 +43,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
              setStream(recs.summary);
           } else if (recs.systemIds.length > 0) {
              const topRecId = recs.systemIds[0];
-             const topRecName = SYSTEMS.find(s => s.id === topRecId)?.title;
+             const topRecName = SYSTEMS?.find(s => s.id === topRecId)?.title;
              setStream(`Based on your focus on **${data.priorities.moneyFocus || 'Growth'}**, I highly recommend starting with the **${topRecName}**. \n\nSelect up to 3 systems to build your stack.`);
           }
         } catch (e) {
@@ -70,7 +70,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
     
     // Individual Impacts
     currentSelection.forEach(id => {
-      const sys = SYSTEMS.find(s => s.id === id);
+      const sys = SYSTEMS?.find(s => s.id === id);
       const impact = aiRecommendations.impacts[id] || sys?.revenueImpact;
       narrative += `• **${sys?.title}**: ${impact}\n`;
     });

@@ -1,14 +1,77 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAnalytics } from '../../../hooks/useAnalytics';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend
 } from 'recharts';
-import { Loader2, TrendingUp, Users, PieChart } from 'lucide-react';
+import { Loader2, TrendingUp, PieChart, Download, RefreshCw, Sparkles } from 'lucide-react';
+import { Button } from '../../Button';
+import { supabase } from '../../../services/supabase';
 
 export const AnalyticsLayout: React.FC = () => {
   const { data, loading } = useAnalytics();
+  const [aiInsights, setAiInsights] = useState<string[]>([]);
+  const [aiHeadline, setAiHeadline] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Trigger AI analysis when data is loaded
+  useEffect(() => {
+    if (data && !aiLoading && aiInsights.length === 0) {
+      generateInsights();
+    }
+  }, [data]);
+
+  const generateInsights = async () => {
+    if (!data) return;
+    
+    setAiLoading(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('analytics', {
+        body: { 
+          metrics: {
+            revenue: data.summary.totalRevenue,
+            clients: data.summary.activeClients,
+            growth: data.summary.revenueGrowth,
+            capacity: data.summary.teamCapacity
+          },
+          type: 'general' 
+        }
+      });
+
+      if (error) throw error;
+
+      if (result) {
+        setAiInsights(result.insights || []);
+        setAiHeadline(result.headline || "Strategic Analysis");
+      }
+    } catch (e) {
+      console.error("AI Analytics Error", e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!data) return;
+
+    // Flatten data for CSV
+    const rows = [
+      ['Date', 'Revenue'],
+      ...data.revenue.map(r => [r.date, r.value])
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "sun_ai_analytics_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (loading || !data) {
     return (
@@ -17,6 +80,9 @@ export const AnalyticsLayout: React.FC = () => {
       </div>
     );
   }
+
+  // Use fallback insights if AI hasn't run or failed, but prioritize AI
+  const displayInsights = aiInsights.length > 0 ? aiInsights : data.insights;
 
   return (
     <div className="flex h-[calc(100vh-140px)] border border-sun-border rounded-sm overflow-hidden bg-white animate-fade-in">
@@ -50,8 +116,14 @@ export const AnalyticsLayout: React.FC = () => {
 
       {/* Center Panel: Charts */}
       <div className="w-full md:w-[50%] flex flex-col bg-white overflow-y-auto">
-        <div className="p-6 border-b border-sun-border">
+        <div className="p-6 border-b border-sun-border flex justify-between items-center">
             <h2 className="font-serif text-xl text-sun-primary">Revenue Trend</h2>
+            <Button variant="outline" className="h-8 text-xs gap-2" onClick={handleExportCSV}>
+              <Download size={14} /> Export CSV
+            </Button>
+        </div>
+        
+        <div className="p-6 border-b border-sun-border">
             <div className="h-64 w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data.revenue}>
@@ -91,28 +163,49 @@ export const AnalyticsLayout: React.FC = () => {
 
       {/* Right Panel: Analytics Agent */}
       <div className="w-full md:w-[30%] border-l border-sun-border bg-sun-right overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-sun-border bg-white/50 backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-sun-muted">
-            <PieChart size={12} className="text-sun-accent" />
-            Analytics Agent
+        <div className="p-6 border-b border-sun-border bg-white/50 backdrop-blur-sm flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-sun-muted">
+              <PieChart size={12} className="text-sun-accent" />
+              Analytics Agent
+            </div>
+            <h2 className="font-serif text-xl text-sun-primary">{aiHeadline || "Strategic Insights"}</h2>
           </div>
-          <h2 className="font-serif text-xl text-sun-primary">Strategic Insights</h2>
+          <button 
+            onClick={generateInsights} 
+            disabled={aiLoading}
+            className="p-2 hover:bg-sun-bg rounded-full text-sun-tertiary transition-colors"
+            title="Refresh Analysis"
+          >
+            <RefreshCw size={16} className={aiLoading ? "animate-spin" : ""} />
+          </button>
         </div>
         
         <div className="p-6 space-y-6 overflow-y-auto">
-            {data.insights.map((insight, idx) => (
-                <div key={idx} className="bg-white p-4 rounded-sm border border-sun-border shadow-sm">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-sun-muted mb-2">Observation {idx + 1}</div>
-                    <p className="text-sm text-sun-secondary leading-relaxed">{insight}</p>
+            {aiLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-sun-muted gap-3">
+                    <Sparkles className="animate-pulse text-sun-accent" size={24} />
+                    <span className="text-sm font-medium">Analyzing revenue patterns...</span>
                 </div>
-            ))}
-            
-            <div className="bg-sun-primary text-white p-5 rounded-sm">
-                <div className="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">Recommendation</div>
-                <p className="text-sm leading-relaxed">
-                    Based on the high performance of the Design team but low capacity, consider hiring a junior designer to offload production tasks and maintain quality.
-                </p>
-            </div>
+            ) : (
+                <>
+                    {displayInsights.map((insight, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-sm border border-sun-border shadow-sm animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-sun-muted mb-2">Observation {idx + 1}</div>
+                            <p className="text-sm text-sun-secondary leading-relaxed">{insight}</p>
+                        </div>
+                    ))}
+                    
+                    <div className="bg-sun-primary text-white p-5 rounded-sm animate-fade-in" style={{ animationDelay: '400ms' }}>
+                        <div className="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">Recommendation</div>
+                        <p className="text-sm leading-relaxed">
+                            {displayInsights.length > 0 
+                                ? "Focus on converting the recent influx of leads to stabilize revenue growth." 
+                                : "Based on the high performance of the Design team but low capacity, consider hiring a junior designer to offload production tasks and maintain quality."}
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
       </div>
     </div>

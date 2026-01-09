@@ -8,9 +8,15 @@ declare const Deno: {
 };
 
 export const createGeminiClient = () => {
-  const apiKey = Deno.env.get("GOOGLE_API_KEY");
+  // Support standard naming conventions for Supabase Secrets
+  const apiKey = 
+    Deno.env.get("GEMINI_API_KEY") || 
+    Deno.env.get("GOOGLE_API_KEY") || 
+    Deno.env.get("API_KEY");
+
   if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY not found in environment variables");
+    throw new Error("Missing API Key: Please set GEMINI_API_KEY in Supabase Dashboard > Settings > Secrets");
   }
+  
   return new GoogleGenAI({ apiKey });
 };

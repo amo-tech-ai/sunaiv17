@@ -1,15 +1,60 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SYSTEMS } from '../../types';
 import { Server, Activity, Terminal, Settings, Power } from 'lucide-react';
 import { Button } from '../Button';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SystemsViewProps {
   selectedSystems: string[];
   impacts: Record<string, string>;
 }
 
+interface LogEntry {
+  id: string;
+  created_at: string;
+  operation: string;
+  model: string;
+  token_count: number;
+}
+
 export const SystemsView: React.FC<SystemsViewProps> = ({ selectedSystems, impacts }) => {
+  const { user } = useAuth();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Fetch initial logs
+    const fetchLogs = async () => {
+      const { data } = await supabase
+        .from('ai_run_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (data) setLogs(data);
+    };
+    fetchLogs();
+
+    // Subscribe to new logs
+    const channel = supabase
+      .channel('system_logs_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_run_logs' }, (payload) => {
+        setLogs(prev => [payload.new as LogEntry, ...prev].slice(0, 10));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const formatTime = (isoString: string) => {
+    return new Date(isoString).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex justify-between items-end">
@@ -23,7 +68,7 @@ export const SystemsView: React.FC<SystemsViewProps> = ({ selectedSystems, impac
 
       <div className="grid grid-cols-1 gap-6">
         {selectedSystems.map((sysId) => {
-          const system = SYSTEMS.find((s) => s.id === sysId);
+          const system = SYSTEMS?.find((s) => s.id === sysId);
           const impact = impacts[sysId] || system?.revenueImpact;
 
           return (
@@ -96,28 +141,25 @@ export const SystemsView: React.FC<SystemsViewProps> = ({ selectedSystems, impac
                   </div>
                 </div>
 
-                {/* Live Logs Simulation */}
-                <div className="p-6 bg-sun-primary/5 font-mono text-xs">
+                {/* Real Live Logs */}
+                <div className="p-6 bg-sun-primary/5 font-mono text-xs overflow-hidden flex flex-col h-full min-h-[200px]">
                   <div className="text-[10px] uppercase tracking-widest text-sun-tertiary font-bold mb-3 flex items-center gap-2">
                     <Terminal size={12} /> System Logs
                   </div>
-                  <div className="space-y-2 opacity-70">
-                    <div className="flex gap-2">
-                      <span className="text-sun-muted">[10:42:05]</span>
-                      <span className="text-sun-primary">Processing inbound trigger...</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-sun-muted">[10:42:08]</span>
-                      <span className="text-green-700">Action executed successfully.</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-sun-muted">[10:45:12]</span>
-                      <span className="text-sun-primary">Syncing context with CRM...</span>
-                    </div>
-                    <div className="flex gap-2 animate-pulse">
-                      <span className="text-sun-muted">[10:45:15]</span>
-                      <span className="text-sun-accent">Monitoring for events...</span>
-                    </div>
+                  <div className="space-y-2 opacity-70 flex-1 overflow-y-auto no-scrollbar">
+                    {logs.length > 0 ? (
+                      logs.map((log) => (
+                        <div key={log.id} className="flex gap-2 animate-fade-in">
+                          <span className="text-sun-muted shrink-0">[{formatTime(log.created_at)}]</span>
+                          <span className="text-sun-primary">
+                            <span className="text-sun-accent mr-1">{log.model.split('-')[1] || 'Agent'}:</span> 
+                            {log.operation}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sun-muted italic">Waiting for activity...</div>
+                    )}
                   </div>
                 </div>
 
