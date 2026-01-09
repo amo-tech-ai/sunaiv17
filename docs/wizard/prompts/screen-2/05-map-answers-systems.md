@@ -1,50 +1,42 @@
 
-# PROMPT 05 — MAP ANSWERS → FUTURE SYSTEMS (INTERNAL ONLY)
+# PROMPT 05 — MAP ANSWERS → FUTURE SYSTEMS (VALIDATION)
 
 **Role:** Systems Architect
-**Goal:** Ensure every problem has a solution ready for Screen 3.
-**Visibility:** Internal Logic (Hidden from User).
+**Goal:** Ensure every problem has a valid solution. **Prevent Runtime Crashes.**
+**Visibility:** Internal Logic.
 
 ---
 
 ## 1. THE MAPPING RULE
-**Every option** in Screen 2 must carry a hidden `mapped_system_id` metadata tag. This ID corresponds to a specific System in the `INDUSTRY_PACK`.
+Every option in Screen 2 must carry a `mapped_system_id`. This ID **MUST** exist in the `SYSTEMS` constant in `types.ts`.
 
-*   If user selects Option A -> Recommend System A in Screen 3.
-*   If user selects Option B -> Recommend System B in Screen 3.
+**CRITICAL:** If an ID refers to a system that does not exist, the application will crash on Screen 3.
 
-## 2. THE TASK
-For each selected question option, confirm the mapping:
+## 2. VALIDATION LOGIC
+The `extractor` Edge Function must perform a final validation pass before returning JSON:
 
-| Industry | Screen 2 Answer (Problem) | Mapped System ID (Solution) |
+1.  Load the master list of `VALID_SYSTEM_IDS` (e.g., `['lead_gen', 'crm_autopilot', 'whatsapp_assistant', ...]`).
+2.  Iterate through all generated options.
+3.  **Check:** `if (!VALID_SYSTEM_IDS.includes(option.mapped_system_id))`
+4.  **Action:**
+    *   *If Invalid:* Remap to a fallback system (e.g., `conversion_booster`) OR remove the option entirely.
+    *   *If Valid:* Pass through.
+
+## 3. MAPPING TABLE (REFERENCE)
+
+| Industry | Pain Point | System ID (MUST MATCH `types.ts`) |
 | :--- | :--- | :--- |
-| **Fashion** | "High Return Rates" | `whatsapp_assistant` (Renamed: Fit Concierge) |
-| **Fashion** | "Low Conversion" | `conversion_booster` (Renamed: PDP Optimizer) |
-| **Real Estate** | "Missed Weekend Leads" | `whatsapp_assistant` (Renamed: Lead Concierge) |
-| **Real Estate** | "Unqualified Tours" | `lead_gen` (Renamed: Buyer Qualifier) |
-| **Events** | "Slow Ticket Sales" | `conversion_booster` (Renamed: Ticket Funnel) |
-| **Events** | "Vendor Chaos" | `whatsapp_assistant` (Renamed: Ops Bot) |
+| **Fashion** | "High Return Rates" | `whatsapp_assistant` |
+| **Fashion** | "Low Conversion" | `conversion_booster` |
+| **Real Estate** | "Missed Leads" | `whatsapp_assistant` |
+| **Real Estate** | "Unqualified Tours" | `lead_gen` |
+| **Events** | "Slow Ticket Sales" | `conversion_booster` |
 
-## 3. LOGIC VALIDATION
-Before rendering Screen 2, the **Extractor Agent** performs a self-check:
-1.  Iterate through all generated options.
-2.  Check if `mapped_system_id` exists in `types.ts`.
-3.  If ID is missing or invalid, REMOVE the option from the UI.
-    *   *Why?* We cannot let a user select a problem we cannot solve.
-
-## 4. DATA FLOW DIAGRAM
+## 4. DATA FLOW
 ```mermaid
-graph LR
-    S2_Answer["User Selects: 'High Returns'"]
-    
-    subgraph "Hidden State"
-        ID[mapped_system_id: 'whatsapp_assistant']
-        Tag[pain_point_tag: 'Returns']
-    end
-    
-    S2_Answer --> ID
-    S2_Answer --> Tag
-    
-    ID --> S3_Logic[Optimizer Agent]
-    S3_Logic --> S3_UI[Display 'Fit Concierge' Card]
+graph TD
+    Generated[AI Generated Option] --> Validator{System ID Exists?}
+    Validator -- Yes --> Output[UI Render]
+    Validator -- No --> Fallback[Remap to Default]
+    Fallback --> Output
 ```

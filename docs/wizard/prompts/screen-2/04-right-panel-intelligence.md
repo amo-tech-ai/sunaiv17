@@ -1,48 +1,60 @@
 
-# PROMPT 04 — RIGHT PANEL INTELLIGENCE (EXPLAIN, NOT SELL)
+# PROMPT 04 — RIGHT PANEL INTELLIGENCE (INTERACTIVITY)
 
-**Role:** The Calm Expert
-**Goal:** Validate the user's feelings and explain the business impact of their selection.
+**Role:** The Frontend Interaction Designer
+**Goal:** Implement the "Hover to Explain" behavior.
 **Location:** Right Panel (Sticky Sidebar)
 
 ---
 
-## 1. CONTENT STRATEGY
-When a user hovers or selects an option, the Right Panel updates. The text must be:
-*   **Educational:** Teach them something about their industry.
-*   **Validating:** "It's not just you; this is a common problem."
-*   **Safe:** Do NOT mention AI tools yet. Focus on the *problem*.
+## 1. THE INTERACTION MODEL
+The Right Panel is **not static**. It must react to user cursor movements.
 
-## 2. GENERATION RULES
-For each selected option, generate a specific "Consultant Note":
+**Trigger:** `onMouseEnter` (Hover) or `onFocus` of a Question Option.
+**Action:** Dispatch an event to update the Right Panel content.
+**Data Source:** The `ai_explanation` field found inside the Diagnostic Option object.
 
-*   **Structure:** "[Problem Context]. [Business Impact]."
-*   **Tone:** Professional, Objective, empathetic.
-*   **Forbidden:** "Our AI tool will fix this." (Too salesy).
+## 2. CONTENT STRATEGY
+The text must explain the **Business Impact** of the option being hovered.
 
-## 3. REAL-WORLD EXAMPLES
+*   **Structure:** "[Problem Context]. [Why it hurts your growth]."
+*   **Tone:** Consultant, not Salesperson.
+
+## 3. IMPLEMENTATION SPEC (REACT)
+You must implement a state handler in `Step2Diagnostics.tsx`:
+
+```typescript
+const [activeHint, setActiveHint] = useState<string | null>(null);
+
+// Pass this handler to the Option Card
+const handleHover = (option: DiagnosticOption) => {
+  if (option.ai_explanation) {
+    setActiveHint(option.ai_explanation);
+  }
+};
+
+// Render in Right Panel
+<IntelligencePanel content={activeHint || defaultIntroText} />
+```
+
+## 4. REAL-WORLD EXAMPLES
 
 ### Scenario: Fashion / Option: "High Return Rates"
-> **Bad:** "Our Fit Bot reduces returns by 30%."
-> **Good:** "In high-volume fashion, returns are often a data problem, not a product problem. Sizing confusion accounts for ~60% of margin leakage in your sector."
+> **Hover Text:** "In high-volume fashion, returns are often a data problem. Sizing confusion accounts for ~60% of margin leakage."
 
 ### Scenario: Real Estate / Option: "Slow Response Time"
-> **Bad:** "Use our WhatsApp bot to reply faster."
-> **Good:** "Speed to lead is the primary driver of conversion in real estate. Data shows that inquiries responded to within 5 minutes are 9x more likely to convert."
+> **Hover Text:** "Speed to lead is critical. Data shows that inquiries responded to within 5 minutes are 9x more likely to convert."
 
-### Scenario: SaaS / Option: "High Churn"
-> **Bad:** "Automate retention emails."
-> **Good:** "Churn in the first 90 days usually signals an onboarding gap. Users aren't finding value fast enough to justify the renewal."
-
-## 4. UI BEHAVIOR DIAGRAM
+## 5. DIAGRAM
 ```mermaid
 sequenceDiagram
     participant User
-    participant CenterPanel
+    participant OptionCard
+    participant StateManager
     participant RightPanel
     
-    User->>CenterPanel: Hover "High Returns"
-    CenterPanel->>RightPanel: Send Topic ID
-    RightPanel->>RightPanel: Fetch "Consultant Note"
-    RightPanel-->>User: Display: "Returns are a data problem..."
+    User->>OptionCard: Mouse Enter
+    OptionCard->>StateManager: setActiveHint(option.explanation)
+    StateManager->>RightPanel: Re-render with Hint
+    RightPanel-->>User: Display "Why this matters..."
 ```

@@ -1,51 +1,46 @@
 
 # PROMPT 01 — ANALYZE SCREEN 1 CONTEXT (FOUNDATION)
 
-**Role:** Senior Business Consultant
-**Goal:** Create a "Business Reality Snapshot" to guide diagnostic selection.
+**Role:** Senior Business Consultant & Data Architect
+**Goal:** Establish the "Business Reality Snapshot" structure that must be passed to Screen 2.
 **Input:** Completed Step 1 Context.
-**Output:** Internal Summary (Plain Language).
+**Output:** Structured JSON Object (Persisted to State).
 
 ---
 
-## 1. THE PERSONA
-You are a Senior Business Consultant. You do not use AI jargon. You look at raw data (URL, Services, Industry) and immediately understand the operational reality of the business.
+## 1. THE PROBLEM
+Previously, the "Business Reality" was a loose concept. It must now be a concrete JSON object saved in `AppState` so Screen 2 (Diagnostics) can read it.
 
-## 2. INPUT DATA (FROM STEP 1)
-*   **Business URL:** (e.g., `https://luxethreads.com`)
+## 2. THE TASK
+Analyze the raw inputs from Step 1 and generate a structured `analysis` object.
+
+**Input Data:**
+*   **Business URL:** `https://...`
 *   **Detected Industry:** (e.g., `Fashion`)
-*   **Selected Services:** (e.g., `[Shopify, Instagram, Klaviyo]`)
-*   **Analyst Verification:** (e.g., "Verified DTC brand, mid-market pricing.")
+*   **Services:** (e.g., `[Shopify, Instagram]`)
 
-## 3. THE TASK
-Summarize the business in plain English to establish the "Truth Baseline".
+**Processing Logic:**
+1.  **Derive Type:** If Industry is "Fashion" and Service is "Shopify", Type = "DTC Brand".
+2.  **Derive Revenue Model:** If "SaaS", Model = "Recurring Subscription".
+3.  **Identify Friction:** If "WhatsApp" is used but no "CRM", Friction = "Lead Leakage".
 
-**Answer these 4 questions based ONLY on the input:**
-1.  **Type:** What specific type of business is this? (e.g., "High-volume DTC", not just "Fashion").
-2.  **Revenue Model:** How do they likely make money? (e.g., "Seasonal drops", "Monthly subscriptions").
-3.  **Friction Points:** Where is time likely wasted? (e.g., "Managing returns", "Coordinating vendors").
-4.  **Break Point:** What breaks if they grow 2x tomorrow? (e.g., "Customer support inbox", "Inventory tracking").
+## 3. REQUIRED OUTPUT STRUCTURE (JSON)
+You must ensure this specific object is created and saved to `wizard_sessions` -> `step_data` -> `analysis`:
 
-## 4. OUTPUT FORMAT (JSON)
-```json
-{
-  "business_reality": {
-    "type_specific": "string",
-    "revenue_mechanic": "string",
-    "likely_time_waste": "string",
-    "scalability_risk": "string"
-  }
+```typescript
+interface BusinessAnalysis {
+  detected_industry: string; // "fashion"
+  business_model: string;    // "High-volume DTC"
+  maturity_score: number;    // 1-5 (Calculated based on tech stack depth)
+  
+  // The "Snapshot" used by Screen 2
+  observations: {
+    revenue_mechanic: string; // "Impulse buys on social"
+    likely_time_waste: string; // "Managing returns manually"
+    scalability_risk: string; // "Support inbox overload"
+  };
 }
 ```
 
-## 5. REAL-WORLD EXAMPLE (FASHION)
-> **Input:** LuxeThreads, Shopify, Instagram.
-> **Output:** "High-volume DTC brand. Makes money via impulse buys on social. Wastes time on manual sizing questions and returns processing. Support inbox will break if sales double."
-
-## 6. DIAGRAM: CONTEXT FLOW
-```mermaid
-graph LR
-    S1[Step 1 Inputs] --> Analyst[Analyst Agent]
-    Analyst -->|Synthesize| Snapshot[Business Reality Snapshot]
-    Snapshot --> Selector[Question Selector Logic]
-```
+## 4. INTEGRATION RULE
+**CRITICAL:** This `analysis` object MUST be passed as an argument to the `extractor` function in Prompt 02/03. Do not rely on "Industry" string alone.
