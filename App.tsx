@@ -45,7 +45,7 @@ export default function App() {
   }, [user, authLoading]);
 
   const nextStep = () => {
-    if (state.step < 5) { // Restored to 5 steps
+    if (state.step < 4) { // Reduced to 4 steps
       setIsTransitioning(true);
       setTimeout(() => {
         setState(prev => ({ ...prev, step: prev.step + 1 }));
@@ -127,7 +127,6 @@ export default function App() {
     }
     if (state.step === 3) return state.data.selectedSystems.length === 0;
     if (state.step === 4) return state.aiState.readinessAnalysis.score === 0; // Wait for analysis
-    if (state.step === 5) return state.aiState.roadmap.length === 0; // Wait for plan
     return false;
   };
 
@@ -199,7 +198,7 @@ export default function App() {
                 className="group"
                 disabled={isNextDisabled()}
               >
-                {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
+                {state.step === 4 ? 'Go to Dashboard' : 'Continue'}
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>

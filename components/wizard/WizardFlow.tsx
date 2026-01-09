@@ -5,7 +5,6 @@ import { Step1Context } from './Step1Context';
 import { Step2Diagnostics } from './Step2Diagnostics';
 import { Step3Systems } from './Step3Systems';
 import { Step4Summary } from './Step4Summary';
-import { Step5Plan } from './Step5Plan';
 
 interface WizardFlowProps {
   step: number;
@@ -76,14 +75,6 @@ export const WizardFlow: React.FC<WizardFlowProps> = ({
           state={state}
           updateData={updateData}
           setAnalysis={setAnalysis}
-          setStream={setStream}
-        />
-      );
-    case 5:
-      return (
-        <Step5Plan 
-          state={state}
-          setRoadmap={setRoadmap}
           setStream={setStream}
         />
       );

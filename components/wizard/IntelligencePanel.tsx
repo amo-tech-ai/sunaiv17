@@ -137,15 +137,6 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                         </p>
                       </>
                     )}
-                    
-                    {step === 5 && (
-                      <>
-                        <p className="mb-6">"Sequencing complete. This roadmap is designed to be executed in 3 distinct sprints."</p>
-                        <p>
-                          Notice how Phase 1 focuses entirely on <strong>Foundation</strong>. Without cleaning data and setting up the API layer, the advanced agents in Phase 2 will fail.
-                        </p>
-                      </>
-                    )}
                  </div>
               )}
             </>

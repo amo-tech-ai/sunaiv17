@@ -11,23 +11,21 @@ interface ProgressPanelProps {
 }
 
 export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [], priorities }) => {
-  // 5-step progress calculation
-  const progress = [20, 40, 60, 80, 100][step - 1];
+  // 4-step progress calculation (25% increments)
+  const progress = [25, 50, 75, 100][step - 1];
 
   const titles = [
     "Getting to know your business",
     "Industry Deep Dive",
     "System Selection",
-    "Executive Brief",
-    "Strategic Roadmap"
+    "Executive Brief"
   ];
 
   const descriptions = [
     "We start by understanding who you are to tailor the AI models specifically to your market context.",
     `Locked context: ${industry.charAt(0).toUpperCase() + industry.slice(1).replace('_', ' ')}.`,
     "Focusing on systems over tools ensures long-term revenue growth rather than short-term efficiency.",
-    "Validating your infrastructure readiness and calculating strategic impact scores.",
-    "Synthesizing all inputs into a cohesive 90-day execution plan."
+    "Validating your infrastructure readiness and calculating strategic impact scores."
   ];
 
   return (
@@ -35,7 +33,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, se
       <div>
         <div className="mb-8">
           <span className="font-sans text-xs font-bold tracking-widest text-sun-accent uppercase mb-2 block">
-            Step {step} of 5
+            Step {step} of 4
           </span>
           <div className="h-1 w-full bg-sun-border rounded-full overflow-hidden">
             <div 
