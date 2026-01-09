@@ -1,41 +1,43 @@
+# LOADING INDUSTRY PACKS
 
-# PROMPT 02 — LOAD INDUSTRY DIAGNOSTIC PACK (STRICT)
-
-**Role:** The Extractor Agent (Configuration Phase)
-**Goal:** Load the static "Ground Truth" for the industry.
-**Rule:** *Select. Don't Invent.*
+**Role:** Backend Logic (Edge Function)
+**Task:** Select and validate the correct data module.
 
 ---
 
-## 1. THE CONSTITUTION
-1.  You must **NOT** invent new questions.
-2.  You must **NOT** rewrite question text defined in the Pack.
-3.  You must **ONLY** use questions from the provided `INDUSTRY_PACK`.
+## 1. SELECTION LOGIC
 
-## 2. THE TASK
-1.  Identify the `Detected Industry` from Prompt 01.
-2.  Load the corresponding JSON object from `industryPacks.ts`:
-    *   `FASHION_PACK`
-    *   `REAL_ESTATE_PACK`
-    *   `TOURISM_PACK`
-    *   `EVENTS_PACK`
-    *   `SAAS_PACK`
-3.  Validate that the pack contains the **4 Core Sections**:
-    *   **Section A:** Primary Focus (North Star)
-    *   **Section B:** Revenue Pain Points
-    *   **Section C:** Time/Automation Blockers
-    *   **Section D:** Scale Readiness
+The `extractor` Edge Function performs a lookup based on the `industry` string.
 
-## 3. LOGIC: FALLBACK SAFETY
-If the `Detected Industry` does not match a specific pack (e.g., "Mining"), load the `GENERIC_PACK`. **Never** attempt to generate a "Mining Pack" on the fly.
+```typescript
+import { FASHION_PACK } from "../../data/packs/fashion";
+// ... imports
 
-## 4. DIAGRAM: PACK LOADING
-```mermaid
-flowchart TD
-    Input[Industry: 'Real Estate'] --> Router{Exists in Packs?}
-    Router -- Yes --> Load[Load REAL_ESTATE_PACK]
-    Router -- No --> Fallback[Load GENERIC_PACK]
-    Load --> Validator[Verify 4 Sections]
-    Fallback --> Validator
-    Validator --> Ready[Ready for Selection]
+const PACK_MAP = {
+  'fashion': FASHION_PACK,
+  'real_estate': REAL_ESTATE_PACK,
+  // ...
+};
+
+const selectedPack = PACK_MAP[userIndustry] || GENERIC_PACK;
 ```
+
+---
+
+## 2. VALIDATION CHECKLIST
+
+Before generating the form, the system validates the Pack integrity:
+
+1.  **System Mapping:** Do all `mapped_system_id` values in the pack exist in the global `SYSTEMS` registry?
+2.  **Structure:** Does the pack contain all 4 required sections (Focus, Pain, Time, Readiness)?
+3.  **Content:** Are there at least 3 options per multi-select question?
+
+---
+
+## 3. DYNAMIC INJECTION
+
+The AI Agent does **not** write questions from scratch. It acts as a **Selector**.
+
+*   **Input:** User Context + Industry Pack (Raw Data).
+*   **Process:** The AI reviews the Pack options and selects the top 5 most relevant options for this specific user.
+*   **Constraint:** The AI cannot invent options that are not in the Pack (to ensure System mapping works).

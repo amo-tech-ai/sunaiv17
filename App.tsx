@@ -15,6 +15,7 @@ import { WizardLayout } from './components/layout/WizardLayout';
 import { WizardFlow } from './components/wizard/WizardFlow';
 import { ProgressPanel } from './components/wizard/ProgressPanel';
 import { IntelligencePanel } from './components/wizard/IntelligencePanel';
+import { ClientLayout } from './components/client-dashboard/ClientLayout';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -136,6 +137,20 @@ export default function App() {
       return <LandingPage onStart={() => setShowLanding(false)} />;
   }
 
+  // Check Role for Client Portal
+  // For Dev/Demo: If the user's metadata role is 'client', show client portal
+  const isClientRole = user?.app_metadata?.role === 'client' || user?.user_metadata?.role === 'client';
+
+  if (isClientRole) {
+      return (
+          <ErrorBoundary>
+              <AuthGuard>
+                  <ClientLayout />
+              </AuthGuard>
+          </ErrorBoundary>
+      );
+  }
+
   return (
     <ErrorBoundary>
       {state.completed ? (
@@ -155,6 +170,7 @@ export default function App() {
               industry={state.data.industry} 
               selectedServices={state.data.selectedServices} 
               priorities={state.data.priorities}
+              analysis={state.data.analysis}
             />
           }
           rightPanel={

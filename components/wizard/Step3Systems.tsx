@@ -5,6 +5,7 @@ import { SYSTEMS, AppState } from '../../types';
 import { optimizer } from '../../services/gemini/optimizer';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { getIndustryPack } from '../../data/industryPacks';
 
 interface Step3SystemsProps {
   selectedSystems: string[];
@@ -26,6 +27,9 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const dbSaveTimeoutRef = useRef<any>(null);
+  
+  // Load Industry Pack for dynamic naming
+  const pack = getIndustryPack(data.industry);
 
   useEffect(() => {
     // Only fetch if we haven't already populated recommendations or if it's empty
@@ -43,7 +47,8 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
              setStream(recs.summary);
           } else if (recs.systemIds.length > 0) {
              const topRecId = recs.systemIds[0];
-             const topRecName = SYSTEMS?.find(s => s.id === topRecId)?.title;
+             // Use Industry Pack name if available, else generic title
+             const topRecName = pack.systemNames[topRecId] || SYSTEMS?.find(s => s.id === topRecId)?.title;
              setStream(`Based on your focus on **${data.priorities.moneyFocus || 'Growth'}**, I highly recommend starting with the **${topRecName}**. \n\nSelect up to 3 systems to build your stack.`);
           }
         } catch (e) {
@@ -62,8 +67,6 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
       return "Select a system to see its projected impact on your business.";
     }
 
-    const customerTerm = data.industry === 'tourism' ? 'guests' : data.industry === 'fashion' ? 'shoppers' : 'leads';
-    const conversionTerm = data.industry === 'real_estate' ? 'tours' : 'sales';
     const mainPriority = data.priorities.moneyFocus || "Revenue Growth";
     
     let narrative = `**Strategic Stack Analysis**\n\n`;
@@ -71,8 +74,10 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
     // Individual Impacts
     currentSelection.forEach(id => {
       const sys = SYSTEMS?.find(s => s.id === id);
-      const impact = aiRecommendations.impacts[id] || sys?.revenueImpact;
-      narrative += `• **${sys?.title}**: ${impact}\n`;
+      const title = pack.systemNames[id] || sys?.title;
+      // Prefer AI generated custom impact, fallback to pack specific formula, fallback to generic
+      const impact = aiRecommendations.impacts[id] || pack.roiFormulas[id] || sys?.revenueImpact;
+      narrative += `• **${title}**: ${impact}\n`;
     });
 
     narrative += `\n`;
@@ -80,7 +85,6 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
     // Advanced Synergy Logic
     if (currentSelection.length > 1) {
       narrative += `**Synergistic Benefit:**\n`;
-      // ... (Rest of synergy logic)
       narrative += `By integrating these ${currentSelection.length} systems, you create a cohesive workflow addressing ${mainPriority}.\n`;
     }
 
@@ -189,7 +193,12 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
           {SYSTEMS.map(sys => {
             const isSelected = selectedSystems.includes(sys.id);
             const isRecommended = aiRecommendations.systemIds.includes(sys.id);
-            const customImpact = aiRecommendations.impacts[sys.id] || sys.revenueImpact;
+            // Use Industry Pack Logic: 
+            // 1. AI Custom Impact (Best)
+            // 2. Pack Formula (Better)
+            // 3. Generic (Good)
+            const customImpact = aiRecommendations.impacts[sys.id] || pack.roiFormulas[sys.id] || sys.revenueImpact;
+            const industryTitle = pack.systemNames[sys.id] || sys.title;
             const isDisabled = !isSelected && selectedSystems.length >= 3;
 
             return (
@@ -217,7 +226,7 @@ export const Step3Systems: React.FC<Step3SystemsProps> = ({
                 <div>
                   <div className="flex justify-between items-start mb-3 mt-1">
                     <h3 className={`font-serif text-lg md:text-xl leading-tight ${isSelected ? 'text-sun-primary' : 'text-sun-secondary'}`}>
-                      {sys.title}
+                      {industryTitle}
                     </h3>
                     <div className={`w-6 h-6 border rounded-full flex items-center justify-center transition-colors shrink-0 ml-2 ${
                       isSelected ? 'bg-sun-primary border-sun-primary text-white' : 'border-sun-border group-hover:border-sun-accent'

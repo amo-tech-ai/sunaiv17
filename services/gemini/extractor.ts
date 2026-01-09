@@ -39,9 +39,10 @@ export const extractor = {
       // Load static questions from the Industry Pack so the user is never blocked.
       try {
         const pack = getIndustryPack(industry);
-        if (pack && pack.fallbackQuestions && pack.fallbackQuestions.length > 0) {
+        // Use diagnostics as the primary fallback source
+        if (pack && pack.diagnostics && pack.diagnostics.length > 0) {
             console.log("Loaded fallback questions for:", industry);
-            return pack.fallbackQuestions;
+            return pack.diagnostics;
         }
       } catch (fallbackError) {
         console.error("Critical: Fallback strategy also failed.", fallbackError);

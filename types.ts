@@ -92,6 +92,8 @@ export interface UploadedDocument {
   size: number;
   base64?: string;
   content?: string;
+  uploaded_at?: string;
+  category?: 'Brief' | 'Assets' | 'Reference';
 }
 
 export type PipelineStage = 'New' | 'Contacted' | 'Qualified' | 'Proposal' | 'Won' | 'Lost';
@@ -119,6 +121,26 @@ export interface Project {
   startDate: string;
   value: number;
   tasks: Task[];
+}
+
+export interface Brief {
+  id: string;
+  executive_summary: string;
+  goals: string[];
+  scope: string;
+  status: 'draft' | 'in_review' | 'approved';
+  updated_at: string;
+  version: number;
+}
+
+export interface Invoice {
+  id: string;
+  number: string;
+  amount: number;
+  status: 'paid' | 'pending' | 'overdue';
+  due_date: string;
+  created_at: string;
+  items: { description: string; amount: number }[];
 }
 
 export interface AnalyticsData {

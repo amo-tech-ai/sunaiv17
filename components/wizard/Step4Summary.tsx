@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Layers, Zap } from 'lucide-react';
 import { AppState, SYSTEMS } from '../../types';
 import { supabase } from '../../services/supabase';
+import { getIndustryPack } from '../../data/industryPacks';
 
 interface Step4SummaryProps {
   state: AppState;
@@ -21,6 +22,9 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
   const [hasRun, setHasRun] = useState(false);
   const { data, aiState } = state;
   const analysisData = (aiState.readinessAnalysis as any).analysis || {};
+  
+  // Load pack for naming
+  const pack = getIndustryPack(data.industry);
 
   useEffect(() => {
     // Only fetch if no score present (or simple re-fetch logic if needed)
@@ -117,17 +121,20 @@ export const Step4Summary: React.FC<Step4SummaryProps> = ({
               <Layers size={14} /> Recommended System Architecture
           </div>
           <div className="grid grid-cols-1 gap-4">
-              {selectedSystemDetails.map(sys => (
-                  <div key={sys.id} className="bg-white border border-sun-border p-4 rounded-sm flex items-start gap-4">
-                      <div className="bg-sun-bg p-2 rounded-sm text-sun-primary shrink-0">
-                          <Zap size={18} />
-                      </div>
-                      <div>
-                          <h4 className="font-bold text-sm text-sun-primary">{sys.title}</h4>
-                          <p className="text-xs text-sun-secondary mt-1">{sys.description}</p>
-                      </div>
-                  </div>
-              ))}
+              {selectedSystemDetails.map(sys => {
+                  const industryTitle = pack.systemNames[sys.id] || sys.title;
+                  return (
+                    <div key={sys.id} className="bg-white border border-sun-border p-4 rounded-sm flex items-start gap-4">
+                        <div className="bg-sun-bg p-2 rounded-sm text-sun-primary shrink-0">
+                            <Zap size={18} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-sm text-sun-primary">{industryTitle}</h4>
+                            <p className="text-xs text-sun-secondary mt-1">{sys.description}</p>
+                        </div>
+                    </div>
+                  );
+              })}
           </div>
       </div>
     </div>

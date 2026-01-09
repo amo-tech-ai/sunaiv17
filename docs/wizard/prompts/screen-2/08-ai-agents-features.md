@@ -1,65 +1,50 @@
+# AI AGENT SPEC: SCREEN 2
 
-# PROMPT 08 — AI AGENTS & GEMINI 3 FEATURES USED
-
-**Role:** AI Systems Planner
-**Goal:** Define the technical AI implementation for Screen 2.
-
----
-
-## 1. AGENT ROSTER
-
-### 🔬 **Extractor Agent** (Primary)
-*   **Model:** `gemini-3-pro-preview`.
-*   **Role:** The Consultant.
-*   **Responsibility:** Generates the dynamic form structure based on context.
-*   **Trigger:** Component Mount (or pre-fetch on Step 1 completion).
-
-### 🕵️ **Analyst Agent** (Background)
-*   **Model:** `gemini-3-flash-preview`.
-*   **Role:** The Researcher.
-*   **Responsibility:** Continues to verify business details (e.g., "Do they have a cart page?") to inform the Extractor.
+**Agent Name:** Extractor
+**Filename:** `supabase/functions/extractor/index.ts`
 
 ---
 
-## 2. GEMINI 3 FEATURES
+## 1. MODEL CONFIGURATION
 
-### A. Gemini Thinking (Reasoning)
-*   **Why?** To make the "Pain" -> "System" connection logical, not random.
-*   **Usage:**
-    *   *Input:* "User uses Shopify."
-    *   *Thought:* "Shopify users often struggle with Returns."
-    *   *Output:* "Generate question about Return Rates."
-*   **Budget:** `2048` tokens (Medium depth).
-
-### B. Structured Outputs (Reliability)
-*   **Why?** The UI breaks if the AI returns messy text.
-*   **Usage:** Enforce `DiagnosticSchema` JSON.
-    *   Must return array of `sections`.
-    *   Must return `mapped_system_id` string.
-
-### C. Search Grounding (Relevance)
-*   **Why?** To ensure questions fit the *current* market.
-*   **Usage:** Check industry trends. (e.g., "Is UGC a trend in Fashion right now?" -> Yes -> Include UGC question).
+*   **Model:** `gemini-3-pro-preview`
+*   **Temperature:** 0.2 (Low). We want consistency, not creativity.
+*   **Thinking Budget:** 2048 Tokens. (Required for mapping logic).
 
 ---
 
-## 3. SAFETY & BOUNDARIES
-*   **No Function Calling:** Screen 2 does NOT take actions (no emails sent, no DB updates). It is purely data collection.
-*   **No PII:** Do not ask for sensitive financial data (exact revenue) yet.
-*   **Constraint:** The Agent is forbidden from generating options that do not map to a `SystemID`.
+## 2. TOOLS
 
-## 4. AGENT ARCHITECTURE
-```mermaid
-graph TD
-    Context[Step 1 Data] --> Extractor[Extractor Agent]
-    Pack[Industry Pack JSON] --> Extractor
-    
-    subgraph "Gemini Pro Runtime"
-        Extractor --> Thinking[Reasoning Loop]
-        Thinking --> Select[Select Questions]
-        Select --> Map[Map System IDs]
-    end
-    
-    Map --> Output[Structured JSON]
-    Output --> UI[React Frontend]
+### A. Structured Outputs (`responseSchema`)
+We do not parse Markdown. We demand JSON.
+
+```json
+{
+  "sections": [
+    {
+      "id": "revenue_pain",
+      "questions": [
+        {
+          "id": "q1",
+          "options": [
+            { "label": "High Returns", "mapped_system_id": "whatsapp_assistant" }
+          ]
+        }
+      ]
+    }
+  ]
+}
 ```
+
+### B. Context Injection
+The prompt must include:
+1.  **Industry Pack JSON** (The Menu).
+2.  **User Context** (The Filter).
+
+---
+
+## 3. PERFORMANCE TARGETS
+
+*   **Latency:** < 4000ms.
+*   **Fallback:** If latency > 8000ms, abort and load the raw Industry Pack without AI filtering.
+*   **Caching:** Cache the result based on `Industry + ServiceHash` to save tokens on reload.

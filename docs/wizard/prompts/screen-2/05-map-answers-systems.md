@@ -1,42 +1,36 @@
+# MAPPING: PAIN POINT → SYSTEM ID
 
-# PROMPT 05 — MAP ANSWERS → FUTURE SYSTEMS (VALIDATION)
-
-**Role:** Systems Architect
-**Goal:** Ensure every problem has a valid solution. **Prevent Runtime Crashes.**
-**Visibility:** Internal Logic.
+**Criticality:** 🔴 High (Application Breaking)
+**Purpose:** Ensure every problem selected leads to a solution.
 
 ---
 
-## 1. THE MAPPING RULE
-Every option in Screen 2 must carry a `mapped_system_id`. This ID **MUST** exist in the `SYSTEMS` constant in `types.ts`.
+## 1. THE DATA CHAIN
 
-**CRITICAL:** If an ID refers to a system that does not exist, the application will crash on Screen 3.
+1.  **Step 2 (Selection):** User selects "High Returns".
+    *   Underlying Data: `{ label: "High Returns", mapped_system_id: "whatsapp_assistant" }`
+    *   *Note: In Fashion pack, `whatsapp_assistant` acts as the "Fit Concierge".*
 
-## 2. VALIDATION LOGIC
-The `extractor` Edge Function must perform a final validation pass before returning JSON:
+2.  **Step 3 (Recommendation):**
+    *   System looks up `whatsapp_assistant` in the Global System Registry.
+    *   Result: Displays "Fit & Sizing Concierge" card.
 
-1.  Load the master list of `VALID_SYSTEM_IDS` (e.g., `['lead_gen', 'crm_autopilot', 'whatsapp_assistant', ...]`).
-2.  Iterate through all generated options.
-3.  **Check:** `if (!VALID_SYSTEM_IDS.includes(option.mapped_system_id))`
-4.  **Action:**
-    *   *If Invalid:* Remap to a fallback system (e.g., `conversion_booster`) OR remove the option entirely.
-    *   *If Valid:* Pass through.
+---
 
-## 3. MAPPING TABLE (REFERENCE)
+## 2. VALIDATION RULES
 
-| Industry | Pain Point | System ID (MUST MATCH `types.ts`) |
-| :--- | :--- | :--- |
-| **Fashion** | "High Return Rates" | `whatsapp_assistant` |
-| **Fashion** | "Low Conversion" | `conversion_booster` |
-| **Real Estate** | "Missed Leads" | `whatsapp_assistant` |
-| **Real Estate** | "Unqualified Tours" | `lead_gen` |
-| **Events** | "Slow Ticket Sales" | `conversion_booster` |
+The **Extractor Agent** (Edge Function) must run a final validation pass before sending JSON to the frontend:
 
-## 4. DATA FLOW
-```mermaid
-graph TD
-    Generated[AI Generated Option] --> Validator{System ID Exists?}
-    Validator -- Yes --> Output[UI Render]
-    Validator -- No --> Fallback[Remap to Default]
-    Fallback --> Output
-```
+1.  **Existence Check:** Iterate through all selected options.
+2.  **Lookup:** Verify `option.mapped_system_id` exists in `types.ts` / `SYSTEMS` array.
+3.  **Fallback:**
+    *   IF `mapped_system_id` is invalid/missing:
+    *   **Action:** Remap to `conversion_booster` (Safe default).
+    *   **Log:** Error "Invalid System Mapping in Pack".
+
+---
+
+## 3. PREVENTION
+
+*   **Static Typing:** `IndustryPack` interface enforces string types.
+*   **Test Suite:** Unit test should verify that every ID in `data/packs/*.ts` matches an ID in `SYSTEMS`.

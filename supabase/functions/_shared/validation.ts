@@ -22,7 +22,16 @@ export const ExtractorRequestSchema = z.object({
   industry: z.string().min(1),
   selectedServices: z.array(z.string()).optional(),
   docInsights: z.string().optional(),
-  wizard_session_id: z.string().optional()
+  wizard_session_id: z.string().optional(),
+  analysis: z.object({
+    business_model: z.string().nullable().optional(),
+    maturity_score: z.number().optional(),
+    observations: z.object({
+      revenue_mechanic: z.string().nullable().optional(),
+      likely_time_waste: z.string().nullable().optional(),
+      scalability_risk: z.string().nullable().optional()
+    }).optional()
+  }).optional()
 });
 
 // Step 3: Optimizer

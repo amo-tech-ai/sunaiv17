@@ -1,50 +1,46 @@
+# EXTRACTOR AGENT: SELECTION & RANKING
 
-# PROMPT 03 — SELECT & RANK QUESTIONS (CORE LOGIC)
-
-**Role:** Senior Consultant (Reasoning Engine)
-**Goal:** Filter the Industry Pack down to the most high-signal options using FULL context.
-**Model:** `gemini-3-pro-preview` (Thinking Mode)
+**Role:** Senior Industry Consultant
+**Model:** `gemini-3-pro-preview`
+**Mode:** Thinking (2048 Tokens)
 
 ---
 
-## 1. INPUTS (UPDATED)
-The Extractor Agent must receive:
-1.  **Industry:** (e.g., "Fashion")
-2.  **Selected Services:** (e.g., "Shopify")
-3.  **Business Analysis:** (The object from Prompt 01, containing `maturity_score` and `observations`).
+## 1. THE PRIME DIRECTIVE
 
-## 2. SELECTION LOGIC (Filter vs Generate)
-**Clarification:** We are **Selecting** from the Industry Pack templates, but **Tailoring** the phrasing based on context.
+> **"Do not invent. Select and Rank."**
 
-**Rules:**
-1.  **Maturity Check:**
-    *   *IF* `maturity_score` < 3: Select questions about "Foundations" (e.g., "Do you have a CRM?").
-    *   *IF* `maturity_score` >= 3: Select questions about "Optimization" (e.g., "Is your CAC too high?").
-2.  **Service Matching:**
-    *   *IF* `services` includes "WhatsApp" -> **Prioritize** the "Response Time" question from the pack.
-    *   *IF* `services` includes "Shopify" -> **Prioritize** the "Returns/Cart" question.
-3.  **Limit Options:**
-    *   **MAX 5 OPTIONS** per question. Do not overwhelm the user.
+The Extractor Agent receives the `IndustryPack` as context. Its job is to curate the perfect diagnostic form for *this specific user*, not to write creative fiction.
 
-## 3. THE OUTPUT TASK
-Return a `DiagnosticSchema` JSON where:
-*   Questions are sorted by relevance.
-*   Options are filtered to match the user's Tech Stack.
-*   **Validation:** Ensure every option has a valid `mapped_system_id`.
+---
 
-## 4. REAL-WORLD SCENARIO (TOURISM)
-*   **Context:** "High seasonality, manual bookings via email." (From Step 1 Analysis).
-*   **Logic:**
-    *   *Keep:* "Missed inquiries due to time zones" (High relevance to manual email).
-    *   *Drop:* "Low Ticket Page Conversion" (Irrelevant if they don't have a checkout page).
+## 2. RANKING ALGORITHM (MENTAL MODEL)
 
-## 5. DIAGRAM: FILTER LOGIC
-```mermaid
-graph TD
-    Pack[Industry Pack] --> Filter[Context Filter]
-    Snapshot[Step 1 Analysis] --> Filter
-    Services[Tech Stack] --> Filter
-    
-    Filter -->|Score Options| Ranker[Relevance Ranker]
-    Ranker -->|Top 5| UI[Screen 2 UI]
+When deciding which options to show in the UI:
+
+1.  **Service Match (High Priority):**
+    *   IF User has `WhatsApp` AND Option mentions `Messaging/Chat` -> **Rank #1**.
+2.  **Business Model Match (Medium Priority):**
+    *   IF Model is `High Ticket` AND Option mentions `Lead Quality` -> **Rank #2**.
+3.  **General Pain (Low Priority):**
+    *   Standard industry pains (e.g., "Manual Data Entry").
+
+---
+
+## 3. PROMPT STRUCTURE
+
+```text
+You are a consultant for {industry}.
+User Tech Stack: {services}.
+
+Here is the Master List of potential problems for this industry:
+{pack_json}
+
+TASK:
+1. Select exactly 5 options for the "Revenue Pain" section.
+2. Select exactly 5 options for the "Time Drain" section.
+3. Sort them so the most relevant options (based on Tech Stack) appear at the top.
+
+OUTPUT:
+Return the selected JSON subset. Do not modify IDs.
 ```

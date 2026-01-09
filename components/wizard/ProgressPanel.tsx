@@ -1,16 +1,17 @@
 
 import React from 'react';
 import { AppState } from '../../types';
-import { CheckCircle2, Server, Target } from 'lucide-react';
+import { CheckCircle2, Server, Target, BarChart2 } from 'lucide-react';
 
 interface ProgressPanelProps {
   step: number;
   industry: AppState['data']['industry'];
   selectedServices?: string[];
   priorities?: AppState['data']['priorities'];
+  analysis?: AppState['data']['analysis']; // Added analysis prop
 }
 
-export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [], priorities }) => {
+export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, selectedServices = [], priorities, analysis }) => {
   // 4-step progress calculation (25% increments)
   const progress = [25, 50, 75, 100][step - 1];
 
@@ -62,6 +63,27 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({ step, industry, se
                 <span className="block text-[10px] text-sun-tertiary uppercase tracking-wider mb-1">Industry</span>
                 <span className="text-sm font-medium text-sun-primary capitalize">{industry.replace('_', ' ')}</span>
               </div>
+
+              {/* Step 1 Analysis Context (Maturity) */}
+              {analysis && (
+                 <div className="bg-white/50 border border-sun-border p-3 rounded-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart2 size={12} className="text-sun-tertiary"/>
+                      <span className="block text-[10px] text-sun-tertiary uppercase tracking-wider">Digital Maturity</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <div className="flex gap-1">
+                         {[1,2,3,4,5].map(i => (
+                           <div 
+                             key={i} 
+                             className={`h-1.5 w-3 rounded-full ${i <= (analysis.maturity_score || 1) ? 'bg-sun-accent' : 'bg-sun-border'}`} 
+                           />
+                         ))}
+                       </div>
+                       <span className="text-xs font-bold text-sun-primary">{analysis.maturity_score || 1}/5</span>
+                    </div>
+                 </div>
+              )}
 
               {selectedServices.length > 0 && (
                 <div className="bg-white/50 border border-sun-border p-3 rounded-sm">

@@ -9,12 +9,15 @@ and this project adheres to Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- **Screen 2 Redesign**: Implemented high-fidelity "Industry Diagnostics" screen with a 4-block layout (Focus, Revenue, Time, Readiness).
+- **Interactive Intelligence**: Hovering over diagnostic options now triggers context-aware explanations in the Right Panel.
 - **Database Persistence**: Integrated Supabase database writes for `summary` (Executive Brief) and `planner` (Roadmap) edge functions.
 - **Context Snapshots**: Added logic to save AI-generated strategic insights to the `context_snapshots` table.
 - **Roadmap Persistence**: Added logic to save generated implementation plans to `roadmaps` and `roadmap_phases` tables.
 - **Rich Intelligence Panel**: Added support for visual "Scores & Signals" cards in the Right Panel (Step 4).
 
 ### Changed
+- **Type Definitions**: Updated `DiagnosticOption` to include `priority_weight` and `ai_explanation` for richer UI rendering.
 - **Wizard Architecture**: Restored the full **5-Step Consultative Flow** (Context → Diagnostics → Systems → Executive Brief → Roadmap).
 - **AI Persona**: Updated all Edge Function prompts (`analyst`, `extractor`, `optimizer`, `scorer`, `planner`) to adopt a "Senior Strategic Partner" persona for more professional, high-value output.
 - **Step 4 Redesign**: Transformed the "Readiness Check" into a high-fidelity "Executive Strategic Summary" featuring a radial readiness score and key signal indicators.

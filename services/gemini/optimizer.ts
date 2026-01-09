@@ -2,6 +2,7 @@
 import { supabase } from "../supabase";
 import { AppState } from "../../types";
 import { retryWithBackoff } from "../../utils/retry";
+import { getIndustryPack } from "../../data/industryPacks";
 
 export const optimizer = {
   async recommendSystems(
@@ -31,8 +32,19 @@ export const optimizer = {
       };
     } catch (error) {
       console.error("Optimizer Function Error after retries:", error);
-      // Fail gracefully with empty recs (UI will show standard list)
-      return { systemIds: [], impacts: {} };
+      
+      // Fallback Strategy
+      try {
+        const pack = getIndustryPack(industry);
+        // Provide the industry-specific ROI formulas even if ranking failed
+        return { 
+            systemIds: [], // Empty lets UI show all, or we could pick top 3 hardcoded
+            impacts: pack.roiFormulas || {},
+            summary: "Unable to connect to optimization agent. These systems are selected based on your industry profile."
+        };
+      } catch (fallbackError) {
+        return { systemIds: [], impacts: {} };
+      }
     }
   }
 };

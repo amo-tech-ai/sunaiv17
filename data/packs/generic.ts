@@ -1,5 +1,5 @@
 
-import { IndustryPack } from "./interfaces.ts";
+import { IndustryPack } from "./interfaces";
 
 export const GENERIC_PACK: IndustryPack = {
   industry: 'other',
