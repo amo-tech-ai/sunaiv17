@@ -1,5 +1,4 @@
-
-import { z } from 'npm:zod@3.22.4';
+import { z } from 'zod';
 
 export const businessContextSchema = z.object({
   businessName: z.string().min(2, "Business name must be at least 2 characters"),
