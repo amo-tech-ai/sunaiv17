@@ -2,13 +2,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { CRMContact, PipelineStage } from '../types';
+import { useAuth } from './useAuth';
 
 export const useCRM = () => {
   const [contacts, setContacts] = useState<CRMContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchContacts = async () => {
+    if (!user) return;
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -18,16 +21,8 @@ export const useCRM = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data) {
         setContacts(data as CRMContact[]);
-      } else {
-        // Fallback for demo if DB is empty
-        setContacts([
-            { id: 'mock-1', name: 'Alice Freeman', company: 'Urban Properties', role: 'Head of Sales', status: 'active', pipeline_stage: 'Proposal', last_active_at: new Date().toISOString(), email: 'alice@urban.prop', value: 15000 },
-            { id: 'mock-2', name: 'Marcus Chen', company: 'Luxe Threads', role: 'Founder', status: 'lead', pipeline_stage: 'New', last_active_at: new Date(Date.now() - 86400000).toISOString(), email: 'marcus@luxe.co', value: 8500 },
-            { id: 'mock-3', name: 'Sarah Jones', company: 'TechFlow', role: 'CTO', status: 'prospect', pipeline_stage: 'Qualified', last_active_at: new Date(Date.now() - 172800000).toISOString(), email: 'sarah@techflow.io', value: 25000 },
-            { id: 'mock-4', name: 'David Miller', company: 'EventHorizon', role: 'Director', status: 'lead', pipeline_stage: 'Contacted', last_active_at: new Date(Date.now() - 43200000).toISOString(), email: 'david@eventh.com', value: 5000 },
-        ]);
       }
     } catch (err: any) {
       console.error('Error fetching contacts:', err);
@@ -37,22 +32,48 @@ export const useCRM = () => {
     }
   };
 
+  useEffect(() => {
+    fetchContacts();
+
+    if (!user) return;
+
+    // Realtime Subscription
+    const channel = supabase
+      .channel('crm_realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'crm_contacts' 
+      }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setContacts(prev => [payload.new as CRMContact, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setContacts(prev => prev.map(c => c.id === payload.new.id ? payload.new as CRMContact : c));
+        } else if (payload.eventType === 'DELETE') {
+          setContacts(prev => prev.filter(c => c.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const updateStage = async (contactId: string, newStage: PipelineStage) => {
     // Optimistic update
     setContacts(prev => prev.map(c => c.id === contactId ? { ...c, pipeline_stage: newStage } : c));
     
-    // In production, sync with Supabase here
-    /*
     const { error } = await supabase
       .from('crm_contacts')
       .update({ pipeline_stage: newStage })
       .eq('id', contactId);
-    */
+      
+    if (error) {
+        console.error("Failed to update stage:", error);
+        fetchContacts(); // Revert on error
+    }
   };
-
-  useEffect(() => {
-    fetchContacts();
-  }, []);
 
   return {
     contacts,

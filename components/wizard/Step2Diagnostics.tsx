@@ -1,9 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
-import { Loader2, Info, RefreshCw, Check, Circle, Square } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Loader2, RefreshCw, Check, Circle, Square } from 'lucide-react';
 import { AppState, DiagnosticSection, DiagnosticOption } from '../../types';
 import { extractor } from '../../services/gemini/extractor';
 import { Button } from '../Button';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Step2DiagnosticsProps {
   industry: AppState['data']['industry'];
@@ -28,12 +30,48 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const { user } = useAuth();
+  const answerSaveTimeoutRef = useRef<any>(null);
+
+  // Load saved answers on mount
+  useEffect(() => {
+    const loadSavedAnswers = async () => {
+      if (!user) return;
+      
+      const { data: session } = await supabase
+        .from('wizard_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (session) {
+        const { data: answers } = await supabase
+          .from('wizard_answers')
+          .select('question_id, answer_value')
+          .eq('session_id', session.id);
+
+        if (answers && answers.length > 0) {
+          const answerMap: Record<string, string[]> = {};
+          answers.forEach(a => {
+            answerMap[a.question_id] = Array.isArray(a.answer_value) ? a.answer_value : [a.answer_value];
+          });
+          // Only update if we have new data to avoid overwriting local state unnecessarily if sync is instant
+          // For now, we assume local state might be empty on refresh
+          if (Object.keys(diagnosticAnswers).length === 0) {
+             updateData('diagnosticAnswers', answerMap);
+          }
+        }
+      }
+    };
+    loadSavedAnswers();
+  }, [user]);
 
   const fetchQuestions = async () => {
     setLoading(true);
     setError(false);
     
-    // Initial stream message to build trust
     setStream(`**Consultant is Online**\n\nI am analyzing your **${industry.replace('_', ' ')}** business context.\n\nReviewing your tech stack: ${selectedServices.join(', ') || 'Standard Setup'}...`);
     
     setTimeout(() => {
@@ -59,35 +97,57 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
   };
 
   useEffect(() => {
-    // Only fetch if questions haven't been generated yet for this industry context
     const qs = aiQuestions as unknown as DiagnosticSection[];
     if (!qs || qs.length === 0) {
       fetchQuestions();
     }
   }, [industry]);
 
+  const saveAnswerToDb = async (questionId: string, answers: string[]) => {
+    if (!user) return;
+
+    try {
+      // Find active wizard session
+      const { data: wizardSession } = await supabase
+        .from('wizard_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (wizardSession) {
+        // Upsert answer
+        await supabase.from('wizard_answers').upsert({
+          session_id: wizardSession.id,
+          question_id: questionId,
+          answer_value: answers, 
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'session_id, question_id' });
+      }
+    } catch (e) {
+      console.warn("Failed to save answer to DB", e);
+    }
+  };
+
   const handleSelection = (questionId: string, option: DiagnosticOption, type: 'single' | 'multi') => {
     const currentAnswers = diagnosticAnswers[questionId] || [];
     let newAnswers: string[];
 
     if (type === 'single') {
-      // Toggle off if clicking same option, otherwise set new
       if (currentAnswers.includes(option.label)) {
         newAnswers = [];
         setStream(`**Diagnostics Ready**\n\nHover over options to see strategic context.`);
       } else {
         newAnswers = [option.label];
-        // Stream the AI explanation for this choice
         if (option.ai_explanation) {
             setStream(`**Strategic Insight**\n\n${option.ai_explanation}`);
         }
       }
     } else {
-      // Multi-select toggle
       if (currentAnswers.includes(option.label)) {
         newAnswers = currentAnswers.filter(a => a !== option.label);
       } else {
-        // Enforce max 3 selections for multi-select to keep focus
         if (currentAnswers.length >= 3) {
             setStream(`**Focus Required**\n\nPlease prioritize your top 3 bottlenecks. Diluted focus leads to diluted results.`);
             return;
@@ -99,17 +159,21 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
       }
     }
 
+    // Update Local State
     updateData('diagnosticAnswers', {
       ...diagnosticAnswers,
       [questionId]: newAnswers
     });
+
+    // Debounce save to DB
+    if (answerSaveTimeoutRef.current) clearTimeout(answerSaveTimeoutRef.current);
+    answerSaveTimeoutRef.current = setTimeout(() => {
+        saveAnswerToDb(questionId, newAnswers);
+    }, 500);
   };
 
   const handleHover = (option: DiagnosticOption) => {
-      // Only show hint on hover if not selected (selection priority)
-      if (option.ai_explanation) {
-          // Debounce could be good here, but for now direct set is fine
-      }
+      // Optional: Debounce hint display logic here if needed
   };
 
   if (loading) {
@@ -131,7 +195,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
     );
   }
 
-  // Cast aiQuestions to correct type
   const sections = aiQuestions as unknown as DiagnosticSection[];
 
   if (error || !sections || sections.length === 0) {
@@ -144,7 +207,7 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
           <h3 className="text-lg font-serif text-sun-primary mb-2">Connection Issue</h3>
           <p className="text-sun-secondary mb-6">Unable to load diagnostic questions.</p>
           <Button onClick={fetchQuestions}>
-            Retry
+            Retry with Offline Mode
           </Button>
         </div>
       </div>
@@ -153,8 +216,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   return (
     <div className="animate-fade-in space-y-12 pb-20">
-      
-      {/* Header */}
       <div>
         <h1 className="font-serif text-3xl md:text-4xl text-sun-primary mb-3">Diagnostic Phase</h1>
         <p className="text-sun-secondary font-sans max-w-xl leading-relaxed">
@@ -165,8 +226,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
       <div className="space-y-16">
         {sections.map((section, idx) => (
           <div key={section.id} className="animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
-            
-            {/* Section Header */}
             <div className="mb-6 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 border-b border-sun-border pb-2">
               <h2 className="text-sm font-bold tracking-widest text-sun-primary uppercase flex items-center gap-2">
                 <span className="w-2 h-2 bg-sun-accent rounded-full"></span>
@@ -178,8 +237,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
             <div className="space-y-10">
               {section.questions.map((q) => (
                 <div key={q.id}>
-                  
-                  {/* Question Text */}
                   <div className="flex flex-col md:flex-row md:items-baseline justify-between mb-4 gap-2">
                     <label className="text-lg font-serif font-medium text-sun-primary leading-tight">
                       {q.text}
@@ -191,7 +248,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
                     )}
                   </div>
 
-                  {/* Options Grid */}
                   <div className={`grid gap-3 md:gap-4 ${section.id === 'north_star' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                     {q.options.map((opt: DiagnosticOption) => {
                       const isSelected = (diagnosticAnswers[q.id] || []).includes(opt.label);
@@ -202,7 +258,6 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
                           key={opt.label}
                           onClick={() => handleSelection(q.id, opt, q.type)}
                           onMouseEnter={() => handleHover(opt)}
-                          // Added touch-manipulation and active:scale for mobile responsiveness
                           className={`
                             relative text-left border transition-all duration-200 flex items-start gap-4 group/btn touch-manipulation active:scale-[0.99]
                             ${isNorthStar ? 'p-5 md:p-6 rounded-sm' : 'p-4 rounded-sm'}

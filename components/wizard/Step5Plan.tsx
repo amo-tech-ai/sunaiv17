@@ -21,11 +21,19 @@ export const Step5Plan: React.FC<Step5PlanProps> = ({ state, setRoadmap, setStre
         
         setTimeout(() => setStream("Thinking...\n\nCalculated critical path based on readiness score of " + state.aiState.readinessAnalysis.score + "..."), 2000);
         setTimeout(() => setStream("Thinking...\n\nSequencing implementation phases..."), 4500);
+        setTimeout(() => setStream("Constructing Strategy...\n\nSaving roadmap to secure database..."), 8000);
 
-        const plan = await planner.generateRoadmap(state);
-        setRoadmap(plan);
-        setLoading(false);
-        setStream("I've structured a 30-day rollout. Notice how Phase 1 addresses your data readiness gaps before we deploy the active agents.");
+        try {
+            // The planner service calls the Edge Function, which persists the roadmap to the DB
+            const plan = await planner.generateRoadmap(state);
+            setRoadmap(plan);
+            setStream("I've structured a 30-day rollout. Notice how Phase 1 addresses your data readiness gaps before we deploy the active agents.");
+        } catch (e) {
+            console.error("Plan generation failed", e);
+            setStream("Error generating plan. Please try again.");
+        } finally {
+            setLoading(false);
+        }
       };
       generate();
     }
@@ -44,8 +52,17 @@ export const Step5Plan: React.FC<Step5PlanProps> = ({ state, setRoadmap, setStre
 
   return (
     <div className="animate-fade-in space-y-8">
-      <h1 className="font-serif text-4xl text-sun-primary mb-2">Your 30-Day Plan</h1>
-      <p className="text-sun-secondary font-sans mb-8">The execution roadmap.</p>
+      <div className="flex justify-between items-end">
+        <div>
+            <h1 className="font-serif text-4xl text-sun-primary mb-2">Your 30-Day Plan</h1>
+            <p className="text-sun-secondary font-sans">The execution roadmap.</p>
+        </div>
+        {loading && (
+            <div className="text-xs text-sun-accent animate-pulse font-medium bg-sun-accent/10 px-3 py-1 rounded-full">
+                Generating & Saving...
+            </div>
+        )}
+      </div>
 
       {loading ? (
         <div className="space-y-12 ml-4 border-l border-sun-border pl-8 animate-pulse">

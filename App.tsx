@@ -5,6 +5,8 @@ import { Button } from './components/Button';
 import { Dashboard } from './components/Dashboard';
 import { analyst } from './services/gemini/analyst';
 import { useWizardState } from './hooks/useWizardState';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthGuard } from './components/auth/AuthGuard';
 
 // Layout & Flow Components
 import { WizardLayout } from './components/layout/WizardLayout';
@@ -48,7 +50,7 @@ export default function App() {
 
   const handleReset = () => {
     if (confirm("Are you sure you want to reset your progress?")) {
-      localStorage.removeItem('sun_ai_wizard_state');
+      // In production, we might want to archive the session in DB instead of just clearing local state
       setState(INITIAL_STATE);
       window.scrollTo(0, 0);
     }
@@ -104,6 +106,7 @@ export default function App() {
       
     } catch (err) {
       console.error("Analysis failed", err);
+      setIntelligenceStream("Connection interrupted. Please verify your internet connection and try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -138,76 +141,76 @@ export default function App() {
     return false;
   };
 
-  // --- Render Dashboard if Complete ---
-  if (state.completed) {
-    return (
-      <Dashboard 
-        state={state} 
-        onReset={handleReset} 
-        updateDashboardState={updateDashboardState}
-      />
-    );
-  }
-
-  // --- Render Wizard ---
   return (
-    <WizardLayout
-      isTransitioning={isTransitioning}
-      leftPanel={
-        <ProgressPanel 
-          step={state.step} 
-          industry={state.data.industry} 
-          selectedServices={state.data.selectedServices} 
-          priorities={state.data.priorities}
-        />
-      }
-      rightPanel={
-        <IntelligencePanel 
-          step={state.step} 
-          data={state.data}
-          intelligenceStream={intelligenceStream}
-          documentInsights={state.aiState.documentInsights}
-        />
-      }
-    >
-      <div className="flex-1 p-8 md:p-16 md:pt-24 max-w-3xl mx-auto w-full">
-        <WizardFlow 
-          step={state.step}
-          data={state.data}
-          aiState={state.aiState}
-          isAnalyzing={isAnalyzing}
-          updateData={updateData}
-          updateNestedData={updateNestedData}
-          setAiQuestions={setAiQuestions}
-          setRecommendations={setRecommendations}
-          setAnalysis={setAnalysis}
-          setRoadmap={setRoadmap}
-          setStream={setIntelligenceStream}
-          onUrlBlur={handleUrlBlur}
-        />
-      </div>
-      
-      {/* Sticky Footer for Navigation */}
-      <div className="sticky bottom-0 w-full p-8 bg-sun-bg/95 backdrop-blur-sm border-t border-sun-border mt-auto">
-        <div className="max-w-3xl mx-auto flex justify-end gap-4">
-            {state.step > 1 && (
+    <ErrorBoundary>
+      {state.completed ? (
+        <AuthGuard>
+          <Dashboard 
+            state={state} 
+            onReset={handleReset} 
+            updateDashboardState={updateDashboardState}
+          />
+        </AuthGuard>
+      ) : (
+        <WizardLayout
+          isTransitioning={isTransitioning}
+          leftPanel={
+            <ProgressPanel 
+              step={state.step} 
+              industry={state.data.industry} 
+              selectedServices={state.data.selectedServices} 
+              priorities={state.data.priorities}
+            />
+          }
+          rightPanel={
+            <IntelligencePanel 
+              step={state.step} 
+              data={state.data}
+              intelligenceStream={intelligenceStream}
+              documentInsights={state.aiState.documentInsights}
+            />
+          }
+        >
+          <div className="flex-1 p-8 md:p-16 md:pt-24 max-w-3xl mx-auto w-full">
+            <WizardFlow 
+              step={state.step}
+              data={state.data}
+              aiState={state.aiState}
+              isAnalyzing={isAnalyzing}
+              updateData={updateData}
+              updateNestedData={updateNestedData}
+              setAiQuestions={setAiQuestions}
+              setRecommendations={setRecommendations}
+              setAnalysis={setAnalysis}
+              setRoadmap={setRoadmap}
+              setStream={setIntelligenceStream}
+              onUrlBlur={handleUrlBlur}
+            />
+          </div>
+          
+          {/* Sticky Footer for Navigation */}
+          <div className="sticky bottom-0 w-full p-8 bg-sun-bg/95 backdrop-blur-sm border-t border-sun-border mt-auto">
+            <div className="max-w-3xl mx-auto flex justify-end gap-4">
+                {state.step > 1 && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setState(prev => ({ ...prev, step: prev.step - 1 }))}
+                  >
+                    Back
+                  </Button>
+                )}
               <Button 
-                variant="ghost" 
-                onClick={() => setState(prev => ({ ...prev, step: prev.step - 1 }))}
+                onClick={nextStep} 
+                className="group"
+                disabled={isNextDisabled()}
               >
-                Back
+                {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Button>
-            )}
-          <Button 
-            onClick={nextStep} 
-            className="group"
-            disabled={isNextDisabled()}
-          >
-            {state.step === 5 ? 'Go to Dashboard' : 'Continue'}
-            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
-      </div>
-    </WizardLayout>
+            </div>
+          </div>
+        </WizardLayout>
+      )}
+    </ErrorBoundary>
   );
 }

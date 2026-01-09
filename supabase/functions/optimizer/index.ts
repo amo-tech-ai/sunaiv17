@@ -4,6 +4,13 @@ import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -12,6 +19,19 @@ serve(async (req) => {
     const { industry, priorities, services } = await req.json();
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
+
+    // Initialize Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get User
+    const authHeader = req.headers.get('Authorization');
+    let userId = null;
+    if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        userId = user?.id;
+    }
 
     const schema: Schema = {
       type: Type.OBJECT,
@@ -34,7 +54,7 @@ serve(async (req) => {
         },
         synergy_notes: {
           type: Type.STRING,
-          description: "A short strategic insight highlighting system dependencies (e.g. why Lead Gen needs CRM) or stack synergies."
+          description: "A short strategic insight highlighting system dependencies or stack synergies."
         }
       },
       required: ["recommended_ids", "custom_impacts", "synergy_notes"]
@@ -44,32 +64,14 @@ serve(async (req) => {
       model: 'gemini-3-pro-preview',
       contents: `
         You are a Solution Architect for the ${pack.industry} industry.
-        
         User Context:
         - Primary Goal: ${priorities.mainPriority || 'Growth'}
         - Pain Points: ${priorities.moneyFocus}, ${priorities.marketingFocus}, ${priorities.responseSpeed}
         - Current Tech Stack: ${services ? services.join(', ') : 'None'}
+        Available Systems: ${JSON.stringify(pack.systemNames)}
+        ROI Formulas: ${JSON.stringify(pack.roiFormulas)}
 
-        Available Systems (Generic ID -> Specific Name):
-        ${JSON.stringify(pack.systemNames)}
-
-        ROI Formulas (Base):
-        ${JSON.stringify(pack.roiFormulas)}
-
-        Task:
-        1. **Rank** the top 2-3 systems. 
-           - **CRITICAL:** Prioritize systems that natively integrate with their 'Current Tech Stack'.
-             (e.g., If 'WhatsApp' is listed, 'whatsapp_assistant' should likely be #1).
-             (e.g., If 'Shopify' is listed, 'conversion_booster' is high value).
-           - Solve their specific Pain Points.
-        2. **Rewrite** the ROI text for EVERY system to be hyper-specific. 
-           - **MUST** reference their specific tools in the text where relevant (e.g., "Since you use Shopify, this will...").
-           - Focus on the 'Benefit' not the 'Feature'.
-           - Use industry jargon (e.g., 'AOV' for Fashion, 'Showings' for Real Estate).
-        3. **Analyze Dependencies**:
-           - If recommending 'lead_gen' (traffic), check if they need 'crm_autopilot' (retention) to catch the value.
-           - Highlight specific stack integrations in 'synergy_notes'.
-           - **Upgrade**: If 'whatsapp_assistant' and 'crm_autopilot' are both candidates, explicitly mention "Automatic Lead Sync" in the synergy notes.
+        Task: Rank top 2-3 systems. Rewrite ROI text to be specific.
       `,
       config: {
         thinkingConfig: { thinkingBudget: 1024 },
@@ -77,6 +79,37 @@ serve(async (req) => {
         responseSchema: schema
       }
     });
+
+    const result = JSON.parse(response.text);
+
+    // PERSISTENCE
+    if (userId) {
+        const { data: projects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('status', 'draft')
+            .limit(1);
+        
+        const projectId = projects?.[0]?.id;
+
+        if (projectId && result.recommended_ids) {
+            // Save Recommendations
+            const systemPayloads = result.recommended_ids.map((sysId: string) => ({
+                project_id: projectId,
+                system_id: sysId,
+                is_recommended: true,
+                is_selected: false, // User hasn't selected yet in UI
+                custom_impact: result.custom_impacts[sysId],
+                updated_at: new Date().toISOString()
+            }));
+
+            // Upsert based on project_id + system_id
+            await supabase
+                .from('project_systems')
+                .upsert(systemPayloads, { onConflict: 'project_id, system_id' });
+        }
+    }
 
     return new Response(response.text, { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

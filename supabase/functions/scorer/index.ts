@@ -1,8 +1,16 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -11,6 +19,19 @@ serve(async (req) => {
     const { checklist, industry, selectedSystems } = await req.json();
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
+
+    // Initialize Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get User
+    const authHeader = req.headers.get('Authorization');
+    let userId = null;
+    if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        userId = user?.id;
+    }
 
     const schema: Schema = {
       type: Type.OBJECT,
@@ -58,6 +79,32 @@ serve(async (req) => {
         responseSchema: schema
       }
     });
+
+    const result = JSON.parse(response.text);
+
+    // Persistence Logic
+    if (userId) {
+        // Find project
+        const { data: projects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('status', 'draft')
+            .limit(1);
+        
+        const projectId = projects?.[0]?.id;
+
+        if (projectId) {
+            // Upsert/Insert Context Snapshot for Readiness
+            await supabase.from('context_snapshots').insert({
+                project_id: projectId,
+                snapshot_type: 'readiness_assessment',
+                snapshot_data: result,
+                readiness_score: result.score, // Assuming column exists or stored in jsonb
+                is_active: true
+            });
+        }
+    }
 
     return new Response(response.text, { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

@@ -1,6 +1,7 @@
 
 import { supabase } from "../supabase";
 import { BusinessAnalysis, UploadedDocument, IndustryType } from "../../types";
+import { retryWithBackoff } from "../../utils/retry";
 
 const getAnonKey = () => (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 const getFunctionUrl = (name: string) => {
@@ -15,20 +16,24 @@ export const analyst = {
    */
   async *analyzeBusinessStream(name: string, website: string) {
     try {
-      const response = await fetch(getFunctionUrl('analyst'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getAnonKey()}`
-        },
-        body: JSON.stringify({
-          mode: 'research',
-          businessName: name,
-          website
-        })
+      // Retry logic applied to the fetch call establishment
+      const response = await retryWithBackoff(async () => {
+        const res = await fetch(getFunctionUrl('analyst'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAnonKey()}`
+          },
+          body: JSON.stringify({
+            mode: 'research',
+            businessName: name,
+            website
+          })
+        });
+        if (!res.ok) throw new Error(`Stream request failed: ${res.status}`);
+        return res;
       });
 
-      if (!response.ok) throw new Error('Stream request failed');
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       if (!reader) return;
@@ -72,14 +77,17 @@ export const analyst = {
         textContent: doc.content
       }));
 
-      const { data, error } = await supabase.functions.invoke('analyst', {
-        body: {
-          mode: 'summarize_docs',
-          documents: payload
-        }
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('analyst', {
+          body: {
+            mode: 'summarize_docs',
+            documents: payload
+          }
+        });
+        if (error) throw error;
+        return data;
       });
 
-      if (error) throw error;
       return data?.summary || "No insights extracted.";
     } catch (error) {
       console.warn("Document Analysis Offline:", error);
@@ -99,18 +107,20 @@ export const analyst = {
     docInsights: string = ""
   ): Promise<BusinessAnalysis> {
     try {
-      const { data, error } = await supabase.functions.invoke('analyst', {
-        body: {
-          businessName: name,
-          website: website,
-          description: description,
-          selectedServices: services,
-          docInsights: docInsights
-        }
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('analyst', {
+          body: {
+            businessName: name,
+            website: website,
+            description: description,
+            selectedServices: services,
+            docInsights: docInsights
+          }
+        });
+        if (error) throw error;
+        if (!data) throw new Error("No data returned from Analyst agent");
+        return data;
       });
-
-      if (error) throw error;
-      if (!data) throw new Error("No data returned from Analyst agent");
 
       return data as BusinessAnalysis;
 

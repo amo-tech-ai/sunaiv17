@@ -2,6 +2,7 @@
 import { supabase } from "../supabase";
 import { DiagnosticSection, IndustryType } from "../../types";
 import { getIndustryPack } from "../../data/industryPacks";
+import { retryWithBackoff } from "../../utils/retry";
 
 export const extractor = {
   async generateQuestions(
@@ -10,26 +11,26 @@ export const extractor = {
     docInsights: string = ""
   ): Promise<DiagnosticSection[]> {
     try {
-      // Attempt to call the AI Edge Function
-      const { data, error } = await supabase.functions.invoke('extractor', {
-        body: {
-          industry,
-          selectedServices: services,
-          docInsights
+      // Use retry utility for robust Edge Function calls
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('extractor', {
+          body: {
+            industry,
+            selectedServices: services,
+            docInsights
+          }
+        });
+
+        if (error) throw error;
+        
+        // Validation: Ensure we got a valid array of sections
+        if (data && data.sections && Array.isArray(data.sections) && data.sections.length > 0) {
+            return data;
         }
+        throw new Error("Invalid format from Extractor Agent");
       });
 
-      if (error) {
-        console.warn("Extractor Edge Function failed:", error);
-        throw error;
-      }
-      
-      // Validation: Ensure we got a valid array of sections
-      if (data && data.sections && Array.isArray(data.sections) && data.sections.length > 0) {
-          return data.sections as DiagnosticSection[];
-      }
-      
-      throw new Error("Invalid or empty format from Extractor Agent");
+      return data.sections as DiagnosticSection[];
 
     } catch (error) {
       console.warn("Extractor Agent Offline/Error. Engaging Fallback Strategy.", error);
@@ -46,7 +47,6 @@ export const extractor = {
         console.error("Critical: Fallback strategy also failed.", fallbackError);
       }
 
-      // Absolute worst case: Return empty array (will trigger UI error state, but cleaner)
       return [];
     }
   },

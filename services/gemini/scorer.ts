@@ -1,5 +1,7 @@
+
 import { supabase } from "../supabase";
 import { AppState } from "../../types";
+import { retryWithBackoff } from "../../utils/retry";
 
 export const scorer = {
   async analyzeReadiness(
@@ -8,18 +10,22 @@ export const scorer = {
     selectedSystems: string[]
   ): Promise<{ score: number, headline: string, risks: string[], wins: string[], summary: string }> {
     try {
-      const { data, error } = await supabase.functions.invoke('scorer', {
-        body: {
-          checklist: readiness,
-          industry,
-          selectedSystems
-        }
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('scorer', {
+          body: {
+            checklist: readiness,
+            industry,
+            selectedSystems
+          }
+        });
+
+        if (error) throw error;
+        return data;
       });
 
-      if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Scorer Function Error:", error);
+      console.error("Scorer Function Error after retries:", error);
       // Fallback calculation if AI fails
       const fallbackScore = Object.values(readiness).filter(Boolean).length * 25;
       return {

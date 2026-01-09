@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import { CheckCircle2, ShieldCheck, Activity, Plus, Upload, X, FileText, File as FileIcon } from 'lucide-react';
 import { Input, TextArea, Select } from '../Input';
 import { AppState, IndustryType, UploadedDocument } from '../../types';
-import { analyst } from '../../services/gemini/analyst';
+import { validateBusinessContext } from '../../utils/validation';
 
 interface Step1ContextProps {
   data: AppState['data'];
@@ -29,9 +29,32 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
   isAnalyzing 
 }) => {
   const analysis = data.analysis;
-  const isNameValid = data.businessName.length >= 2;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const validateField = (field: string, value: any) => {
+    const payload = {
+        businessName: field === 'businessName' ? value : data.businessName,
+        website: field === 'website' ? value : data.website,
+        description: field === 'description' ? value : data.description
+    };
+    
+    const result = validateBusinessContext(payload);
+    if (!result.success) {
+        const error = result.error.errors.find(e => e.path[0] === field);
+        setValidationErrors(prev => ({
+            ...prev,
+            [field]: error ? error.message : ''
+        }));
+    } else {
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+    }
+  };
 
   const toggleService = (service: string) => {
     const currentServices = data.selectedServices || [];
@@ -62,7 +85,6 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
       const docPromise = new Promise<UploadedDocument>((resolve) => {
         reader.onload = (e) => {
           const result = e.target?.result as string;
-          // Extract base64 part
           const base64 = result.split(',')[1];
           
           resolve({
@@ -71,7 +93,7 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
             type: file.type,
             size: file.size,
             base64: base64,
-            content: file.type.startsWith('text/') ? atob(base64) : undefined // Simple text extraction for text files
+            content: file.type.startsWith('text/') ? atob(base64) : undefined 
           });
         };
         reader.readAsDataURL(file);
@@ -83,18 +105,6 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
 
     if (newDocs.length > 0) {
       updateData('uploadedDocuments', [...(data.uploadedDocuments || []), ...newDocs]);
-      // Trigger analysis here or in parent? 
-      // Let's rely on parent or a separate effect, but parent doesn't know when upload finishes easily unless we prop drill.
-      // For simplicity, we won't auto-trigger full re-analysis immediately upon upload to save tokens, 
-      // or we can let the user trigger it / it triggers on next step.
-      // Actually, the prompt says "insights appear in right panel... as they're extracted".
-      // We should probably trigger document analysis.
-      // Since `analyst` is imported here, we can run it, but we need to update `aiState.documentInsights`.
-      // `Step1Context` doesn't have access to `setDocumentInsights` directly via props currently.
-      // We should probably invoke `onUrlBlur` or similar to refresh analysis, OR just let it happen when they blur the name/url next time.
-      // BETTER: We'll modify the parent to handle this via `updateData` triggering an effect if we wanted, 
-      // but simpler is to just let the "Verify" flow handle it, or add a specific prop.
-      // Given the props, let's trigger `onUrlBlur` which refreshes everything including docs.
       onUrlBlur(); 
     }
   };
@@ -131,26 +141,38 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
             label="Business Name" 
             placeholder="e.g. Acme Corp" 
             value={data.businessName}
-            onChange={(e) => updateData('businessName', e.target.value)}
-            className={!isNameValid && data.businessName.length > 0 ? "border-red-300" : ""}
+            onChange={(e) => {
+                updateData('businessName', e.target.value);
+                if (validationErrors.businessName) validateField('businessName', e.target.value);
+            }}
+            onBlur={(e) => validateField('businessName', e.target.value)}
+            className={validationErrors.businessName ? "border-red-300 focus:border-red-500" : ""}
           />
-          {!isNameValid && data.businessName.length > 0 && (
-            <p className="text-xs text-red-500">Name must be at least 2 characters.</p>
+          {validationErrors.businessName && (
+            <p className="text-xs text-red-500">{validationErrors.businessName}</p>
           )}
         </div>
         
-        <div className="relative">
+        <div className="relative space-y-2">
           <Input 
             label="Website" 
             placeholder="acme.com" 
             value={data.website}
-            onChange={(e) => updateData('website', e.target.value)}
-            onBlur={() => {
-              if (data.website && isNameValid) {
+            onChange={(e) => {
+                updateData('website', e.target.value);
+                if (validationErrors.website) validateField('website', e.target.value);
+            }}
+            onBlur={(e) => {
+              validateField('website', e.target.value);
+              if (data.website && !validationErrors.businessName) {
                 onUrlBlur();
               }
             }}
+            className={validationErrors.website ? "border-red-300 focus:border-red-500" : ""}
           />
+          {validationErrors.website && (
+            <p className="text-xs text-red-500">{validationErrors.website}</p>
+          )}
           {isAnalyzing && (
             <div className="absolute right-0 top-8 flex items-center gap-2 text-xs text-sun-accent animate-pulse font-medium">
               <Activity size={12} className="animate-spin" />

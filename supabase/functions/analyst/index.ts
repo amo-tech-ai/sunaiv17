@@ -3,6 +3,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -11,6 +18,19 @@ serve(async (req) => {
     const body = await req.json();
     const { mode } = body;
     const ai = createGeminiClient();
+    
+    // Initialize Supabase (Service Role)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get User from Auth Header
+    const authHeader = req.headers.get('Authorization');
+    let userId = null;
+    if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        userId = user?.id;
+    }
 
     // MODE 1: RESEARCH (Streaming)
     if (mode === 'research') {
@@ -57,7 +77,6 @@ serve(async (req) => {
     if (mode === 'summarize_docs') {
         const { documents } = body;
         
-        // Explicitly type the array to allow both text and inlineData parts to prevent TS inference errors
         const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{
             text: `Analyze the attached business documents. Extract key insights about:
             1. Business Model & Strategy
@@ -139,7 +158,69 @@ serve(async (req) => {
       }
     });
 
-    return new Response(response.text, { 
+    const analysisData = JSON.parse(response.text);
+    let projectId = null;
+    let snapshotId = null;
+
+    // PERSISTENCE LOGIC
+    if (userId) {
+        // 1. Find or create Project
+        const { data: projects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', userId) // Security: Scope to user
+            .eq('status', 'draft')
+            .limit(1);
+        
+        projectId = projects?.[0]?.id;
+
+        // If no draft project, create one (this is Step 1, so entry point)
+        if (!projectId) {
+            const { data: newProject } = await supabase
+                .from('projects')
+                .insert({
+                    user_id: userId,
+                    name: businessName,
+                    website: website,
+                    industry: analysisData.detected_industry,
+                    status: 'draft',
+                    wizard_data: { step1: body } // Initial dump
+                })
+                .select()
+                .single();
+            projectId = newProject?.id;
+        } else {
+            // Update existing draft with new findings
+            await supabase.from('projects').update({
+                name: businessName,
+                industry: analysisData.detected_industry,
+                wizard_data: { step1: body } // simplified merge
+            }).eq('id', projectId);
+        }
+
+        // 2. Save Context Snapshot
+        if (projectId) {
+            const { data: snap } = await supabase.from('context_snapshots').insert({
+                project_id: projectId,
+                org_id: null,
+                snapshot_type: 'business_analysis',
+                snapshot_data: analysisData,
+                is_active: true
+            }).select().single();
+            snapshotId = snap?.id;
+        }
+
+        // 3. Log Run
+        await supabase.from('ai_run_logs').insert({
+            project_id: projectId,
+            model: 'gemini-3-flash-preview',
+            token_count: 0,
+            operation: 'classify_business',
+            metadata: { business: businessName, industry: analysisData.detected_industry }
+        });
+    }
+
+    return new Response(JSON.stringify({ ...analysisData, projectId, snapshotId }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
 

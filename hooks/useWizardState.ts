@@ -1,39 +1,105 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppState, INITIAL_STATE, Task } from '../types';
-
-const STORAGE_KEY = 'sun_ai_wizard_state';
+import { supabase } from '../services/supabase';
+import { useAuth } from './useAuth';
+import debounce from 'lodash.debounce';
 
 export const useWizardState = () => {
-  const [state, setState] = useState<AppState>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Migration/Safety check for new dashboardState
-        if (!parsed.dashboardState) {
-          parsed.dashboardState = INITIAL_STATE.dashboardState;
-        }
-        // Migration for diagnosticAnswers
-        if (!parsed.data.diagnosticAnswers) {
-          parsed.data.diagnosticAnswers = {};
-        }
-        return parsed;
-      }
-    } catch (e) {
-      console.error("Failed to load state", e);
-    }
-    return INITIAL_STATE;
-  });
-
+  const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Persist state changes
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+  
+  // 1. Initialize State (Load from DB)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    const init = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-  // Smooth scroll to top on step change
+      try {
+        // Load latest session for this user
+        const { data: dbSession, error } = await supabase
+          .from('wizard_sessions')
+          .select('step_data')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (dbSession?.step_data) {
+          const loadedState = dbSession.step_data as AppState;
+          // Ensure migrations/schema compatibility
+          if (!loadedState.dashboardState) loadedState.dashboardState = INITIAL_STATE.dashboardState;
+          if (!loadedState.data.diagnosticAnswers) loadedState.data.diagnosticAnswers = {};
+          setState(loadedState);
+        } else {
+          // New session or no data found
+          setState(INITIAL_STATE);
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
+  }, [user]);
+
+  // 2. Persist State to DB (Debounced)
+  const saveState = async (currentState: AppState) => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // Upsert based on user_id (assuming one active draft per user for now)
+      // Ideally we would track a specific session ID, but for this wizard flow, user-scoped is fine.
+      // We first check if a session exists to update, or create new.
+      const { data: existing } = await supabase
+        .from('wizard_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('wizard_sessions').update({
+          step_data: currentState,
+          current_step: currentState.step,
+          updated_at: new Date().toISOString()
+        }).eq('id', existing.id);
+      } else {
+        await supabase.from('wizard_sessions').insert({
+          user_id: user.id,
+          step_data: currentState,
+          current_step: currentState.step
+        });
+      }
+    } catch (err) {
+      console.error("Failed to save wizard state:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Create a debounced version of saveState
+  const debouncedSave = useCallback(debounce((newState: AppState) => {
+    saveState(newState);
+  }, 1000), [user]);
+
+  // Trigger save on state changes (excluding loading/transition flags)
+  useEffect(() => {
+    if (!loading && user) {
+      debouncedSave(state);
+    }
+  }, [state, user, loading, debouncedSave]);
+
+  // Smooth scroll on step change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [state.step]);
@@ -58,8 +124,7 @@ export const useWizardState = () => {
     }));
   };
 
-  // State Setters
-  const setAiQuestions = (qs: any) => { // Using any loosely here to accommodate the type change during refactor if needed, but AppState is strict
+  const setAiQuestions = (qs: any) => { 
     setState(prev => ({ ...prev, aiState: { ...prev.aiState, questions: qs } }));
   };
   
@@ -97,6 +162,8 @@ export const useWizardState = () => {
     setAnalysis,
     setRoadmap,
     updateDashboardState,
-    INITIAL_STATE
+    INITIAL_STATE,
+    loading,
+    saving
   };
 };
