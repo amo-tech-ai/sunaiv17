@@ -79,24 +79,27 @@ serve(async (req) => {
       
       CONTEXT:
       - Industry: ${industry}
-      - Tech Stack: ${selectedServices && selectedServices.length > 0 ? selectedServices.join(', ') : 'Standard'}
+      - Tech Stack: ${selectedServices && selectedServices.length > 0 ? selectedServices.join(', ') : 'Standard/None'}
       - Document Insights: ${docInsights || 'None'}
       
       REFERENCE MATERIAL (Industry Pack):
       ${JSON.stringify(pack.diagnostics)}
       
       TASK:
-      Generate a diagnostic questionnaire (5 sections) tailored to this specific client.
+      Generate a diagnostic questionnaire tailored to this specific client.
       
       GUIDELINES:
-      1. **Base Content:** Start with the "REFERENCE MATERIAL" questions but REWRITE them to be more specific to the user's Tech Stack if applicable.
-         - Example: If they use 'WhatsApp', change "How do you handle leads?" to "How do you manage high-volume WhatsApp inquiries?"
+      1. **Tech Stack Adaptation (HIGHEST PRIORITY):**
+         - The user uses: [${selectedServices && selectedServices.length > 0 ? selectedServices.join(', ') : 'Standard Tools'}].
+         - You MUST rewrite the reference questions to specifically mention these tools where relevant.
+         - Example: If 'WhatsApp' is present, change "How do you handle leads?" to "How do you manage high-volume WhatsApp inquiries?"
+         - Example: If 'Shopify' is present, ask about "Shopify cart recovery" or "Shopify data".
       2. **Industry Jargon:** Use high-signal terms.
-         - For Tourism: Use 'Guest Satisfaction', 'Booking Velocity'.
-         - For Real Estate: Use 'Listing Velocity', 'Showings', 'GCI'.
-         - For Fashion: Use 'Drop Cadence', 'AOV', 'Return Rate'.
+         - For Tourism: 'Guest Satisfaction', 'Booking Velocity'.
+         - For Real Estate: 'Listing Velocity', 'Showings', 'GCI'.
+         - For Fashion: 'Drop Cadence', 'AOV', 'Return Rate'.
       3. **System Mapping (CRITICAL):**
-         - The 'mapped_system_id' MUST be one of the keys found in the Industry Pack (e.g. ${Object.keys(pack.systemNames).join(', ')}).
+         - The 'mapped_system_id' MUST be one of the keys found in the Industry Pack: [${Object.keys(pack.systemNames).join(', ')}].
          - Do not invent new system IDs.
       4. **Prioritization:** Ensure the options cover Revenue, Speed, and Operations.
       

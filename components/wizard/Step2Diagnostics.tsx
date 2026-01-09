@@ -75,7 +75,7 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
     setStream(`**Consultant is Online**\n\nI am analyzing your **${industry.replace('_', ' ')}** business context.\n\nReviewing your tech stack: ${selectedServices.join(', ') || 'Standard Setup'}...`);
     
     setTimeout(() => {
-        if(loading) setStream(`**Deep Dive**\n\nIdentifying high-signal diagnostic questions based on your industry profile...`);
+        if(loading) setStream(`**Deep Dive**\n\nIdentifying high-signal diagnostic questions based on your industry profile and ${selectedServices.length > 0 ? 'selected services' : 'tech needs'}...`);
     }, 1200);
 
     try {
@@ -83,7 +83,7 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
       
       if (result && result.length > 0) {
         setAiQuestions(result);
-        setStream(`**Diagnostics Ready**\n\nI've prepared a custom deep-dive.\n\nSelect your primary constraints to unlock the system architecture phase.`);
+        setStream(`**Diagnostics Ready**\n\nI've prepared a custom deep-dive tailored to your stack.\n\nSelect your primary constraints to unlock the system architecture phase.`);
       } else {
          throw new Error("No sections generated");
       }
@@ -98,10 +98,11 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
 
   useEffect(() => {
     const qs = aiQuestions as unknown as DiagnosticSection[];
+    // Re-fetch if empty, or potentially if services changed (optional logic could go here)
     if (!qs || qs.length === 0) {
       fetchQuestions();
     }
-  }, [industry]);
+  }, [industry, selectedServices]); // Added selectedServices to dependency
 
   const saveAnswerToDb = async (questionId: string, answers: string[]) => {
     if (!user) return;
@@ -187,9 +188,15 @@ export const Step2Diagnostics: React.FC<Step2DiagnosticsProps> = ({
         </div>
         <div className="text-center space-y-3 max-w-md px-4">
           <h3 className="font-serif text-2xl text-sun-primary">Analyzing Business Context</h3>
-          <p className="text-sun-secondary leading-relaxed">
+          <div className="text-sun-secondary leading-relaxed">
             Configuring diagnostic layer for {industry.replace('_', ' ')}...
-          </p>
+            {selectedServices.length > 0 && (
+                <div className="text-xs text-sun-tertiary mt-2 bg-sun-right py-1 px-3 rounded-full border border-sun-border inline-block">
+                    Adapting to: {selectedServices.slice(0, 3).join(', ')}
+                    {selectedServices.length > 3 && ` +${selectedServices.length - 3}`}
+                </div>
+            )}
+          </div>
         </div>
       </div>
     );
