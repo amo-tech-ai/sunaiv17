@@ -4,6 +4,7 @@ import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { CRMIntelligenceRequestSchema } from "../_shared/validation.ts";
 
 declare const Deno: {
   env: {
@@ -15,7 +16,16 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { clientId, recentHistory, clientDetails } = await req.json();
+    const json = await req.json();
+    const validation = CRMIntelligenceRequestSchema.safeParse(json);
+
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { clientId, recentHistory, clientDetails } = validation.data;
     const ai = createGeminiClient();
 
     // Initialize Supabase Client to fetch data if not provided

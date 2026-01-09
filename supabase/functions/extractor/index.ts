@@ -4,6 +4,7 @@ import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
+import { ExtractorRequestSchema } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +12,17 @@ serve(async (req) => {
   }
 
   try {
-    const { industry, selectedServices, docInsights } = await req.json();
+    const json = await req.json();
+    
+    // Validation
+    const validation = ExtractorRequestSchema.safeParse(json);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const { industry, selectedServices, docInsights } = validation.data;
+
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
 
@@ -113,10 +124,6 @@ serve(async (req) => {
     console.error("Extractor Function Error:", error);
     
     // Fallback: If AI fails, return the static pack (safe mode)
-    // We need to re-fetch the pack because it might be out of scope in the catch block if we defined it inside try
-    // But since we define 'pack' at the top of try, if that fails, we are in trouble. 
-    // Assuming getIndustryPack is safe (it is, static dict lookup).
-    
     try {
         const reqJson = await req.clone().json().catch(() => ({ industry: 'other' })); // Safety clone
         const pack = getIndustryPack(reqJson.industry || 'other');

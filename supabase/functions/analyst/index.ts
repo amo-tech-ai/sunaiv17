@@ -4,6 +4,7 @@ import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { AnalystRequestSchema } from "../_shared/validation.ts";
 
 declare const Deno: {
   env: {
@@ -15,7 +16,16 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const body = await req.json();
+    const json = await req.json();
+    
+    // Validate Request
+    const validation = AnalystRequestSchema.safeParse(json);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const body = validation.data;
     const { mode } = body;
     const ai = createGeminiClient();
     
@@ -35,12 +45,14 @@ serve(async (req) => {
     // MODE 1: RESEARCH (Streaming)
     if (mode === 'research') {
         const { businessName, website } = body;
+        if (!businessName) throw new Error("Business Name required for research mode");
+
         const response = await ai.models.generateContentStream({
             model: 'gemini-3-flash-preview',
             contents: `
             System context: Role as senior business analyst.
             Task: Research and verify business, detect industry, assess maturity.
-            Input: Company: "${businessName}", URL: "${website}".
+            Input: Company: "${businessName}", URL: "${website || ''}".
             
             Key Instructions:
             - Verify business existence before making claims.
@@ -76,6 +88,7 @@ serve(async (req) => {
     // MODE 2: DOCUMENT SUMMARY
     if (mode === 'summarize_docs') {
         const { documents } = body;
+        if (!documents || documents.length === 0) throw new Error("No documents provided");
         
         const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{
             text: `Analyze the attached business documents. Extract key insights about:
@@ -112,6 +125,7 @@ serve(async (req) => {
 
     // MODE 3: CLASSIFY (Default)
     const { businessName, website, selectedServices, description, docInsights } = body;
+    if (!businessName) throw new Error("Business Name required for classification");
     
     const schema: Schema = {
       type: Type.OBJECT,

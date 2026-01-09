@@ -5,6 +5,7 @@ import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { PlannerRequestSchema } from "../_shared/validation.ts";
 
 declare const Deno: {
   env: {
@@ -16,7 +17,15 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { wizardState } = await req.json();
+    const json = await req.json();
+    
+    const validation = PlannerRequestSchema.safeParse(json);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const { wizardState } = validation.data;
     
     // Initialize Supabase Client (Service Role for Admin Writes)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -66,7 +75,7 @@ serve(async (req) => {
         
         Inputs:
         - Systems: ${wizardState.data.selectedSystems.join(', ')}
-        - Gaps: ${JSON.stringify(wizardState.aiState.readinessAnalysis.risks)}
+        - Gaps: ${JSON.stringify(wizardState.aiState?.readinessAnalysis?.risks || [])}
         - KPIs: ${JSON.stringify(pack.kpis)}
 
         Task:

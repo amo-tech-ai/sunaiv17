@@ -3,12 +3,22 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Type, Schema } from "npm:@google/genai";
 import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { MonitorRequestSchema } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { timelineData, projectContext } = await req.json();
+    const json = await req.json();
+    const validation = MonitorRequestSchema.safeParse(json);
+
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { timelineData, projectContext } = validation.data;
     const ai = createGeminiClient();
 
     const schema: Schema = {

@@ -5,6 +5,7 @@ import { createGeminiClient } from "../_shared/gemini.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getIndustryPack } from "../_shared/industryPacks.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { OptimizerRequestSchema } from "../_shared/validation.ts";
 
 declare const Deno: {
   env: {
@@ -16,7 +17,16 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { industry, priorities, services } = await req.json();
+    const json = await req.json();
+    
+    const validation = OptimizerRequestSchema.safeParse(json);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Validation Error", details: validation.error.format() }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const { industry, priorities, services } = validation.data;
+
     const pack = getIndustryPack(industry);
     const ai = createGeminiClient();
 

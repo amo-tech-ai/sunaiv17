@@ -1,5 +1,6 @@
 
 import { supabase } from "../supabase";
+import { retryWithBackoff } from "../../utils/retry";
 
 export const assistant = {
   /**
@@ -7,14 +8,18 @@ export const assistant = {
    */
   async analyzeDocument(documentText: string, briefContext: any) {
     try {
-      const { data, error } = await supabase.functions.invoke('assistant', {
-        body: { 
-          task: 'analyze_document',
-          content: documentText, 
-          context: briefContext 
-        }
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('assistant', {
+          body: { 
+            task: 'analyze_document',
+            content: documentText, 
+            context: briefContext 
+          }
+        });
+        if (error) throw error;
+        return data;
       });
-      if (error) throw error;
+      
       return data;
     } catch (error) {
       console.error("Assistant Agent Error (Document):", error);
@@ -31,14 +36,18 @@ export const assistant = {
    */
   async generateBriefSummary(briefContent: string, projectContext: any) {
     try {
-      const { data, error } = await supabase.functions.invoke('assistant', {
-        body: { 
-          task: 'summarize_brief',
-          content: briefContent, 
-          context: projectContext 
-        }
+      const data = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('assistant', {
+          body: { 
+            task: 'summarize_brief',
+            content: briefContent, 
+            context: projectContext 
+          }
+        });
+        if (error) throw error;
+        return data;
       });
-      if (error) throw error;
+      
       return data;
     } catch (error) {
       console.error("Assistant Agent Error (Brief):", error);
