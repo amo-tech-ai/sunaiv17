@@ -91,6 +91,7 @@ export interface UploadedDocument {
   type: string;
   size: number;
   base64?: string;
+  storagePath?: string; // Path in Supabase Storage
   content?: string;
   uploaded_at?: string;
   category?: 'Brief' | 'Assets' | 'Reference';

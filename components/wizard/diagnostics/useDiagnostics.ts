@@ -14,8 +14,6 @@ interface UseDiagnosticsProps {
   updateData: (section: keyof AppState['data'], value: any) => void;
   setAiQuestions: (qs: any) => void;
   setStream: (text: string) => void;
-  // Note: Assuming the parent might pass priorities or we handle the priority update manually in the parent if needed.
-  // For now, we will handle the 'primary_focus' special case here by updating the 'priorities' data key as per original logic.
   priorities?: AppState['data']['priorities'];
 }
 
@@ -50,18 +48,20 @@ export const useDiagnostics = ({
         .maybeSingle();
 
       if (session) {
-        const { data: answers } = await supabase
+        // CORRECTED: Fetch by screen_id and read JSONB data
+        const { data: row } = await supabase
           .from('wizard_answers')
-          .select('question_id, answer_value')
-          .eq('session_id', session.id);
+          .select('data')
+          .eq('session_id', session.id)
+          .eq('screen_id', 'step-2')
+          .maybeSingle();
 
-        if (answers && answers.length > 0) {
-          const answerMap: Record<string, string[]> = {};
-          answers.forEach(a => {
-            answerMap[a.question_id] = Array.isArray(a.answer_value) ? a.answer_value : [a.answer_value];
-          });
-          if (Object.keys(diagnosticAnswers).length === 0) {
-             updateData('diagnosticAnswers', answerMap);
+        if (row?.data) {
+          // The data column stores the full Record<string, string[]> map
+          const loadedAnswers = row.data as Record<string, string[]>;
+          
+          if (Object.keys(diagnosticAnswers).length === 0 && loadedAnswers) {
+             updateData('diagnosticAnswers', loadedAnswers);
           }
         }
       }
@@ -112,7 +112,8 @@ export const useDiagnostics = ({
     }
   }, [industry, selectedServices]);
 
-  const saveAnswerToDb = async (questionId: string, answers: string[]) => {
+  // CORRECTED: Save full answer state to JSONB column
+  const saveAnswersToDb = async (allAnswers: Record<string, string[]>) => {
     if (!user) return;
 
     try {
@@ -127,10 +128,10 @@ export const useDiagnostics = ({
       if (wizardSession) {
         await supabase.from('wizard_answers').upsert({
           session_id: wizardSession.id,
-          question_id: questionId,
-          answer_value: answers, 
+          screen_id: 'step-2', // Use screen ID as the key
+          data: allAnswers,    // Store full map in JSONB
           updated_at: new Date().toISOString()
-        }, { onConflict: 'session_id, question_id' });
+        }, { onConflict: 'session_id, screen_id' });
       }
     } catch (e) {
       console.warn("Failed to save answer to DB", e);
@@ -156,7 +157,6 @@ export const useDiagnostics = ({
         
         // Populate priorities map for legacy compatibility
         if (questionId === 'primary_focus') {
-             // We update the data object structure manually for nested priorities
              const currentPriorities = priorities || {};
              updateData('priorities', {
                  ...currentPriorities,
@@ -178,14 +178,16 @@ export const useDiagnostics = ({
       }
     }
 
-    updateData('diagnosticAnswers', {
+    const updatedDiagnosticAnswers = {
       ...diagnosticAnswers,
       [questionId]: newAnswers
-    });
+    };
+
+    updateData('diagnosticAnswers', updatedDiagnosticAnswers);
 
     if (answerSaveTimeoutRef.current) clearTimeout(answerSaveTimeoutRef.current);
     answerSaveTimeoutRef.current = setTimeout(() => {
-        saveAnswerToDb(questionId, newAnswers);
+        saveAnswersToDb(updatedDiagnosticAnswers);
     }, 500);
   };
 

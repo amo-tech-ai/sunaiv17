@@ -61,7 +61,7 @@ export const useSettings = () => {
           email: user.email || '',
           avatar_url: profile?.avatar_url
         },
-        organization: member?.organizations || { id: '', name: 'My Agency', tier: 'Free' },
+        organization: (Array.isArray(member?.organizations) ? member?.organizations[0] : member?.organizations) as UserSettings['organization'] || { id: '', name: 'My Agency', tier: 'Free' },
         preferences: prefs || {
           theme: 'light',
           email_notifications: true,

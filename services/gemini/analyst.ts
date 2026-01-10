@@ -63,17 +63,20 @@ export const analyst = {
 
   /**
    * Core Prompt: Document Analysis
-   * Migrated to Edge Function to handle file processing securely
+   * Migrated to Edge Function to handle file processing securely via Storage Paths
    */
   async analyzeDocuments(documents: UploadedDocument[]): Promise<string> {
     if (documents.length === 0) return "";
 
     try {
       // Prepare documents for Edge Function
+      // Instead of base64, we send the storagePath if available
       const payload = documents.map(doc => ({
         name: doc.name,
         mimeType: doc.type,
-        base64: doc.base64,
+        // Send storagePath if available, otherwise base64 (fallback/legacy)
+        storagePath: doc.storagePath,
+        base64: doc.storagePath ? undefined : doc.base64,
         textContent: doc.content
       }));
 
@@ -90,8 +93,8 @@ export const analyst = {
 
       return data?.summary || "No insights extracted.";
     } catch (error) {
-      console.warn("Document Analysis Offline:", error);
-      return "Document uploaded successfully. Analysis pending (Offline Mode).";
+      console.warn("Document Analysis Failed:", error);
+      return "Document analysis unavailable. Proceeding with basic context.";
     }
   },
 

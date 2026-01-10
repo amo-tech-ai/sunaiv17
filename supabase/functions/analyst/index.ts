@@ -100,7 +100,29 @@ serve(async (req) => {
         }];
 
         for (const doc of documents) {
-            if (doc.base64) {
+            // Handle Storage Path Download
+            if (doc.storagePath) {
+                const { data: fileData, error: downloadError } = await supabase.storage
+                    .from('documents')
+                    .download(doc.storagePath);
+                
+                if (!downloadError && fileData) {
+                    // Convert Blob to ArrayBuffer then Base64
+                    const buffer = await fileData.arrayBuffer();
+                    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+                    
+                    parts.push({
+                        inlineData: {
+                            mimeType: doc.mimeType || 'application/pdf',
+                            data: base64
+                        }
+                    });
+                } else {
+                    console.error(`Failed to download ${doc.storagePath}:`, downloadError);
+                }
+            } 
+            // Fallback for legacy base64 direct passing
+            else if (doc.base64) {
                 parts.push({
                     inlineData: {
                         mimeType: doc.mimeType || 'application/pdf',

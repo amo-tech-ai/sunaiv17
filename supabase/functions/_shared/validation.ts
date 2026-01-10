@@ -13,6 +13,7 @@ export const AnalystRequestSchema = z.object({
     name: z.string(),
     mimeType: z.string().optional(),
     base64: z.string().optional(),
+    storagePath: z.string().optional(), // Added
     textContent: z.string().optional()
   })).optional()
 });

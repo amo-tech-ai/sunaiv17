@@ -18,7 +18,7 @@ import { IntelligencePanel } from './components/wizard/IntelligencePanel';
 import { ClientLayout } from './components/client-dashboard/ClientLayout';
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signInDev } = useAuth();
   const {
     state,
     setState,
@@ -134,7 +134,7 @@ export default function App() {
   if (authLoading) return null;
 
   if (showLanding && !user) {
-      return <LandingPage onStart={() => setShowLanding(false)} />;
+      return <LandingPage onDevLogin={signInDev} />;
   }
 
   // Check Role for Client Portal

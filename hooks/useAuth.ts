@@ -4,7 +4,9 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 
 // --- DEV BYPASS CONFIGURATION ---
-const ENABLE_DEV_AUTH_BYPASS = true;
+// Keep this FALSE to show Landing Page initially. 
+// We will use signInDev to bypass manually via UI interaction.
+const ENABLE_DEV_AUTH_BYPASS = false; 
 
 const MOCK_DEV_USER = {
   id: 'dev-preview-user',
@@ -31,20 +33,38 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Development Login Bypass
+  const signInDev = (role: 'client' | 'agency' = 'agency') => {
+    const mockUser = { ...MOCK_DEV_USER };
+    
+    // Set roles in metadata (Supabase style)
+    mockUser.app_metadata = { ...mockUser.app_metadata, role };
+    mockUser.user_metadata = { ...mockUser.user_metadata, role };
+    
+    // Customize name based on role
+    if (role === 'client') {
+        mockUser.email = 'client@example.com';
+        mockUser.user_metadata.full_name = 'Client User';
+    }
+
+    setSession({ ...MOCK_SESSION, user: mockUser });
+    setUser(mockUser);
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (ENABLE_DEV_AUTH_BYPASS) {
-      // Immediate mock return for dev mode
-      setSession(MOCK_SESSION);
-      setUser(MOCK_DEV_USER);
-      setLoading(false);
+      signInDev('agency');
       return;
     }
 
     // --- ORIGINAL PRODUCTION LOGIC ---
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+      }
       setLoading(false);
     });
 
@@ -60,5 +80,5 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading };
+  return { session, user, loading, signInDev };
 };

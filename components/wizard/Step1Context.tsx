@@ -1,9 +1,11 @@
 
 import React, { useRef, useState } from 'react';
-import { CheckCircle2, ShieldCheck, Activity, Plus, Upload, X, FileText, File as FileIcon } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Activity, Plus, Upload, X, FileText, File as FileIcon, Loader2 } from 'lucide-react';
 import { Input, TextArea, Select } from '../Input';
 import { AppState, IndustryType, UploadedDocument } from '../../types';
 import { validateBusinessContext } from '../../utils/validation';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Step1ContextProps {
   data: AppState['data'];
@@ -28,9 +30,11 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
   onUrlBlur,
   isAnalyzing 
 }) => {
+  const { user } = useAuth();
   const analysis = data.analysis;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const validateField = (field: string, value: any) => {
@@ -42,7 +46,6 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
     
     const result = validateBusinessContext(payload);
     if (!result.success) {
-        // Safe access to errors using .issues (Zod v3 property) instead of .errors
         const error = result.error.issues.find(e => e.path[0] === field);
         setValidationErrors(prev => ({
             ...prev,
@@ -68,46 +71,53 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || !user) return;
 
     setUploadError(null);
+    setIsUploading(true);
     const newDocs: UploadedDocument[] = [];
-    const maxFileSize = 25 * 1024 * 1024; // 25MB
+    const maxFileSize = 10 * 1024 * 1024; // 10MB Limit for Edge compatibility
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > maxFileSize) {
-        setUploadError(`File ${file.name} exceeds 25MB limit.`);
+        setUploadError(`File ${file.name} exceeds 10MB limit.`);
         continue;
       }
 
-      const reader = new FileReader();
-      
-      const docPromise = new Promise<UploadedDocument>((resolve) => {
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          const base64 = result.split(',')[1];
-          
-          resolve({
-            id: `doc-${Date.now()}-${i}`,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            base64: base64,
-            content: file.type.startsWith('text/') ? atob(base64) : undefined 
-          });
-        };
-        reader.readAsDataURL(file);
-      });
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error } = await supabase.storage
+          .from('documents') // Ensure this bucket exists
+          .upload(fileName, file);
 
-      const doc = await docPromise;
-      newDocs.push(doc);
+        if (error) throw error;
+
+        newDocs.push({
+          id: `doc-${Date.now()}-${i}`,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          storagePath: uploadData.path, // Store the path, not base64
+          uploaded_at: new Date().toISOString(),
+          category: 'Brief'
+        });
+
+      } catch (err: any) {
+        console.error("Upload failed", err);
+        setUploadError(`Failed to upload ${file.name}: ${err.message}`);
+      }
     }
 
     if (newDocs.length > 0) {
       updateData('uploadedDocuments', [...(data.uploadedDocuments || []), ...newDocs]);
-      onUrlBlur(); 
+      // Trigger analysis only after upload completes
+      // We don't auto-blur here because we want to make sure the user is done uploading
     }
+    setIsUploading(false);
   };
 
   const removeDocument = (id: string) => {
@@ -191,6 +201,7 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
               { label: 'Fashion / Retail', value: 'fashion' },
               { label: 'Real Estate', value: 'real_estate' },
               { label: 'Tourism / Hospitality', value: 'tourism' },
+              { label: 'Events / Entertainment', value: 'events' },
               { label: 'Other', value: 'other' },
             ]}
             value={data.industry}
@@ -225,9 +236,14 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
             Upload Context (Optional)
           </label>
           <div 
-            className="border border-dashed border-sun-border rounded-sm p-6 text-center hover:bg-sun-right/50 transition-colors cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
+            className="border border-dashed border-sun-border rounded-sm p-6 text-center hover:bg-sun-right/50 transition-colors cursor-pointer relative"
+            onClick={() => !isUploading && fileInputRef.current?.click()}
           >
+            {isUploading && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                    <Loader2 className="animate-spin text-sun-accent" />
+                </div>
+            )}
             <input 
               type="file" 
               ref={fileInputRef}
@@ -239,7 +255,7 @@ export const Step1Context: React.FC<Step1ContextProps> = ({
             <div className="flex flex-col items-center gap-2 text-sun-secondary">
               <Upload size={24} className="text-sun-tertiary" />
               <span className="text-sm font-medium">Drop brand guides, pitch decks, or requirements here</span>
-              <span className="text-xs text-sun-muted">PDF, Images, TXT supported for AI Analysis (Max 25MB)</span>
+              <span className="text-xs text-sun-muted">PDF, Images, TXT supported for AI Analysis (Max 10MB)</span>
             </div>
           </div>
           {uploadError && <p className="text-xs text-red-500 mt-2">{uploadError}</p>}
